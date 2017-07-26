@@ -6,9 +6,6 @@ Wren Saylor
 July 12 2017
 
 To Do:
-tissue x uce
-tissue x meth/c
-uce x meth/c
 methylation flanks
 """
 
@@ -23,11 +20,15 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+def savePanda(pdData, strFilename):
+	pdData.to_csv(strFilename, sep='\t', header=False, index=False)
+
 # Reduce each id/tissue x location to get a corresponding tissue/id list of associations
-def listOverlap(dataframe,yItem,zItem,xItem):
+def listOverlap(dataframe,yItem,zItem,xItem,num,uce,halfwindow,window,methylationflank):
+
 	# Separate by strand
-	PlusMeth = dataframe.loc[dataframe['Cytosine'] == 'C']
-	MinusMeth = dataframe.loc[dataframe['Cytosine'] == 'G']
+	PlusMeth = dataframe.loc[(dataframe['Cytosine'] == 'C') & (dataframe['methLoc'] >= (((num-uce)/2)-halfwindow-methylationflank)) & (dataframe['methLoc'] <= (((num-uce)/2)+uce-halfwindow+methylationflank))]
+	MinusMeth = dataframe.loc[(dataframe['Cytosine'] == 'G') & (dataframe['methLoc'] >= (((num-uce)/2)-halfwindow-methylationflank)) & (dataframe['methLoc'] <= (((num-uce)/2)+uce-halfwindow+methylationflank))]
 	
 	# Subset just columns to use
 	PlussubMeth = PlusMeth[['methLoc',yItem,zItem,xItem]]
@@ -38,29 +39,51 @@ def listOverlap(dataframe,yItem,zItem,xItem):
 	MinusgroupMeth = MinussubMeth.join(MinussubMeth.groupby(['methLoc',yItem])[xItem].unique(),on=['methLoc',yItem],rsuffix='_r')
 
 	# Just the new xItem list, and location
-	PlusxLMeth = PlusgroupMeth[['methLoc','{0}_r'.format(xItem)]]
-	MinusxLMeth = MinusgroupMeth[['methLoc','{0}_r'.format(xItem)]]
+	PlusxMeth = PlusgroupMeth[['methLoc',yItem,'{0}_r'.format(xItem)]].drop_duplicates(['methLoc',yItem],keep='last')
+	MinusxMeth = MinusgroupMeth[['methLoc',yItem,'{0}_r'.format(xItem)]].drop_duplicates(['methLoc',yItem],keep='last')
 
-	print 'Collected list of {0} item associated with Location'.format(xItem)
+	print 'Collected list of {0}s associated with Location and {1}'.format(xItem,yItem)
+	
+	return PlusxMeth,MinusxMeth
 
-	# Just the new xItem list, and yItem
-	PlusxYMeth = PlusgroupMeth[[yItem,'{0}_r'.format(xItem)]]
-	MinusxYMeth = MinusgroupMeth[[yItem,'{0}_r'.format(xItem)]]
-	
-	print 'Collected list of {0} item associated with {1}'.format(xItem,yItem)
+# Get Tissue x Id
+def elementID(dataframe,yItem,zItem,num,uce,halfwindow,window,methylationflank):
 
-	# Reindex the methLocation x ID/Tissue df
-# 	PlusxYMeth.set_index('methLoc',drop=True,inplace=True)
-# 	MinusxYMeth.set_index('methLoc',drop=True,inplace=True)
-# 	
-# 	reinPlusxYMeth = PlusxYMeth.reindex(new_index,fill_value=0)
-# 	reinMinusxYMeth = MinusxYMeth.reindex(new_index,fill_value=0)
+	# Separate by strand
+	PlusMeth = dataframe.loc[(dataframe['Cytosine'] == 'C') & (dataframe['methLoc'] >= (((num-uce)/2)-halfwindow-methylationflank)) & (dataframe['methLoc'] <= (((num-uce)/2)+uce-halfwindow+methylationflank))]
+	MinusMeth = dataframe.loc[(dataframe['Cytosine'] == 'G') & (dataframe['methLoc'] >= (((num-uce)/2)-halfwindow-methylationflank)) & (dataframe['methLoc'] <= (((num-uce)/2)+uce-halfwindow+methylationflank))]
 	
+	# Subset just columns to use
+	PlussubMeth = PlusMeth[['methFreq',yItem,zItem]]
+	MinussubMeth = MinusMeth[['methFreq',yItem,zItem]]
 	
-	return PlusxLMeth,MinusxLMeth,PlusxYMeth,MinusxYMeth
+	# Sort ascending, in order to only use the highest value with keep = last
+	PlussortMeth = PlussubMeth.sort_values(['methFreq'],ascending=True)
+	MinussortMeth = MinussubMeth.sort_values(['methFreq'],ascending=True)
+
+	PlusdupMeth = PlussortMeth.drop_duplicates(['methFreq',yItem,zItem],keep='last')
+	MinusdupMeth = MinussortMeth.drop_duplicates(['methFreq',yItem,zItem],keep='last')
+
+	# Pivot the data frame so that each tissue/cell type is a column
+	PluspivotMeth = pd.pivot_table(PlusdupMeth,index=[yItem],columns=[zItem],values='methFreq',fill_value=0)
+	MinuspivotMeth = pd.pivot_table(MinusdupMeth,index=[yItem],columns=[zItem],values='methFreq',fill_value=0)
+	
+	PluspivotMeth.columns.name = None
+	MinuspivotMeth.columns.name = None
+
+	# Remove the index column name
+	PluspivotMeth.index.name = None
+	MinuspivotMeth.index.name = None
+
+	PlusfloatMeth = PluspivotMeth[PluspivotMeth.columns].astype(float)
+	MinusfloatMeth = MinuspivotMeth[MinuspivotMeth.columns].astype(float)
+
+	print 'Collected {0} by {1} into data frame for Frequency'.format(yItem,zItem)
+	
+	return PlusfloatMeth,MinusfloatMeth
 
 # Transform the Frequency, Percentage and Coverage data into graphable data frames, returning just the info for the element
-def elemenetIndex(dataframe,yItem,zItem,num,uce,halfwindow,window):
+def elemenetIndex(dataframe,yItem,zItem,num,uce,halfwindow,window,methylationflank):
 
 	# x item is methLoc, y item is either tissue or id, z item is coverage, percentage, or frequency
 	new_index = range(0,num)
@@ -96,8 +119,8 @@ def elemenetIndex(dataframe,yItem,zItem,num,uce,halfwindow,window):
 	MinusindexMeth.index.name = None
 	
 	# Get just the element 
-	Pluselement = PlusindexMeth[(((num-uce)/2)-halfwindow):(((num-uce)/2)+uce-halfwindow)]
-	Minuselement = MinusindexMeth[(((num-uce)/2)-halfwindow):(((num-uce)/2)+uce-halfwindow)]
+	Pluselement = PlusindexMeth[(((num-uce)/2)-halfwindow-methylationflank):(((num-uce)/2)+uce-halfwindow+methylationflank)]
+	Minuselement = MinusindexMeth[(((num-uce)/2)-halfwindow-methylationflank):(((num-uce)/2)+uce-halfwindow+methylationflank)]
 
 	# Transpose the data frame for easy input into the heatamp
 	PlustransMeth = Pluselement.T
@@ -124,7 +147,7 @@ def graphCluster(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine
 	ATgroup = ATconcat.groupby(ATconcat.columns,axis=1).sum()
 	ATmean = ATgroup.mean()
 	ATstd = ATgroup.std()
-	ATelement = ATgroup.T[(((num-uce)/2)-halfwindow):(((num-uce)/2)+uce-halfwindow)]
+	ATelement = ATgroup.T[(((num-uce)/2)-halfwindow-methylationflank):(((num-uce)/2)+uce-halfwindow+methylationflank)]
 
 	# Title info
 	info = str(fileName) + ', '+ str(len(ATgroup.index)) + ' - ' "UCES"
@@ -153,28 +176,26 @@ def graphCluster(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine
 	sns.despine()
 	pp.savefig()
 
-	# Various combinations to plot on heatmaps, just for element
-	# Frequency x (tissue, id)
-	FreqPlusID,FreqMinusID = elemenetIndex(pdMeth,'id','methFreq',num,uce,halfwindow,window)
-	FreqPlusTis,FreqMinusTis = elemenetIndex(pdMeth,'tissue','methFreq',num,uce,halfwindow,window)
-	
-	PlusLMethID,MinusLMethID,PlusYMethID,MinusYMethID = listOverlap(pdMeth,'id','methFreq','tissue')
-	PlusLMethTis,MinusLMethTis,PlusYMethTis,MinusYMethTis = listOverlap(pdMeth,'tissue','methFreq','id')
-	
-	print PlusLMethID
-	print PlusYMethID
-	# zip a dictionary for location and y axis, to use as row color
-	
-	# Remove UCEs with out methylation within the element
+	# Various combinations to plot on heatmaps, just for element plus methylation flanks
+	# Frequency x Tissue x ID X Location
+	FreqPlusID,FreqMinusID = elemenetIndex(pdMeth,'id','methFreq',num,uce,halfwindow,window,methylationflank)
+	FreqPlusTis,FreqMinusTis = elemenetIndex(pdMeth,'tissue','methFreq',num,uce,halfwindow,window,methylationflank)
+	XPlus,XMinus = elementID(pdMeth,'id','tissue',num,uce,halfwindow,window,methylationflank)
+	savePanda(FreqPlusID,'frqXidXpos.txt')
+	savePanda(FreqPlusTis,'frqXtisXpos.txt')
+	savePanda(XPlus,'frqXtisXid.txt')
+
+# 	# Get the aggregated list of ids/tissues corresponding to location and tissues/ids
+# 	PlusMethID,MinusMethID = listOverlap(pdMeth,'id','methFreq','tissue',num,uce,halfwindow,window,methylationflank)
+# 	PlusMethTis,MinusMethTis = listOverlap(pdMeth,'tissue','methFreq','id',num,uce,halfwindow,window,methylationflank)
+
+	# Remove UCEs with out methylation within the element - only for ID group
 	FreqPlusID = FreqPlusID[(FreqPlusID.T != 0).any()]
 	FreqMinusID = FreqMinusID[(FreqMinusID.T != 0).any()]
 
-
 	# Make heatmap for # methylation on pos strand (Frequency)
-# 	lut = dict(zip(species.unique(), "rbg"))
-# 	row_colors = species.map(lut)
 	ylabels1 = FreqPlusTis.index
-	heatmap1 = sns.clustermap(FreqPlusTis,cmap='RdPu',xticklabels=100,col_cluster=False,yticklabels=ylabels1)#cbar_ax=cbar5_ax,vmin=0,vmax=5
+	heatmap1 = sns.clustermap(FreqPlusTis,cmap='RdPu',xticklabels=100,col_cluster=False,yticklabels=ylabels1)
 	plt.setp(heatmap1.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
 	plt.setp(heatmap1.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
 	plt.setp(heatmap1.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
@@ -184,17 +205,15 @@ def graphCluster(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine
 	plt.setp(heatmap1.ax_heatmap.set_xlabel('Position',size=8))
 	plt.setp(heatmap1.ax_heatmap.tick_params(labelsize=8))
 	plt.setp(heatmap1.ax_heatmap.set_yticks(np.arange(FreqPlusTis.shape[0]) + 0.6, minor=False))
-	plt.setp(heatmap1.ax_heatmap.set_yticklabels(ylabels1,minor=False,rotation=0))#,minor=False
+	plt.setp(heatmap1.ax_heatmap.set_yticklabels(ylabels1,minor=False,rotation=0))
 	plt.setp(heatmap1.ax_heatmap.set_title('Methylation Frequency on Plus Strand',size=12))
 	
 	sns.despine()
 	pp.savefig()
 	
 	# Make heatmap for # methylation on pos strand (Frequency)
-# 	lut = dict(zip(species.unique(), "rbg"))
-# 	row_colors = species.map(lut)
 	ylabels2 = FreqMinusTis.index
-	heatmap2 = sns.clustermap(FreqMinusTis,cmap='RdPu',xticklabels=100,col_cluster=False,yticklabels=ylabels2)#cbar_ax=cbar5_ax#,vmin=0,vmax=5
+	heatmap2 = sns.clustermap(FreqMinusTis,cmap='RdPu',xticklabels=100,col_cluster=False,yticklabels=ylabels2)
 	plt.setp(heatmap2.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
 	plt.setp(heatmap2.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
 	plt.setp(heatmap2.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
@@ -204,17 +223,15 @@ def graphCluster(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine
 	plt.setp(heatmap2.ax_heatmap.set_xlabel('Position',size=8))
 	plt.setp(heatmap2.ax_heatmap.tick_params(labelsize=8))
 	plt.setp(heatmap2.ax_heatmap.set_yticks(np.arange(FreqMinusTis.shape[0]) + 0.6, minor=False))
-	plt.setp(heatmap2.ax_heatmap.set_yticklabels(ylabels2,minor=False,rotation=0))#,minor=False
+	plt.setp(heatmap2.ax_heatmap.set_yticklabels(ylabels2,minor=False,rotation=0))
 	plt.setp(heatmap2.ax_heatmap.set_title('Methylation Frequency on Minus Strand',size=12))
 
 	sns.despine()
 	pp.savefig()
 	
 	# Make heatmap for # methylation on pos strand (Frequency)
-# 	lut = dict(zip(tissue.unique(), "rbg"))
-# 	row_colors = tissue.map(lut)
 	ylabels3 = FreqPlusID.index
-	heatmap3 = sns.clustermap(FreqPlusID,cmap='RdPu',xticklabels=100,col_cluster=False,yticklabels=ylabels3)#,vmin=0,vmax=5
+	heatmap3 = sns.clustermap(FreqPlusID,cmap='RdPu',xticklabels=100,col_cluster=False,yticklabels=ylabels3)
 	plt.setp(heatmap3.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
 	plt.setp(heatmap3.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
 	plt.setp(heatmap3.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
@@ -224,17 +241,15 @@ def graphCluster(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine
 	plt.setp(heatmap3.ax_heatmap.set_xlabel('Position',size=8))
 	plt.setp(heatmap3.ax_heatmap.tick_params(labelsize=8))
 	plt.setp(heatmap3.ax_heatmap.set_yticks(np.arange(FreqPlusID.shape[0]) + 0.6, minor=False))
-	plt.setp(heatmap3.ax_heatmap.set_yticklabels(ylabels3,minor=False,rotation=0))#,minor=False
+	plt.setp(heatmap3.ax_heatmap.set_yticklabels(ylabels3,minor=False,rotation=0))
 	plt.setp(heatmap3.ax_heatmap.set_title('Methylation Frequency on Plus Strand',size=12))
 
 	sns.despine()
 	pp.savefig()
 	
 	# Make heatmap for # methylation on neg strand (Frequency)
-# 	lut = dict(zip(tissue.unique(), "rbg"))
-# 	row_colors = tissue.map(lut)
 	ylabels4 = FreqMinusID.index
-	heatmap4 = sns.clustermap(FreqMinusID,cmap='RdPu',xticklabels=100,col_cluster=False,yticklabels=ylabels4)#,vmin=0,vmax=5
+	heatmap4 = sns.clustermap(FreqMinusID,cmap='RdPu',xticklabels=100,col_cluster=False,yticklabels=ylabels4)
 	plt.setp(heatmap4.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
 	plt.setp(heatmap4.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
 	plt.setp(heatmap4.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
@@ -244,9 +259,42 @@ def graphCluster(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine
 	plt.setp(heatmap4.ax_heatmap.set_xlabel('Position',size=8))
 	plt.setp(heatmap4.ax_heatmap.tick_params(labelsize=8))
 	plt.setp(heatmap4.ax_heatmap.set_yticks(np.arange(FreqMinusID.shape[0]) + 0.6, minor=False))
-	plt.setp(heatmap4.ax_heatmap.set_yticklabels(ylabels4,minor=False,rotation=0))#,minor=False
+	plt.setp(heatmap4.ax_heatmap.set_yticklabels(ylabels4,minor=False,rotation=0))
 	plt.setp(heatmap4.ax_heatmap.set_title('Methylation Frequency on Minus Strand',size=12))
-# 	#http://seaborn.pydata.org/examples/timeseries_bootstrapped.html
+
+	sns.despine()
+	pp.savefig()
+	
+	# Make heatmap for # methylation on pos strand (Frequency)
+	ylabels5 = XPlus.index
+	xlabels5 = XPlus.columns
+	heatmap5 = sns.clustermap(XPlus,cmap='RdPu',yticklabels=ylabels5,xticklabels=xlabels5)
+	plt.setp(heatmap5.ax_heatmap.yaxis.tick_right())
+	plt.setp(heatmap5.ax_heatmap.set_ylabel('{0} UCEs'.format(len(FreqMinusID.index)),size=8))
+	plt.setp(heatmap5.ax_heatmap.set_xlabel('Sample',size=8))
+	plt.setp(heatmap5.ax_heatmap.tick_params(labelsize=8))
+	plt.setp(heatmap5.ax_heatmap.set_yticks(np.arange(XPlus.shape[0]) + 0.6, minor=False))
+	plt.setp(heatmap5.ax_heatmap.set_yticklabels(ylabels5,minor=False,rotation=0))
+	plt.setp(heatmap5.ax_heatmap.set_xticks(np.arange(XPlus.shape[1]) + 0.6, minor=False))
+	plt.setp(heatmap5.ax_heatmap.set_xticklabels(xlabels5,minor=False,rotation=0))
+	plt.setp(heatmap5.ax_heatmap.set_title('Methylation Frequency on Plus Strand',size=12))
+
+	sns.despine()
+	pp.savefig()
+	
+	# Make heatmap for # methylation on neg strand (Frequency)
+	ylabels6 = XMinus.index
+	xlabels6 = XMinus.columns
+	heatmap6 = sns.clustermap(XMinus,cmap='RdPu',yticklabels=ylabels6,xticklabels=xlabels6)
+	plt.setp(heatmap6.ax_heatmap.yaxis.tick_right())
+	plt.setp(heatmap6.ax_heatmap.set_ylabel('{0} UCEs'.format(len(FreqMinusID.index)),size=8))
+	plt.setp(heatmap6.ax_heatmap.set_xlabel('Sample',size=8))
+	plt.setp(heatmap6.ax_heatmap.tick_params(labelsize=8))
+	plt.setp(heatmap6.ax_heatmap.set_yticks(np.arange(XMinus.shape[0]) + 0.6, minor=False))
+	plt.setp(heatmap6.ax_heatmap.set_yticklabels(ylabels6,minor=False,rotation=0))
+	plt.setp(heatmap6.ax_heatmap.set_xticks(np.arange(XMinus.shape[1]) + 0.6, minor=False))
+	plt.setp(heatmap6.ax_heatmap.set_xticklabels(xlabels6,minor=False,rotation=0))
+	plt.setp(heatmap6.ax_heatmap.set_title('Methylation Frequency on Minus Strand',size=12))
 
 	sns.despine()
 	pp.savefig()
