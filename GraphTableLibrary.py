@@ -7,6 +7,7 @@ July 13 2017
 To Do:
 Need to calculate the total cpn across the entire genome!!!
 Put each tissue type on separate page
+Deprecated, at the moment
 """
 
 import argparse

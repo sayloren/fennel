@@ -6,7 +6,6 @@ July 5 2017
 
 To Do:
 IO - Have input methylation data in separate callable folder, print output graphs to new folder
-If no methylation plotting, don't process methylation files
 Add verbose as a setting to args
 Cluster plot - just the element for clustering, return out clustered info for organization, label row colors and column colors with tissue for id x pos
 Graph for bin = size calculation
@@ -70,7 +69,7 @@ def get_args():
 	parser.add_argument('-str',"--stringname",type=str,help='string to add to the outfile name')
 
 	# Add additional descriptive file name information
-# 	parser.add_argument('-v',help='print statements',store=True)
+# 	parser.add_argument('-v',help='verbose output from print statements',action="store_true")
 	return parser.parse_args()
 
 def getFilepaths(path):
