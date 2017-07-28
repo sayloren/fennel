@@ -279,19 +279,6 @@ def graphFang(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 	pp.savefig()
 	pp.close()
 
-# Collect each UCEs second derivative
-def behaviorUCE(fillX,pdWindow):
-	secondderUCE = []
-	for index, row in pdWindow.iterrows():
-		f = splrep(fillX,row,k=5,s=11)
-		smoothMean = splev(fillX,f)
-		secondDer = splev(fillX,f,der=2)
-		secondDer[0:window] = 0 # small edge effect
-		secondDer[-window:] = 0 # small edge effect
-		secondderUCE.append(secondDer)
-	pdSecderUCE = pd.DataFrame(secondderUCE)
-	return pdSecderUCE
-
 def main(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 	graphFang(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine)
 

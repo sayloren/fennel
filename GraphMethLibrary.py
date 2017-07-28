@@ -15,9 +15,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import warnings
+import matplotlib.cbook
 
 # Transform the Frequency, Percentage and Coverage data into graphable data frames
 def methIndex(dataframe,yItem,zItem,num): 
+	
 	# x item is methLoc, y item is either tissue or id, z item is coverage, percentage, or frequency
 	new_index = range(0,num)
 	
@@ -28,7 +31,7 @@ def methIndex(dataframe,yItem,zItem,num):
 	# Subset just columns to use
 	PlussubMeth = PlusMeth[['methLoc',yItem,zItem]]
 	MinussubMeth = MinusMeth[['methLoc',yItem,zItem]]
-
+	
 	# Sort ascending, in order to only use the highest value with keep = last
 	PlussortMeth = PlussubMeth.sort_values(['methLoc'],ascending=True).drop_duplicates(['methLoc',yItem,zItem],keep='last')
 	MinussortMeth = MinussubMeth.sort_values(['methLoc'],ascending=True).drop_duplicates(['methLoc',yItem,zItem],keep='last')
@@ -68,12 +71,13 @@ def graphMeth(slidingWinDF,pdMeth,fileName,num,uce,inuce,window):
 	fillX = range(0,(num-window))
 	halfwindow = ((window/2)+1)
 	sns.set_style('ticks')
-	info = str(fileName) + ', '+ str(len(slidingWinDF)) + ' - ' "UCES"
+	info = str(fileName) + ', '+ str(len(pdMeth['id'].unique())) + ' - ' "UCES"
 	plt.suptitle(info,fontsize=10)
 	pp = PdfPages('Methylation_{0}.pdf'.format(fileName))
 
 	# Various combinations to plot on heatmaps
 	# x Tissue
+	# re-cacluate frequency - might not be correct?
 	FreqPlusTis,FreqMinusTis = methIndex(pdMeth,'tissue','methFreq',num)
 	PerPlusTis,PerMinusTis = methIndex(pdMeth,'tissue','methPer',num)
 	CovPlusTis,CovMinusTis = methIndex(pdMeth,'tissue','methCov',num)
@@ -298,6 +302,7 @@ def graphMeth(slidingWinDF,pdMeth,fileName,num,uce,inuce,window):
 	pp.close()
 
 def main(slidingWinDF,pdMeth,fileName,num,uce,inuce,window):
+# 	warnings.filterwarnings("ignore",category=matplotlib.cbook.mplDeprecation)
 	graphMeth(slidingWinDF,pdMeth,fileName,num,uce,inuce,window)
 
 if __name__ == "__main__":

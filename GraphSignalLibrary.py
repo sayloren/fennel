@@ -62,6 +62,20 @@ def performFourier(region):
 	
 	return frqsd, Ysd
 
+# Collect each UCEs second derivative, find their inflection points
+def behaviorUCE(fillX,pdWindow):
+	inflectionPts = []
+	for index, row in pdWindow.iterrows():
+		f = splrep(fillX,row,k=5,s=11)
+		smoothMean = splev(fillX,f)
+		secondDer = splev(fillX,f,der=2)
+		secondDer[0:window] = 0 # small edge effect
+		secondDer[-window:] = 0 # small edge effect
+		peaks = signal.find_peaks_cwt(secondDer,np.arange(3,20),noise_perc=0.1)
+		inflectionPts.append(peaks)
+	peaksUCE = pd.DataFrame(inflectionPts)
+	return peaksUCE
+
 # Make signal graphs
 def graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 	
@@ -98,10 +112,6 @@ def graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 	secondDer = splev(fillX,f,der=2)
 	secondDer[0:window] = 0 # small edge effect
 	secondDer[-window:] = 0 # small edge effect
-	
-	#https://blog.ytotech.com/2015/11/01/findpeaks-in-python/
-	# return the locations of the inflection points
-# 	SDpeaks = peakdetect(secondDer,lookahead=100)
 	
 	# Plot smoothed mean AT
 	ax0 = plt.subplot(gs[0,:])
@@ -220,6 +230,8 @@ def graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 
 def main(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 	graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine)
+	peaks = behaviorUCE(fillX,pdWindow)
+	return peaks
 	
 if __name__ == "__main__":
 	main()

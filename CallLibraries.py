@@ -7,7 +7,6 @@ July 5 2017
 To Do:
 IO - Have input methylation data in separate callable folder, print output graphs to new folder
 Add verbose as a setting to args
-Cluster plot - just the element for clustering, return out clustered info for organization, label row colors and column colors with tissue for id x pos
 Graph for bin = size calculation
 Table for each group % =
 Random regions printed on graph
@@ -72,6 +71,7 @@ def get_args():
 # 	parser.add_argument('-v',help='verbose output from print statements',action="store_true")
 	return parser.parse_args()
 
+# Access the directory where the data is stored
 def getFilepaths(path):
 	relative_path = path
 	current_dir = os.getcwd()
@@ -93,17 +93,19 @@ def plotGraphs(pdMeth,slidingWinDF,names,fileName,num,uce,inuce,window,graphs,nu
 	if 'fangs' in graphs:
 		GraphFangLibrary.main(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine)
 	if 'signal' in graphs:
-		GraphSignalLibrary.main(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine)
+		inflectionPeaks = GraphSignalLibrary.main(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine)
 	if 'methylation' in graphs:
 		GraphMethLibrary.main(slidingWinDF,pdMeth,fileName,num,uce,inuce,window)
 	if 'interactive' in graphs:
 		BokehLibrary.main(slidingWinDF,fileName,num,uce,inuce,window,nucLine)
-# 	if 'table' in graphs:
-# 		GraphTableLibrary.main(slidingWinDF,fileName,num,uce,inuce,window)
 # 	if 'combinations' in graphs:
 # 		BinLibrary.main(base,combinations)
 	if 'cluster' in graphs:
-		GraphClusterLibrary.main(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine,methFlank)
+		ATOrderded = GraphClusterLibrary.main(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine,methFlank)
+
+def plotTable(graphs):
+	if 'table' in graphs:
+		GraphTableLibrary.main(slidingWinDF,fileName,num,uce,inuce,window)
 
 def main():
 	# Collect arguments
