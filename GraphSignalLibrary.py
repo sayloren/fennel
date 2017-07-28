@@ -74,11 +74,9 @@ def behaviorInflectionPointsUCE(ATgroup,num,window):
 		secondDer = splev(fillX,f,der=2)
 		secondDer[0:window] = 0 # small edge effect
 		secondDer[-window:] = 0 # small edge effect
-		peaks = signal.find_peaks_cwt(secondDer,np.arange(1,25))
-# 		print peaks
-# 		peaksOut = [s for s in peaks if s > 0 and s < num]
-# 		print peaksOut 
-		collectUCE.append(peaks)
+		peaks = signal.find_peaks_cwt(secondDer,np.arange(1,45))
+		peaksOut = [s for s in peaks if s > (window*3) and s < (num-(window*3))] # Get rid of edge effects
+		collectUCE.append(peaksOut)
 		inflectionPts.append(collectUCE)
 	peaksUCE = pd.DataFrame(inflectionPts)
 	print 'Collected inflection points for {0} UCEs'.format(len(ATgroup.index))
@@ -146,9 +144,9 @@ def graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 	
 	# Second derivative
 	ax6 = plt.subplot(gs[2,:],sharex=ax0)
-	peakMean = signal.find_peaks_cwt(secondDer,np.arange(1,25)).astype(int)
+	peakMean = signal.find_peaks_cwt(secondDer,np.arange(1,45)).astype(int)
 	ax6.plot(fillX,secondDer,linewidth=1, color='#3e1638',alpha=0.7)
-	ax6.scatter(peakMean,secondDer[peakMean],color='#3e1638',marker='.',alpha=0.3)
+	ax6.scatter(peakMean,secondDer[peakMean],color='#ae3e9e',marker='.')
 	ax6.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
 	ax6.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
 	ax6.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
@@ -168,13 +166,12 @@ def graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 	infUCEpeaks = behaviorInflectionPointsUCE(ATgroup,num,window)
 	infUCEpeaks.columns = ['id','inflectionpoints']
 	inflectionList = infUCEpeaks['inflectionpoints'].apply(pd.Series).stack().tolist()
-	print inflectionList
-	IFbins = num
+	IFbins = num/20
 	ax7.hist(inflectionList,IFbins, color='#ae3e9e',alpha=0.5)#,linewidth=0.3
 	ax7.set_yticks(ax7.get_yticks()[::2])
 	ax7.set_ylabel('Frequency',size=8)
 	ax7.legend(loc=0,fontsize=5,labelspacing=0.1)
-	ax7.set_xlabel('Inflection points',size=8)
+	ax7.set_xlabel('Inflection Point Location',size=8)
 
 	sns.despine()
 	plt.savefig(pp, format='pdf')
