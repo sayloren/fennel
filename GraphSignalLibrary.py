@@ -63,17 +63,25 @@ def performFourier(region):
 	return frqsd, Ysd
 
 # Collect each UCEs second derivative, find their inflection points
-def behaviorUCE(fillX,pdWindow):
+def behaviorInflectionPointsUCE(ATgroup,num,window):
+	fillX = range(0,(num-window))
 	inflectionPts = []
-	for index, row in pdWindow.iterrows():
+	for index, row in ATgroup.iterrows():
+		collectUCE = []
+		collectUCE.append(index)
 		f = splrep(fillX,row,k=5,s=11)
 		smoothMean = splev(fillX,f)
 		secondDer = splev(fillX,f,der=2)
 		secondDer[0:window] = 0 # small edge effect
 		secondDer[-window:] = 0 # small edge effect
-		peaks = signal.find_peaks_cwt(secondDer,np.arange(3,20),noise_perc=0.1)
-		inflectionPts.append(peaks)
+		peaks = signal.find_peaks_cwt(secondDer,np.arange(1,25))
+# 		print peaks
+# 		peaksOut = [s for s in peaks if s > 0 and s < num]
+# 		print peaksOut 
+		collectUCE.append(peaks)
+		inflectionPts.append(collectUCE)
 	peaksUCE = pd.DataFrame(inflectionPts)
+	print 'Collected inflection points for {0} UCEs'.format(len(ATgroup.index))
 	return peaksUCE
 
 # Make signal graphs
@@ -138,9 +146,9 @@ def graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 	
 	# Second derivative
 	ax6 = plt.subplot(gs[2,:],sharex=ax0)
+	peakMean = signal.find_peaks_cwt(secondDer,np.arange(1,25)).astype(int)
 	ax6.plot(fillX,secondDer,linewidth=1, color='#3e1638',alpha=0.7)
-	#http://stackoverflow.com/questions/13691775/python-pinpointing-the-linear-part-of-a-slope
-	#http://stackoverflow.com/questions/16323139/finding-inflection-points-in-spline-fitted-1d-data
+	ax6.scatter(peakMean,secondDer[peakMean],color='#3e1638',marker='.',alpha=0.3)
 	ax6.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
 	ax6.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
 	ax6.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
@@ -154,17 +162,32 @@ def graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 	sns.despine()
 	plt.savefig(pp, format='pdf')
 	
+	# Frequency of inflection points
 	gs = gridspec.GridSpec(1,1,height_ratios=[1])
-	
-	ax7 = plt.subplot(gs[0,:],sharex=ax0)
-	endRange = 100
+	ax7 = plt.subplot(gs[0])
+	infUCEpeaks = behaviorInflectionPointsUCE(ATgroup,num,window)
+	infUCEpeaks.columns = ['id','inflectionpoints']
+	inflectionList = infUCEpeaks['inflectionpoints'].apply(pd.Series).stack().tolist()
+	print inflectionList
+	IFbins = num
+	ax7.hist(inflectionList,IFbins, color='#ae3e9e',alpha=0.5)#,linewidth=0.3
+	ax7.set_yticks(ax7.get_yticks()[::2])
+	ax7.set_ylabel('Frequency',size=8)
+	ax7.legend(loc=0,fontsize=5,labelspacing=0.1)
+	ax7.set_xlabel('Inflection points',size=8)
+
+	sns.despine()
+	plt.savefig(pp, format='pdf')
+
+	gs = gridspec.GridSpec(1,1,height_ratios=[1])
+	ax8 = plt.subplot(gs[0,:],sharex=ax0)
+	endRange = 25
 	widths = np.arange(1, endRange)
 	cwtmatr = signal.cwt(firstDer, signal.ricker, widths)
-	ax7.imshow(cwtmatr,cmap='RdPu',extent=[0, (num-window), 1, endRange],aspect='auto',vmax=abs(cwtmatr).max(), vmin=-abs(cwtmatr).max())
-# 	ax7.set_ylabel('Frequency',size=8)
-	ax7.set_xlabel('Position',size=6)
-	ax7.set_yticks(ax7.get_yticks()[::2])
-	ax7.set_title('Continuous Wavelet Transformation Convolved Over Range {0}-{1} for the First Derivative'.format(widths[0],endRange),size=8)
+	ax8.imshow(cwtmatr,cmap='RdPu',extent=[0, (num-window), 1, endRange],aspect='auto',vmax=abs(cwtmatr).max(), vmin=-abs(cwtmatr).max())
+	ax8.set_xlabel('Position',size=6)
+	ax8.set_yticks(ax8.get_yticks()[::2])
+	ax8.set_title('Continuous Wavelet Transformation Convolved Over Range {0}-{1} for the First Derivative'.format(widths[0],endRange),size=8)
 	
 	sns.despine()
 	plt.savefig(pp, format='pdf')
@@ -173,33 +196,33 @@ def graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 	gs.update(hspace=.65)
 	
 	# Short Fourier Transform
-	ax8 = plt.subplot(gs[0,:],sharex=ax0)
+	ax9 = plt.subplot(gs[0,:],sharex=ax0)
 	sbins = 30
 	f1, t1, Zxx1 = signal.stft(firstDer,fs=1.0, window='hann',nperseg=sbins,noverlap=None)#,nperseg=11,noverlap=5
-	ax8.pcolormesh(t1,f1,np.abs(Zxx1),cmap='RdPu')
-	ax8.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#5fc85b')
-	ax8.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#5fc85b')
-	ax8.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#96c85b')
-	ax8.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#96c85b')
-	ax8.set_ylabel('Frequency',size=8)
-	ax8.set_xlabel('Position',size=6)
-	ax8.set_yticks(ax8.get_yticks()[::2])
-	ax8.set_title('Short Fourier Transform over {0} bins'.format(sbins),size=8)
+	ax9.pcolormesh(t1,f1,np.abs(Zxx1),cmap='RdPu')
+	ax9.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#5fc85b')
+	ax9.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#5fc85b')
+	ax9.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#96c85b')
+	ax9.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#96c85b')
+	ax9.set_ylabel('Frequency',size=8)
+	ax9.set_xlabel('Position',size=6)
+	ax9.set_yticks(ax9.get_yticks()[::2])
+	ax9.set_title('Short Fourier Transform over {0} bins'.format(sbins),size=8)
 	
 	# First Derivative
-	ax9 = plt.subplot(gs[1,:],sharex=ax0)
-	ax9.plot(fillX,firstDer,linewidth=1, color='#3e1638')
-	ax9.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-	ax9.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-	ax9.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-	ax9.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-	ax9.axvspan((((num-uce)/2)-halfwindow),(((num-uce)/2)+uce-halfwindow),facecolor = '#ae3e9e',label='',alpha=0.1)
-	ax9.axvspan(window,(((num-uce)/2)-halfwindow),facecolor = '#863eae',label='',alpha=0.1)
-	ax9.axvspan((((num-uce)/2)+uce-halfwindow),(num-window-window),facecolor = '#ae3e66',label='',alpha=0.1)
-	ax9.set_yticks(ax9.get_yticks()[::2])
-	ax9.set_xlabel('Position',size=6)
-	ax9.set_ylabel('Amplitude',size=8)
-	ax9.set_title('First Derivative of Fitted Mean',size=8)
+	ax10 = plt.subplot(gs[1,:],sharex=ax0)
+	ax10.plot(fillX,firstDer,linewidth=1, color='#3e1638')
+	ax10.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax10.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax10.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax10.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax10.axvspan((((num-uce)/2)-halfwindow),(((num-uce)/2)+uce-halfwindow),facecolor = '#ae3e9e',label='',alpha=0.1)
+	ax10.axvspan(window,(((num-uce)/2)-halfwindow),facecolor = '#863eae',label='',alpha=0.1)
+	ax10.axvspan((((num-uce)/2)+uce-halfwindow),(num-window-window),facecolor = '#ae3e66',label='',alpha=0.1)
+	ax10.set_yticks(ax10.get_yticks()[::2])
+	ax10.set_xlabel('Position',size=6)
+	ax10.set_ylabel('Amplitude',size=8)
+	ax10.set_title('First Derivative of Fitted Mean',size=8)
 	
 	ysdElement = justElement(firstDer,num,uce,halfwindow,window)
 	frq2sd, Y2sd = performFourier(ysdElement)
@@ -209,29 +232,30 @@ def graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 	frq4sd, Y4sd = performFourier(ysdDown)
 	
 	#FFT for sections of the smoothed second derivative
-	ax10 = plt.subplot(gs[2,0])
-	ax10.plot(frq3sd,abs(Y3sd),linewidth=1, color='#863eae')
-	ax10.set_ylabel('|Y(freq)|',size=8)
-	ax10.set_xlabel('Freq(Hz)',size=6) #AT Rate Change
-	ax10.set_yticks(ax10.get_yticks()[::2])
-	ax11 = plt.subplot(gs[2,1],sharey=ax10)
-	plt.setp(ax11.get_yticklabels(), visible=False)
-	ax11.plot(frq2sd,abs(Y2sd),linewidth=1, color='#ae3e9e')
-	ax11.set_title('Power Series for Highlighted Regions',size=8)# Power Spectrum Analysis for FFT
-	ax11.set_xlabel('Freq(Hz)',size=6)
-	ax12 = plt.subplot(gs[2,2],sharey=ax10)
+	ax11 = plt.subplot(gs[2,0])
+	ax11.plot(frq3sd,abs(Y3sd),linewidth=1, color='#863eae')
+	ax11.set_ylabel('|Y(freq)|',size=8)
+	ax11.set_xlabel('Freq(Hz)',size=6) #AT Rate Change
+	ax11.set_yticks(ax11.get_yticks()[::2])
+	ax12 = plt.subplot(gs[2,1],sharey=ax11)
 	plt.setp(ax12.get_yticklabels(), visible=False)
-	ax12.plot(frq4sd,abs(Y4sd),linewidth=1, color='#ae3e66')
+	ax12.plot(frq2sd,abs(Y2sd),linewidth=1, color='#ae3e9e')
+	ax12.set_title('Power Series for Highlighted Regions',size=8)# Power Spectrum Analysis for FFT
 	ax12.set_xlabel('Freq(Hz)',size=6)
+	ax13 = plt.subplot(gs[2,2],sharey=ax11)
+	plt.setp(ax13.get_yticklabels(), visible=False)
+	ax13.plot(frq4sd,abs(Y4sd),linewidth=1, color='#ae3e66')
+	ax13.set_xlabel('Freq(Hz)',size=6)
 	
 	sns.despine()
 	pp.savefig()
 	pp.close()
+	
+	return infUCEpeaks
 
 def main(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
-	graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine)
-	peaks = behaviorUCE(fillX,pdWindow)
-	return peaks
-	
+	infUCEpeaks = ATgroup = graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine)
+	return infUCEpeaks
+
 if __name__ == "__main__":
 	main()
