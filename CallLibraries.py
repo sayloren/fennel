@@ -10,7 +10,6 @@ Add verbose as a setting to args
 Graph for bin = size calculation
 Table for each group % =
 Random regions printed on graph
-AT mean cluster SD row color
 
 """
 
@@ -101,7 +100,7 @@ def plotGraphs(pdMeth,slidingWinDF,names,fileName,num,uce,inuce,window,graphs,nu
 # 	if 'combinations' in graphs:
 # 		BinLibrary.main(base,combinations)
 	if 'cluster' in graphs:
-		ATOrderded = GraphClusterLibrary.main(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine,methFlank)
+		ATOrderded = GraphClusterLibrary.main(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine,methFlank) # need to use this new index to get out the inter-uce relationships
 
 def plotTable(graphs):
 	if 'table' in graphs:

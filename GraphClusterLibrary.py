@@ -158,8 +158,8 @@ def graphCluster(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine
 	ATgroup = ATconcat.groupby(ATconcat.columns,axis=1).sum()
 	ATmean = ATgroup.mean()
 	ATelement = ATgroup.T[(((num-uce)/2)-halfwindow-methylationflank):(((num-uce)/2)+uce-halfwindow+methylationflank)]
-	ATstd = ATelement.std()
-	ATQcut = pd.qcut(ATstd,q=8,labels=False)
+	ATQcutPosition = pd.qcut(ATelement.std(axis=1),q=8,labels=False)
+	ATQcutElement = pd.qcut(ATelement.std(),q=8,labels=False)
 
 	# Title info
 	info = str(fileName) + ', '+ str(len(ATgroup.index)) + ' - ' "UCES"
@@ -171,21 +171,23 @@ def graphCluster(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine
 
 	# Use the row_colors to color those with similar SD?
 	huslPalette = sns.husl_palette(8, s=.45)
-# 	lut = dict(zip(ATQcut.unique(), huslPalette))
-# 	col_colors = ATQcut.map(lut)
-	heatmap0 = sns.clustermap(ATelement.T,cmap='RdPu',vmin=0,vmax=100,xticklabels=50,col_cluster=False)#,row_colors=row_colors
+	lutElement = dict(zip(ATQcutElement.unique(), huslPalette))
+	elementColors = ATQcutElement.map(lutElement)
+	lutPosition = dict(zip(ATQcutPosition.unique(), huslPalette))
+	positionColors = ATQcutPosition.map(lutPosition)
+	heatmap0 = sns.clustermap(ATelement.T,cmap='RdPu',vmin=0,vmax=100,xticklabels=50,col_cluster=False,row_colors=elementColors,col_colors=positionColors)
 	plt.setp(heatmap0.ax_heatmap.tick_params(labelsize=8))
 	plt.setp(heatmap0.ax_heatmap.set_yticks([]))
 	plt.setp(heatmap0.ax_heatmap.yaxis.tick_right())
 	plt.setp(heatmap0.ax_heatmap.set_ylabel('{0} UCEs'.format(len(ATelement.T.index)),size=8))
 	plt.setp(heatmap0.ax_heatmap.set_xlabel('Position',size=10))
 	plt.setp(heatmap0.ax_heatmap.tick_params(labelsize=10))
-# 	plt.setp(heatmap0.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-# 	plt.setp(heatmap0.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-# 	plt.setp(heatmap0.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-# 	plt.setp(heatmap0.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap0.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap0.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap0.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap0.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap0.ax_heatmap.set_title('Mean AT Content per UCE',size=12))
-	ATOrdered = heatmap0.dendrogram_row.linkage.reordered_ind()
+	ATOrdered = heatmap0.dendrogram_row.reordered_ind # need to use this new index to get out the inter-uce relationships
 	
 	sns.despine()
 	pp.savefig()
@@ -212,10 +214,10 @@ def graphCluster(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine
 	plt.setp(heatmap1.ax_heatmap.set_ylabel('Sample',size=10))
 	plt.setp(heatmap1.ax_heatmap.set_xlabel('Position',size=10))
 	plt.setp(heatmap1.ax_heatmap.tick_params(labelsize=10))
-# 	plt.setp(heatmap1.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-# 	plt.setp(heatmap1.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-# 	plt.setp(heatmap1.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-# 	plt.setp(heatmap1.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap1.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap1.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap1.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap1.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap1.ax_heatmap.set_title('Methylation Frequency on Plus Strand',size=12))
 	
 	sns.despine()
@@ -229,10 +231,10 @@ def graphCluster(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine
 	plt.setp(heatmap2.ax_heatmap.set_ylabel('Sample',size=10))
 	plt.setp(heatmap2.ax_heatmap.set_xlabel('Position',size=10))
 	plt.setp(heatmap2.ax_heatmap.tick_params(labelsize=10))
-# 	plt.setp(heatmap2.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-# 	plt.setp(heatmap2.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-# 	plt.setp(heatmap2.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-# 	plt.setp(heatmap2.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap2.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap2.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap2.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap2.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap2.ax_heatmap.set_title('Methylation Frequency on Minus Strand',size=12))
 
 	sns.despine()
@@ -246,10 +248,10 @@ def graphCluster(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine
 	plt.setp(heatmap3.ax_heatmap.set_ylabel('{0} UCEs'.format(len(FreqPlusID.index)),size=10))
 	plt.setp(heatmap3.ax_heatmap.set_xlabel('Position',size=10))
 	plt.setp(heatmap3.ax_heatmap.tick_params(labelsize=10))
-# 	plt.setp(heatmap3.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-# 	plt.setp(heatmap3.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-# 	plt.setp(heatmap3.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-# 	plt.setp(heatmap3.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap3.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap3.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap3.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap3.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap3.ax_heatmap.set_title('Methylation Frequency on Plus Strand',size=12))
 
 	sns.despine()
@@ -263,10 +265,10 @@ def graphCluster(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine
 	plt.setp(heatmap4.ax_heatmap.set_ylabel('{0} UCEs'.format(len(FreqMinusID.index)),size=10))
 	plt.setp(heatmap4.ax_heatmap.set_xlabel('Position',size=10))
 	plt.setp(heatmap4.ax_heatmap.tick_params(labelsize=10))
-# 	plt.setp(heatmap4.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-# 	plt.setp(heatmap4.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-# 	plt.setp(heatmap4.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-# 	plt.setp(heatmap4.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap4.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap4.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap4.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap4.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap4.ax_heatmap.set_title('Methylation Frequency on Minus Strand',size=12))
 
 	sns.despine()
@@ -294,8 +296,6 @@ def graphCluster(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine
 	plt.setp(heatmap6.ax_heatmap.set_xlabel('Sample',size=10))
 	plt.setp(heatmap6.ax_heatmap.tick_params(labelsize=10))
 	plt.setp(heatmap6.ax_heatmap.set_title('Methylation Frequency on Minus Strand',size=12))
-	#heatmap6.dendrogram_col.linkage.reordered_ind
-	#heatmap6.dendrogram_row.linkage.reordered_ind
 
 	sns.despine()
 	pp.savefig()
