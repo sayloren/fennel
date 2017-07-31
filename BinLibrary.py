@@ -28,6 +28,7 @@ def graphComb(n):
 			equal.append(0)
 	
 	sns.set_style('ticks')
+	plt.figure(figsize=(8,8))
 	plt.plot(yrange,equal,linewidth=2,color='#3e1638',alpha=0.9)
 	plt.axvline(x=n,linewidth=.05,linestyle=':',color='#e7298a')
 	plt.axvspan(n-1,n+1,facecolor='#e7298a',label='{0} Bins'.format(n),alpha=0.1)

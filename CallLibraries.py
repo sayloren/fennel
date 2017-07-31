@@ -9,6 +9,7 @@ IO - Have input methylation data in separate callable folder, print output graph
 Add verbose as a setting to args
 Table for each group % =
 Random regions printed on graph
+Align Exonic by intron-exon shift
 
 """
 
