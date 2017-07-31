@@ -31,6 +31,7 @@ def evalN(rangeFeatures,fileName,binDir):
 
 def main(rangeFeatures,fileName,binDir):
 	directionFeatures = evalN(rangeFeatures,fileName,binDir)
+	BinLibrary.main(binDir)
 	return directionFeatures
 
 if __name__ == "__main__":

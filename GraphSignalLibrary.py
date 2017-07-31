@@ -106,9 +106,6 @@ def graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 	# Filename
 	pp = PdfPages('Signal_{0}.pdf'.format(fileName))
 
-	gs = gridspec.GridSpec(3,3,height_ratios=[1,1,1])
-	gs.update(hspace=.65)
-
 	# Create fitted, first and second derivative lines
 	f = splrep(fillX,ATmean,k=5,s=11)
 	smoothMean = splev(fillX,f)
@@ -118,7 +115,9 @@ def graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 	secondDer = splev(fillX,f,der=2)
 	secondDer[0:window] = 0 # small edge effect
 	secondDer[-window:] = 0 # small edge effect
-	
+
+	gs = gridspec.GridSpec(3,3,height_ratios=[1,1,1])
+	gs.update(hspace=.65)
 	# Plot smoothed mean AT
 	ax0 = plt.subplot(gs[0,:])
 	ax0.plot(fillX,smoothMean,linewidth=1, color='#3e1638',alpha=0.9)
@@ -156,7 +155,6 @@ def graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 	ax6.set_xlabel('Position',size=6)
 	ax6.set_yticks(ax6.get_yticks()[::2])
 	ax6.set_title('Second Derivative of Fitted Mean',size=8)
-
 	sns.despine()
 	plt.savefig(pp, format='pdf')
 	
@@ -166,13 +164,16 @@ def graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 	infUCEpeaks = behaviorInflectionPointsUCE(ATgroup,num,window)
 	infUCEpeaks.columns = ['id','inflectionpoints']
 	inflectionList = infUCEpeaks['inflectionpoints'].apply(pd.Series).stack().tolist()
-	IFbins = num/20
-	ax7.hist(inflectionList,IFbins, color='#ae3e9e',alpha=0.5)#,linewidth=0.3
+	IFbins = num/10
+	ax7.hist(inflectionList,IFbins, color='#ae3e9e',alpha=0.5)
+	ax7.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax7.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax7.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax7.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
 	ax7.set_yticks(ax7.get_yticks()[::2])
 	ax7.set_ylabel('Frequency',size=8)
 	ax7.legend(loc=0,fontsize=5,labelspacing=0.1)
 	ax7.set_xlabel('Inflection Point Location',size=8)
-
 	sns.despine()
 	plt.savefig(pp, format='pdf')
 
@@ -185,13 +186,11 @@ def graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 	ax8.set_xlabel('Position',size=6)
 	ax8.set_yticks(ax8.get_yticks()[::2])
 	ax8.set_title('Continuous Wavelet Transformation Convolved Over Range {0}-{1} for the First Derivative'.format(widths[0],endRange),size=8)
-	
 	sns.despine()
 	plt.savefig(pp, format='pdf')
 	
 	gs = gridspec.GridSpec(3,3,height_ratios=[2,1,1])
 	gs.update(hspace=.65)
-	
 	# Short Fourier Transform
 	ax9 = plt.subplot(gs[0,:],sharex=ax0)
 	sbins = 30
