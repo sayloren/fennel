@@ -145,7 +145,7 @@ def elemenetIndex(dataframe,yItem,num,uce,halfwindow,window,methylationflank):
 	return PlustransMeth,MinustransMeth
 
 # Make some graphs for fangs
-def graphCluster(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine,methylationflank):
+def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,rannames,fileName,num,uce,inuce,window,nucLine,methylationflank):
 
 	# Parameters that all graphs will use
 	fillX = range(0,(num-window))
@@ -153,7 +153,7 @@ def graphCluster(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine
 
 	# Get mean and standard deviation for AT
 	ATNames = [names.index(i) for i in names if 'A' in i or 'T' in i]
-	ATDataFrames = [slidingWinDF[i] for i in ATNames]
+	ATDataFrames = [dfWindow[i] for i in ATNames]
 	ATconcat = pd.concat(ATDataFrames,axis=1)
 	ATgroup = ATconcat.groupby(ATconcat.columns,axis=1).sum()
 	ATmean = ATgroup.mean()
@@ -303,8 +303,8 @@ def graphCluster(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine
 	
 	return ATOrdered
 
-def main(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine,methylationflank):
-	ATOrdered = graphCluster(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine,methylationflank)
+def main(dfWindow,ranWindow,pdMeth,rnMeth,names,rannames,fileName,num,uce,inuce,window,nucLine,methylationflank):
+	ATOrdered = graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,rannames,fileName,num,uce,inuce,window,nucLine,methylationflank)
 	return ATOrdered
 
 if __name__ == "__main__":

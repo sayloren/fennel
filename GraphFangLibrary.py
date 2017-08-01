@@ -20,7 +20,7 @@ from scipy.stats import mstats
 import seaborn as sns
 
 # Make some graphs for fangs
-def graphFang(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
+def graphFang(dfWindow,names,ranWindow,rannames,fileName,num,uce,inuce,window,nucLine):
 
 	# Parameters that all graphs will use
 	fillX = range(0,(num-window))
@@ -28,7 +28,7 @@ def graphFang(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 
 	# Get mean and standard deviation for AT
 	ATNames = [names.index(i) for i in names if 'A' in i or 'T' in i]
-	ATDataFrames = [slidingWinDF[i] for i in ATNames]
+	ATDataFrames = [dfWindow[i] for i in ATNames]
 	ATconcat = pd.concat(ATDataFrames,axis=1)
 	ATgroup = ATconcat.groupby(ATconcat.columns,axis=1).sum()
 	ATmean = ATgroup.mean()
@@ -100,7 +100,7 @@ def graphFang(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 	# Separate out those with only a single nucleotide search
 	SingleNames = [names.index(i) for i in names if len(i) == 1]
 	SingleNamesVal = [names[i] for i in SingleNames]
-	SingleDataFrames = [slidingWinDF[i] for i in SingleNames]
+	SingleDataFrames = [dfWindow[i] for i in SingleNames]
 	
 	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
 	gs.update(hspace=.5)
@@ -128,8 +128,8 @@ def graphFang(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 	ax13 = plt.subplot(gs[1,:])
 	for dfNuc,lNuc in zip(SingleDataFrames,SingleNamesVal):
 		elRegion = dfNuc.loc[:,(((num-uce)/2)-halfwindow):(((num-uce)/2)+uce-halfwindow)].std()
-# 		elFlank = dfNuc.iloc[:,np.r_[0:(((num-uce)/2)-halfwindow),(((num-uce)/2)+uce-halfwindow):(num-window)]].std()
 		ax13.hist(elRegion,35,linewidth=0.3,alpha=0.5,label='{0}-{1}'.format(lNuc,'element'))
+# 		elFlank = dfNuc.iloc[:,np.r_[0:(((num-uce)/2)-halfwindow),(((num-uce)/2)+uce-halfwindow):(num-window)]].std()
 # 		ax13.hist(elFlank,35,linewidth=0.3,alpha=0.5,label='{0}-{1}'.format(lNuc,'flank'))
 	ax13.set_yticks(ax13.get_yticks()[::2])
 	ax13.set_ylabel('Frequency',size=8)
@@ -151,7 +151,7 @@ def graphFang(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 		# Separate out those with only a double nucleotide search
 		DoubleNames = [names.index(i) for i in names if len(i) == 2]
 		DoubleNamesVal = [names[i] for i in DoubleNames]
-		DoubleDataFrames = [slidingWinDF[i] for i in DoubleNames]
+		DoubleDataFrames = [dfWindow[i] for i in DoubleNames]
 		
 		# Plot the CpN
 		# Might still want to return the actual CpN location for how many are methylated
@@ -197,7 +197,7 @@ def graphFang(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 		# Separate out those with only a multiple nucleotide search
 		TriNames = [names.index(i) for i in names if len(i) == 3]
 		TriNamesVal = [names[i] for i in TriNames]
-		TriDataFrames = [slidingWinDF[i] for i in TriNames]
+		TriDataFrames = [dfWindow[i] for i in TriNames]
 
 		# Plot the MultiNucleotide Sequences
 		# Might still want to return the actual CpN location for how many are methylated
@@ -243,7 +243,7 @@ def graphFang(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 		# Separate out those with only a multiple nucleotide search
 		MultiNames = [names.index(i) for i in names if len(i) > 3]
 		MultiNamesVal = [names[i] for i in MultiNames]
-		MultiDataFrames = [slidingWinDF[i] for i in MultiNames]
+		MultiDataFrames = [dfWindow[i] for i in MultiNames]
 
 		# Plot the MultiNucleotide Sequences
 		# Might still want to return the actual CpN location for how many are methylated
@@ -279,8 +279,8 @@ def graphFang(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 	pp.savefig()
 	pp.close()
 
-def main(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
-	graphFang(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine)
+def main(dfWindow,names,ranWindow,rannames,fileName,num,uce,inuce,window,nucLine):
+	graphFang(dfWindow,names,ranWindow,rannames,fileName,num,uce,inuce,window,nucLine)
 
 if __name__ == "__main__":
 	main()

@@ -21,7 +21,7 @@ def graphComb(n):
 	equal = []
 	for y in yrange:
 		if y >= 0:
-			t = y+1.0 # include 0
+			t = y+1.0 # include 0%
 			k = t**2.0 # probability space
 			equal.append(t/k)
 		else:
@@ -34,10 +34,10 @@ def graphComb(n):
 	plt.axvspan(n-1,n+1,facecolor='#e7298a',label='{0} Bins'.format(n),alpha=0.1)
 	plt.xlabel('Bin Size',size=12)
 	plt.ylabel('Probability',size=12)
-	plt.title('Probability is {0} for Getting Equal Boundary Values for {1} Bins'.format(round(equal[n],2),n),size=18)
-	# "{:.2E}".format(Decimal('40800000000.00000000000000'))
+	plt.title('Equal Boundary for {0} Bins'.format(n),size=18)
+	plt.text(n,equal[n+2],'Probability is {:0.1e}'.format(equal[n]),size=6,clip_on=False)
 	sns.despine()
-	plt.savefig('EqualBinProbability.pdf')
+	plt.savefig('Probability.pdf')
 
 def main(n):
 	graphComb(n)

@@ -24,4 +24,4 @@ def main(boolType,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,meth
 	return pdMeth,typeWindow,typeNames
 
 if __name__ == "__main__":
-	main()
+	main() 

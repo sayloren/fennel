@@ -21,7 +21,7 @@ import pandas as pd
 import seaborn as sns
 
 # Make interactive plots
-def bokehOut(slidingWinDF,fileName,num,uce,inuce,window,nucLine):
+def bokehOut(dfWindow,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	fillX = range(0,(num-window))
 	# Get mean and standard deviation for AT
 	ATNames = [names.index(i) for i in names if 'A' in i or 'T' in i]
@@ -47,8 +47,8 @@ def bokehOut(slidingWinDF,fileName,num,uce,inuce,window,nucLine):
 	widgets = row(select,toggle)
 	show(column(widgets,p,sd))
 
-def main(slidingWinDF,fileName,num,uce,inuce,window,nucLine):
-	bokehOut(slidingWinDF,fileName,num,uce,inuce,window,nucLine)
+def main(dfWindow,ranWindow,fileName,num,uce,inuce,window,nucLine):
+	bokehOut(dfWindow,ranWindow,fileName,num,uce,inuce,window,nucLine)
 
 if __name__ == "__main__":
 	main()

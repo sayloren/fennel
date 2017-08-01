@@ -83,7 +83,7 @@ def behaviorInflectionPointsUCE(ATgroup,num,window):
 	return peaksUCE
 
 # Make signal graphs
-def graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
+def graphSignal(dfWindow,names,ranWindow,rannames,fileName,num,uce,inuce,window,nucLine):
 	
 	# Parameters used thougout
 	fillX = range(0,(num-window))
@@ -91,7 +91,7 @@ def graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 
 	# Get mean for AT
 	ATNames = [names.index(i) for i in names if 'A' in i or 'T' in i]
-	ATDataFrames = [slidingWinDF[i] for i in ATNames]
+	ATDataFrames = [dfWindow[i] for i in ATNames]
 	ATconcat = pd.concat(ATDataFrames,axis=1)
 	ATgroup = ATconcat.groupby(ATconcat.columns,axis=1).sum()
 	ATmean = ATgroup.mean()
@@ -249,8 +249,8 @@ def graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
 	
 	return infUCEpeaks
 
-def main(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine):
-	infUCEpeaks = ATgroup = graphSignal(slidingWinDF,names,fileName,num,uce,inuce,window,nucLine)
+def main(dfWindow,names,ranWindow,rannames,fileName,num,uce,inuce,window,nucLine):
+	infUCEpeaks = ATgroup = graphSignal(dfWindow,names,ranWindow,rannames,fileName,num,uce,inuce,window,nucLine)
 	return infUCEpeaks
 
 if __name__ == "__main__":

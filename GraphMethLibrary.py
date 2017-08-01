@@ -67,7 +67,7 @@ def methIndex(dataframe,yItem,zItem,num):
 	return PlustransMeth, MinustransMeth
 
 # Make Methylation graphs
-def graphMeth(slidingWinDF,pdMeth,fileName,num,uce,inuce,window):
+def graphMeth(pdMeth,rnMeth,fileName,num,uce,inuce,window):
 	fillX = range(0,(num-window))
 	halfwindow = ((window/2)+1)
 	sns.set_style('ticks')
@@ -296,9 +296,9 @@ def graphMeth(slidingWinDF,pdMeth,fileName,num,uce,inuce,window):
 	pp.savefig()
 	pp.close()
 
-def main(slidingWinDF,pdMeth,fileName,num,uce,inuce,window):
+def main(pdMeth,rnMeth,fileName,num,uce,inuce,window):
 # 	warnings.filterwarnings("ignore",category=matplotlib.cbook.mplDeprecation)
-	graphMeth(slidingWinDF,pdMeth,fileName,num,uce,inuce,window)
+	graphMeth(pdMeth,rnMeth,fileName,num,uce,inuce,window)
 
 if __name__ == "__main__":
 	main()
