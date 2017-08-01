@@ -21,13 +21,13 @@ import pandas as pd
 import seaborn as sns
 
 # Make Methylation graphs
-def graphTable(slidingWinDF,pdTable,fileName,num,uce,inuce,window):
+def graphTable(dfWindow,ranWindow,pdTable,fileName,num,uce,inuce,window):
 	fillX = range(0,(num-window))
 	halfwindow = ((window/2)+1)
 	sns.set_style('ticks')
 	gs = gridspec.GridSpec(3,1,height_ratios=[3,1,1])
 	gs.update(hspace=.8)
-	info = str(fileName) + ', '+ str(len(slidingWinDF)) + ' - ' "UCES"
+	info = str(fileName) + ', '+ str(len(dfWindow)) + ' - ' "UCES"
 	plt.suptitle(info,fontsize=10)
 	pp = PdfPages('Table_{0}.pdf'.format(fileName))
 
@@ -69,8 +69,8 @@ def graphTable(slidingWinDF,pdTable,fileName,num,uce,inuce,window):
 	plt.savefig(pp, format='pdf')
 	pp.close()
 
-def main(slidingWinDF,pdTable,fileName,num,uce,inuce,window):
-	graphTable(slidingWinDF,pdTable,fileName,num,uce,inuce,window)
+def main(dfWindow,ranWindow,pdTable,fileName,num,uce,inuce,window):
+	graphTable(dfWindow,ranWindow,pdTable,fileName,num,uce,inuce,window)
 
 if __name__ == "__main__":
 	main()

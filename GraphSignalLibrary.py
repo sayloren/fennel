@@ -83,7 +83,7 @@ def behaviorInflectionPointsUCE(ATgroup,num,window):
 	return peaksUCE
 
 # Make signal graphs
-def graphSignal(dfWindow,names,ranWindow,rannames,fileName,num,uce,inuce,window,nucLine):
+def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	
 	# Parameters used thougout
 	fillX = range(0,(num-window))
@@ -249,8 +249,8 @@ def graphSignal(dfWindow,names,ranWindow,rannames,fileName,num,uce,inuce,window,
 	
 	return infUCEpeaks
 
-def main(dfWindow,names,ranWindow,rannames,fileName,num,uce,inuce,window,nucLine):
-	infUCEpeaks = ATgroup = graphSignal(dfWindow,names,ranWindow,rannames,fileName,num,uce,inuce,window,nucLine)
+def main(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
+	infUCEpeaks = ATgroup = graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine)
 	return infUCEpeaks
 
 if __name__ == "__main__":

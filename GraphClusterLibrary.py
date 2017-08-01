@@ -145,7 +145,7 @@ def elemenetIndex(dataframe,yItem,num,uce,halfwindow,window,methylationflank):
 	return PlustransMeth,MinustransMeth
 
 # Make some graphs for fangs
-def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,rannames,fileName,num,uce,inuce,window,nucLine,methylationflank):
+def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,window,nucLine,methylationflank):
 
 	# Parameters that all graphs will use
 	fillX = range(0,(num-window))
@@ -303,8 +303,8 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,rannames,fileName,num,uc
 	
 	return ATOrdered
 
-def main(dfWindow,ranWindow,pdMeth,rnMeth,names,rannames,fileName,num,uce,inuce,window,nucLine,methylationflank):
-	ATOrdered = graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,rannames,fileName,num,uce,inuce,window,nucLine,methylationflank)
+def main(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,window,nucLine,methylationflank):
+	ATOrdered = graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,window,nucLine,methylationflank)
 	return ATOrdered
 
 if __name__ == "__main__":

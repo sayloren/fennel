@@ -8,8 +8,9 @@ To Do:
 IO - Have input methylation data in separate callable folder, print output graphs to new folder
 Add verbose as a setting to args
 Table for each group % =
-Random regions printed on graph
+Random regions print on graphs
 Align Exonic by intron-exon shift
+Clean up scripts
 
 """
 
@@ -84,22 +85,22 @@ def groupSeparate(List,directionFeatures,typecolumn,fileName,binDir,mFiles,num,u
 	return bool,Meth,dfWindow,Names
 
 # the plotting options, if in the list of plot flags, run graph
-def plotGraphs(pdMeth,rnMeth,dfWindow,names,ranWindow,rannames,fileName,num,uce,inuce,window,graphs,nucLine,methFlank):
+def plotGraphs(pdMeth,rnMeth,dfWindow,names,ranWindow,fileName,num,uce,inuce,window,graphs,nucLine,methFlank):
 	if 'fangs' in graphs:
-		GraphFangLibrary.main(dfWindow,names,ranWindow,rannames,fileName,num,uce,inuce,window,nucLine)
+		GraphFangLibrary.main(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine)
 	if 'signal' in graphs:
-		inflectionPeaks = GraphSignalLibrary.main(dfWindow,names,ranWindow,rannames,fileName,num,uce,inuce,window,nucLine)
+		inflectionPeaks = GraphSignalLibrary.main(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine)
 	if 'methylation' in graphs:
 		GraphMethLibrary.main(pdMeth,rnMeth,fileName,num,uce,inuce,window)
 	if 'interactive' in graphs:
 		BokehLibrary.main(dfWindow,ranWindow,fileName,num,uce,inuce,window,nucLine)
 	if 'cluster' in graphs:
-		ATOrderded = GraphClusterLibrary.main(dfWindow,ranWindow,pdMeth,rnMeth,names,rannames,fileName,num,uce,inuce,window,nucLine,methFlank) # need to use this new index to get out the inter-uce relationships
+		ATOrderded = GraphClusterLibrary.main(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,window,nucLine,methFlank) # need to use this new index to get out the inter-uce relationships
 # 	return inflectionPeaks,ATOrderded
 
 def plotTable(inflectionPeaks,ATOrderded):
 	if 'table' in graphs:
-		GraphTableLibrary.main(dfWindow,fileName,num,uce,inuce,window)
+		GraphTableLibrary.main(dfWindow,ranWindow,fileName,num,uce,inuce,window)
 
 def main():
 	# Collect arguments
@@ -163,31 +164,31 @@ def main():
 				else:
 					pdMeth = None
 					rnMeth = None
-				plotGraphs(pdMeth,rnMeth,allWindow,allNames,ranWindow,ranNames,'all_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}'.format(uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
+				plotGraphs(pdMeth,rnMeth,allWindow,allNames,ranWindow,'all_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}'.format(uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
 				if revCom:
 					revMeth,revWindow,revNames = RevCompLibrary.main(directionFeatures,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 					ranrevMeth,ranrevWindow,ranrevNames = RevCompLibrary.main(randirFeatures,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-					plotGraphs(revMeth,ranrevMeth,revWindow,revNames,ranrevWindow,ranrevNames,'revComp_all_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}'.format(uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
+					plotGraphs(revMeth,ranrevMeth,revWindow,revNames,ranrevWindow,'revComp_all_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}'.format(uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
 
 # 			# By Type
 			for type in typeList:
 				typeBool,typeMeth,typeWindow,typeNames = groupSeparate(type,directionFeatures,'type',fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 				rantypeBool,rantypeMeth,rantypeWindow,rantypeNames = groupSeparate(type,randirFeatures,'type',randomFile,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-				plotGraphs(typeMeth,rantypeMeth,typeWindow,typeNames,rantypeWindow,rantypeNames,'{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}'.format(type,uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
+				plotGraphs(typeMeth,rantypeMeth,typeWindow,typeNames,rantypeWindow,'{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}'.format(type,uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
 				if revCom:
 					typercMeth,typercWindow,typercNames = RevCompLibrary.main(typeBool,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 					rantypercMeth,rantypercWindow,rantypercNames = RevCompLibrary.main(rantypeBool,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-					plotGraphs(typercMeth,rantypercMeth,typercWindow,typercNames,rantypercWindow,rantypercNames,'revComp_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}'.format(type,uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
+					plotGraphs(typercMeth,rantypercMeth,typercWindow,typercNames,rantypercWindow,'revComp_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}'.format(type,uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
 
 			# By Direction
 			for dir in dirList:
 				dirBool,dirMeth,dirWindow,dirNames = groupSeparate(dir,directionFeatures,'compareBoundaries',fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 				randirBool,randirMeth,randirWindow,randirNames = groupSeparate(dir,randirFeatures,'compareBoundaries',randomFile,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-				plotGraphs(dirMeth,randirMeth,dirWindow,dirNames,randirWindow,randirNames,'all_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}'.format(dir,uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
+				plotGraphs(dirMeth,randirMeth,dirWindow,dirNames,randirWindow,'all_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}'.format(dir,uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
 				for type in typeList:
 					typeBool,typeMeth,typeWindow,typeNames = groupSeparate(type,directionFeatures,'type',fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 					rantypeBool,rantypeMeth,rantypeWindow,rantypeNames = groupSeparate(type,randirFeatures,'type',randomFile,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-					plotGraphs(typeMeth,rantypeMeth,typeWindow,typeNames,rantypeWindow,rantypeNames,'{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}_{9}'.format(type,dir,uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
+					plotGraphs(typeMeth,rantypeMeth,typeWindow,typeNames,rantypeWindow,'{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}_{9}'.format(type,dir,uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
 
 if __name__ == "__main__":
 	main()
