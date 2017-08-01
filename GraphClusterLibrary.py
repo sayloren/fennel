@@ -20,6 +20,7 @@ import seaborn as sns
 import matplotlib.cbook
 from scipy.spatial import distance
 from scipy.cluster import hierarchy
+from GraphFangLibrary import collectAT
 
 def savePanda(pdData, strFilename):
 	pdData.to_csv(strFilename, sep='\t', header=False, index=False)
@@ -144,22 +145,30 @@ def elemenetIndex(dataframe,yItem,num,uce,halfwindow,window,methylationflank):
 	
 	return PlustransMeth,MinustransMeth
 
+# Make dictionary for row and column colors based on standard deviation
+def dictColors(ATelement,huslPalette):
+	ATQcutPosition = pd.qcut(ATelement.std(axis=1),q=8,labels=False)
+	ATQcutElement = pd.qcut(ATelement.std(),q=8,labels=False)
+	lutElement = dict(zip(ATQcutElement.unique(), huslPalette))
+	elementColors = ATQcutElement.map(lutElement)
+	lutPosition = dict(zip(ATQcutPosition.unique(), huslPalette))
+	positionColors = ATQcutPosition.map(lutPosition)
+	print 'Made dictionary for standard deviation'
+	return elementColors,positionColors
+
 # Make some graphs for fangs
 def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,window,nucLine,methylationflank):
 
 	# Parameters that all graphs will use
 	fillX = range(0,(num-window))
 	halfwindow = ((window/2)+1)
-
-	# Get mean and standard deviation for AT
-	ATNames = [names.index(i) for i in names if 'A' in i or 'T' in i]
-	ATDataFrames = [dfWindow[i] for i in ATNames]
-	ATconcat = pd.concat(ATDataFrames,axis=1)
-	ATgroup = ATconcat.groupby(ATconcat.columns,axis=1).sum()
-	ATmean = ATgroup.mean()
+	
+	# Get group, mean and standard deviation for AT
+	ATgroup,ATmean,ATstd = collectAT(dfWindow,names)
+	ranATgroup,ranATmean,ranATstd = collectAT(ranWindow,names)
 	ATelement = ATgroup.T[(((num-uce)/2)-halfwindow-methylationflank):(((num-uce)/2)+uce-halfwindow+methylationflank)]
-	ATQcutPosition = pd.qcut(ATelement.std(axis=1),q=8,labels=False)
-	ATQcutElement = pd.qcut(ATelement.std(),q=8,labels=False)
+	ranATelement = ranATgroup.T[(((num-uce)/2)-halfwindow-methylationflank):(((num-uce)/2)+uce-halfwindow+methylationflank)]
+	print 'Extracted just element and methylation flank, size {0}'.format(len(ATelement))
 
 	# Title info
 	info = str(fileName) + ', '+ str(len(ATgroup.index)) + ' - ' "UCES"
@@ -168,13 +177,11 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	sns.set_style('ticks')
 	plt.suptitle(info,fontsize=10)
 	pp = PdfPages('Cluster_{0}.pdf'.format(fileName))
+	sns.set_palette("husl",n_colors=8)#(len(nucLine)*2)
 
 	# Use the row_colors to color those with similar SD?
 	huslPalette = sns.husl_palette(8, s=.45)
-	lutElement = dict(zip(ATQcutElement.unique(), huslPalette))
-	elementColors = ATQcutElement.map(lutElement)
-	lutPosition = dict(zip(ATQcutPosition.unique(), huslPalette))
-	positionColors = ATQcutPosition.map(lutPosition)
+	elementColors,positionColors = dictColors(ATelement,huslPalette)
 	heatmap0 = sns.clustermap(ATelement.T,cmap='RdPu',vmin=0,vmax=100,xticklabels=50,col_cluster=False,row_colors=elementColors,col_colors=positionColors)
 	plt.setp(heatmap0.ax_heatmap.tick_params(labelsize=8))
 	plt.setp(heatmap0.ax_heatmap.set_yticks([]))
@@ -192,11 +199,35 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	sns.despine()
 	pp.savefig()
 
+	# Use the row_colors to color those with similar SD?
+	ranelementColors,ranpositionColors = dictColors(ranATelement,huslPalette)
+	heatmap1 = sns.clustermap(ranATelement.T,cmap='RdPu',vmin=0,vmax=100,xticklabels=50,col_cluster=False,row_colors=ranelementColors,col_colors=ranpositionColors)
+	plt.setp(heatmap1.ax_heatmap.tick_params(labelsize=8))
+	plt.setp(heatmap1.ax_heatmap.set_yticks([]))
+	plt.setp(heatmap1.ax_heatmap.yaxis.tick_right())
+	plt.setp(heatmap1.ax_heatmap.set_ylabel('{0} UCEs'.format(len(ranATelement.T.index)),size=8))
+	plt.setp(heatmap1.ax_heatmap.set_xlabel('Position',size=10))
+	plt.setp(heatmap1.ax_heatmap.tick_params(labelsize=10))
+	plt.setp(heatmap1.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap1.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap1.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap1.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap1.ax_heatmap.set_title('Mean AT Content per Random Region',size=12))
+	
+	sns.despine()
+	pp.savefig()
+	print 'Plotted cluster plot for mean AT content for all elements and random regions'
+
+	
 	# Various combinations to plot on heatmaps, just for element plus methylation flanks
 	# Frequency x Tissue x ID X Location
 	FreqPlusID,FreqMinusID = elemenetIndex(pdMeth,'id',num,uce,halfwindow,window,methylationflank)
 	FreqPlusTis,FreqMinusTis = elemenetIndex(pdMeth,'tissue',num,uce,halfwindow,window,methylationflank)
 	XPlus,XMinus = elementID(pdMeth,'id','tissue',num,uce,halfwindow,window,methylationflank)
+
+	ranFreqPlusID,ranFreqMinusID = elemenetIndex(rnMeth,'id',num,uce,halfwindow,window,methylationflank)
+	ranFreqPlusTis,ranFreqMinusTis = elemenetIndex(rnMeth,'tissue',num,uce,halfwindow,window,methylationflank)
+	ranXPlus,ranXMinus = elementID(rnMeth,'id','tissue',num,uce,halfwindow,window,methylationflank)
 
 # 	# Get the aggregated list of ids/tissues corresponding to location and tissues/ids
 # 	PlusMethID,MinusMethID = listOverlap(pdMeth,'id','tissue',num,uce,halfwindow,window,methylationflank)
@@ -206,25 +237,11 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	FreqPlusID = FreqPlusID[(FreqPlusID.T != 0).any()]
 	FreqMinusID = FreqMinusID[(FreqMinusID.T != 0).any()]
 
+	ranFreqPlusID = ranFreqPlusID[(ranFreqPlusID.T != 0).any()]
+	ranFreqMinusID = ranFreqMinusID[(ranFreqMinusID.T != 0).any()]
+
 	# Make heatmap for # methylation on pos strand (Frequency)
-	heatmap1 = sns.clustermap(FreqPlusTis,cmap='RdPu',xticklabels=50,col_cluster=False)
-	ylabels1 = heatmap1.ax_heatmap.get_yticklabels()
-	plt.setp(heatmap1.ax_heatmap.set_yticklabels(ylabels1,rotation=0))
-	plt.setp(heatmap1.ax_heatmap.yaxis.tick_right())
-	plt.setp(heatmap1.ax_heatmap.set_ylabel('Sample',size=10))
-	plt.setp(heatmap1.ax_heatmap.set_xlabel('Position',size=10))
-	plt.setp(heatmap1.ax_heatmap.tick_params(labelsize=10))
-	plt.setp(heatmap1.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-	plt.setp(heatmap1.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap1.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap1.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-	plt.setp(heatmap1.ax_heatmap.set_title('Methylation Frequency on Plus Strand',size=12))
-	
-	sns.despine()
-	pp.savefig()
-	
-	# Make heatmap for # methylation on pos strand (Frequency)
-	heatmap2 = sns.clustermap(FreqMinusTis,cmap='RdPu',xticklabels=50,col_cluster=False)
+	heatmap2 = sns.clustermap(FreqPlusTis,cmap='RdPu',xticklabels=50,col_cluster=False)
 	ylabels2 = heatmap2.ax_heatmap.get_yticklabels()
 	plt.setp(heatmap2.ax_heatmap.set_yticklabels(ylabels2,rotation=0))
 	plt.setp(heatmap2.ax_heatmap.yaxis.tick_right())
@@ -235,71 +252,192 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	plt.setp(heatmap2.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
 	plt.setp(heatmap2.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
 	plt.setp(heatmap2.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-	plt.setp(heatmap2.ax_heatmap.set_title('Methylation Frequency on Minus Strand',size=12))
-
+	plt.setp(heatmap2.ax_heatmap.set_title('Methylation Frequency on Plus Strand for Elements',size=12))
+	
 	sns.despine()
 	pp.savefig()
 	
 	# Make heatmap for # methylation on pos strand (Frequency)
-	heatmap3 = sns.clustermap(FreqPlusID,cmap='RdPu',xticklabels=50,col_cluster=False)
+	heatmap3 = sns.clustermap(FreqMinusTis,cmap='RdPu',xticklabels=50,col_cluster=False)
 	ylabels3 = heatmap3.ax_heatmap.get_yticklabels()
 	plt.setp(heatmap3.ax_heatmap.set_yticklabels(ylabels3,rotation=0))
 	plt.setp(heatmap3.ax_heatmap.yaxis.tick_right())
-	plt.setp(heatmap3.ax_heatmap.set_ylabel('{0} UCEs'.format(len(FreqPlusID.index)),size=10))
+	plt.setp(heatmap3.ax_heatmap.set_ylabel('Sample',size=10))
 	plt.setp(heatmap3.ax_heatmap.set_xlabel('Position',size=10))
 	plt.setp(heatmap3.ax_heatmap.tick_params(labelsize=10))
 	plt.setp(heatmap3.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap3.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
 	plt.setp(heatmap3.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
 	plt.setp(heatmap3.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-	plt.setp(heatmap3.ax_heatmap.set_title('Methylation Frequency on Plus Strand',size=12))
+	plt.setp(heatmap3.ax_heatmap.set_title('Methylation Frequency on Minus Strand for Elements',size=12))
 
 	sns.despine()
 	pp.savefig()
-	
-	# Make heatmap for # methylation on neg strand (Frequency)
-	heatmap4 = sns.clustermap(FreqMinusID,cmap='RdPu',xticklabels=50,col_cluster=False)
+	print 'Plotted methylation frequency for tissue types x position, for element'
+
+	# Make heatmap for # methylation on pos strand (Frequency)
+	heatmap4 = sns.clustermap(ranFreqPlusTis,cmap='RdPu',xticklabels=50,col_cluster=False)
 	ylabels4 = heatmap4.ax_heatmap.get_yticklabels()
 	plt.setp(heatmap4.ax_heatmap.set_yticklabels(ylabels4,rotation=0))
 	plt.setp(heatmap4.ax_heatmap.yaxis.tick_right())
-	plt.setp(heatmap4.ax_heatmap.set_ylabel('{0} UCEs'.format(len(FreqMinusID.index)),size=10))
+	plt.setp(heatmap4.ax_heatmap.set_ylabel('Sample',size=10))
 	plt.setp(heatmap4.ax_heatmap.set_xlabel('Position',size=10))
 	plt.setp(heatmap4.ax_heatmap.tick_params(labelsize=10))
 	plt.setp(heatmap4.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap4.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
 	plt.setp(heatmap4.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
 	plt.setp(heatmap4.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-	plt.setp(heatmap4.ax_heatmap.set_title('Methylation Frequency on Minus Strand',size=12))
-
+	plt.setp(heatmap4.ax_heatmap.set_title('Methylation Frequency on Plus Strand for Random Regions',size=12))
+	
 	sns.despine()
 	pp.savefig()
 	
 	# Make heatmap for # methylation on pos strand (Frequency)
-	heatmap5 = sns.clustermap(XPlus,cmap='RdPu')
+	heatmap5 = sns.clustermap(ranFreqMinusTis,cmap='RdPu',xticklabels=50,col_cluster=False)
 	ylabels5 = heatmap5.ax_heatmap.get_yticklabels()
 	plt.setp(heatmap5.ax_heatmap.set_yticklabels(ylabels5,rotation=0))
 	plt.setp(heatmap5.ax_heatmap.yaxis.tick_right())
-	plt.setp(heatmap5.ax_heatmap.set_ylabel('{0} UCEs'.format(len(FreqMinusID.index)),size=10))
-	plt.setp(heatmap5.ax_heatmap.set_xlabel('Sample',size=10))
+	plt.setp(heatmap5.ax_heatmap.set_ylabel('Sample',size=10))
+	plt.setp(heatmap5.ax_heatmap.set_xlabel('Position',size=10))
 	plt.setp(heatmap5.ax_heatmap.tick_params(labelsize=10))
-	plt.setp(heatmap5.ax_heatmap.set_title('Methylation Frequency on Plus Strand',size=12))
+	plt.setp(heatmap5.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap5.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap5.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap5.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap5.ax_heatmap.set_title('Methylation Frequency on Minus Strand for Random Regions',size=12))
+
+	sns.despine()
+	pp.savefig()
+	print 'Plotted methylation frequency for tissue types x position, for  random regions'
+
+	# Make heatmap for # methylation on pos strand (Frequency)
+	heatmap6 = sns.clustermap(FreqPlusID,cmap='RdPu',xticklabels=50,col_cluster=False)
+	ylabels6 = heatmap6.ax_heatmap.get_yticklabels()
+	plt.setp(heatmap6.ax_heatmap.set_yticklabels(ylabels6,rotation=0))
+	plt.setp(heatmap6.ax_heatmap.yaxis.tick_right())
+	plt.setp(heatmap6.ax_heatmap.set_ylabel('{0} UCEs'.format(len(FreqPlusID.index)),size=10))
+	plt.setp(heatmap6.ax_heatmap.set_xlabel('Position',size=10))
+	plt.setp(heatmap6.ax_heatmap.tick_params(labelsize=10))
+	plt.setp(heatmap6.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap6.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap6.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap6.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap6.ax_heatmap.set_title('Methylation Frequency on Plus Strand for Elements',size=12))
 
 	sns.despine()
 	pp.savefig()
 	
 	# Make heatmap for # methylation on neg strand (Frequency)
-	heatmap6 = sns.clustermap(XMinus,cmap='RdPu')
-	ylabels6 = heatmap6.ax_heatmap.get_yticklabels()
-	plt.setp(heatmap6.ax_heatmap.set_yticklabels(ylabels6,rotation=0))
-	plt.setp(heatmap6.ax_heatmap.yaxis.tick_right())
-	plt.setp(heatmap6.ax_heatmap.set_ylabel('{0} UCEs'.format(len(FreqMinusID.index)),size=10))
-	plt.setp(heatmap6.ax_heatmap.set_xlabel('Sample',size=10))
-	plt.setp(heatmap6.ax_heatmap.tick_params(labelsize=10))
-	plt.setp(heatmap6.ax_heatmap.set_title('Methylation Frequency on Minus Strand',size=12))
+	heatmap7 = sns.clustermap(FreqMinusID,cmap='RdPu',xticklabels=50,col_cluster=False)
+	ylabels7 = heatmap7.ax_heatmap.get_yticklabels()
+	plt.setp(heatmap7.ax_heatmap.set_yticklabels(ylabels7,rotation=0))
+	plt.setp(heatmap7.ax_heatmap.yaxis.tick_right())
+	plt.setp(heatmap7.ax_heatmap.set_ylabel('{0} UCEs'.format(len(FreqMinusID.index)),size=10))
+	plt.setp(heatmap7.ax_heatmap.set_xlabel('Position',size=10))
+	plt.setp(heatmap7.ax_heatmap.tick_params(labelsize=10))
+	plt.setp(heatmap7.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap7.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap7.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap7.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap7.ax_heatmap.set_title('Methylation Frequency on Minus Strand for Elements',size=12))
 
 	sns.despine()
 	pp.savefig()
+	print 'Plotted methylation frequency for element x position , element'
+	
+	# Make heatmap for # methylation on pos strand (Frequency)
+	heatmap8 = sns.clustermap(ranFreqPlusID,cmap='RdPu',xticklabels=50,col_cluster=False)
+	ylabels8 = heatmap8.ax_heatmap.get_yticklabels()
+# 	plt.setp(heatmap8.ax_heatmap.set_yticklabels(ylabels8,rotation=0))
+	plt.setp(heatmap8.ax_heatmap.set_yticks([]))
+	plt.setp(heatmap8.ax_heatmap.yaxis.tick_right())
+	plt.setp(heatmap8.ax_heatmap.set_ylabel('{0} UCEs'.format(len(ranFreqPlusID.index)),size=10))
+	plt.setp(heatmap8.ax_heatmap.set_xlabel('Position',size=10))
+	plt.setp(heatmap8.ax_heatmap.tick_params(labelsize=10))
+	plt.setp(heatmap8.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap8.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap8.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap8.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap8.ax_heatmap.set_title('Methylation Frequency on Plus Strand for Random Regions',size=12))
+
+	sns.despine()
+	pp.savefig()
+	
+	# Make heatmap for # methylation on neg strand (Frequency)
+	heatmap9 = sns.clustermap(ranFreqMinusID,cmap='RdPu',xticklabels=50,col_cluster=False)
+	ylabels9 = heatmap9.ax_heatmap.get_yticklabels()
+# 	plt.setp(heatmap9.ax_heatmap.set_yticklabels(ylabels9,rotation=0))
+	plt.setp(heatmap9.ax_heatmap.set_yticks([]))
+	plt.setp(heatmap9.ax_heatmap.yaxis.tick_right())
+	plt.setp(heatmap9.ax_heatmap.set_ylabel('{0} UCEs'.format(len(ranFreqMinusID.index)),size=10))
+	plt.setp(heatmap9.ax_heatmap.set_xlabel('Position',size=10))
+	plt.setp(heatmap9.ax_heatmap.tick_params(labelsize=10))
+	plt.setp(heatmap9.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap9.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap9.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap9.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap9.ax_heatmap.set_title('Methylation Frequency on Minus StrandStrand for Random Regions',size=12))
+
+	sns.despine()
+	pp.savefig()
+	print 'Plotted methylation frequency for element x position , random regions'
+
+	# Make heatmap for # methylation on pos strand (Frequency)
+	heatmap10 = sns.clustermap(XPlus,cmap='RdPu')
+	ylabels10 = heatmap10.ax_heatmap.get_yticklabels()
+	plt.setp(heatmap10.ax_heatmap.set_yticklabels(ylabels10,rotation=0))
+	plt.setp(heatmap10.ax_heatmap.yaxis.tick_right())
+	plt.setp(heatmap10.ax_heatmap.set_ylabel('{0} UCEs'.format(len(FreqPlusID.index)),size=10))
+	plt.setp(heatmap10.ax_heatmap.set_xlabel('Sample',size=10))
+	plt.setp(heatmap10.ax_heatmap.tick_params(labelsize=10))
+	plt.setp(heatmap10.ax_heatmap.set_title('Methylation Frequency on Plus Strand for Elements',size=12))
+
+	sns.despine()
+	pp.savefig()
+	
+	# Make heatmap for # methylation on neg strand (Frequency)
+	heatmap11 = sns.clustermap(XMinus,cmap='RdPu')
+	ylabels11 = heatmap11.ax_heatmap.get_yticklabels()
+	plt.setp(heatmap11.ax_heatmap.set_yticklabels(ylabels11,rotation=0))
+	plt.setp(heatmap11.ax_heatmap.yaxis.tick_right())
+	plt.setp(heatmap11.ax_heatmap.set_ylabel('{0} UCEs'.format(len(FreqMinusID.index)),size=10))
+	plt.setp(heatmap11.ax_heatmap.set_xlabel('Sample',size=10))
+	plt.setp(heatmap11.ax_heatmap.tick_params(labelsize=10))
+	plt.setp(heatmap11.ax_heatmap.set_title('Methylation Frequency on Minus Strand for Elements',size=12))
+	
+	sns.despine()
+	pp.savefig()
+	print 'Plotted methylation frequency for element x tissue type , element'
+
+	# Make heatmap for # methylation on pos strand (Frequency)
+	heatmap12 = sns.clustermap(ranXPlus,cmap='RdPu')
+	ylabels12 = heatmap12.ax_heatmap.get_yticklabels()
+# 	plt.setp(heatmap12.ax_heatmap.set_yticklabels(ylabels12,rotation=0))
+	plt.setp(heatmap12.ax_heatmap.set_yticks([]))
+	plt.setp(heatmap12.ax_heatmap.yaxis.tick_right())
+	plt.setp(heatmap12.ax_heatmap.set_ylabel('{0} UCEs'.format(len(ranFreqPlusID.index)),size=10))
+	plt.setp(heatmap12.ax_heatmap.set_xlabel('Sample',size=10))
+	plt.setp(heatmap12.ax_heatmap.tick_params(labelsize=10))
+	plt.setp(heatmap12.ax_heatmap.set_title('Methylation Frequency on Plus Strand for Random Regions',size=12))
+
+	sns.despine()
+	pp.savefig()
+	
+	# Make heatmap for # methylation on neg strand (Frequency)
+	heatmap13 = sns.clustermap(ranXMinus,cmap='RdPu')
+	ylabels13 = heatmap13.ax_heatmap.get_yticklabels()
+# 	plt.setp(heatmap13.ax_heatmap.set_yticklabels(ylabels13,rotation=0))
+	plt.setp(heatmap13.ax_heatmap.set_yticks([]))
+	plt.setp(heatmap13.ax_heatmap.yaxis.tick_right())
+	plt.setp(heatmap13.ax_heatmap.set_ylabel('{0} UCEs'.format(len(ranFreqMinusID.index)),size=10))
+	plt.setp(heatmap13.ax_heatmap.set_xlabel('Sample',size=10))
+	plt.setp(heatmap13.ax_heatmap.tick_params(labelsize=10))
+	plt.setp(heatmap13.ax_heatmap.set_title('Methylation Frequency on Minus Strand for Random Regions',size=12))
+	
+	sns.despine()
+	pp.savefig()
 	pp.close()
+	print 'Plotted methylation frequency for element x position , random regions'
 	
 	return ATOrdered
 

@@ -79,7 +79,7 @@ def behaviorInflectionPointsUCE(ATgroup,num,window):
 		collectUCE.append(peaksOut)
 		inflectionPts.append(collectUCE)
 	peaksUCE = pd.DataFrame(inflectionPts)
-	print 'Collected inflection points for {0} UCEs'.format(len(ATgroup.index))
+	print 'Collected inflection points for {0} elements'.format(len(ATgroup.index))
 	return peaksUCE
 
 # Get smoothed mean, first and second derivatives
@@ -92,12 +92,14 @@ def getLines(fillX,ATmean,window,halfwindow):
 	secondDer = splev(fillX,f,der=2)
 	secondDer[0:window] = 0 # small edge effect
 	secondDer[-window:] = 0 # small edge effect
+	print 'Got mean and standard deviation for {0} elements'.format(len(smoothMean.index))
 	return smoothMean,firstDer,secondDer
 
 def inflectionPoints(ATgroup,num,window):
 	infUCEpeaks = behaviorInflectionPointsUCE(ATgroup,num,window)
 	infUCEpeaks.columns = ['id','inflectionpoints']
 	inflectionList = infUCEpeaks['inflectionpoints'].apply(pd.Series).stack().tolist()
+	print 'Collected all inflections points to list for {0} elements'.format(len(ATgroup.index))
 	return inflectionList, infUCEpeaks
 
 # Make signal graphs
@@ -156,6 +158,7 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	# Second derivative
 	ax2 = plt.subplot(gs[2,:],sharex=ax0)
 	peakMean = signal.find_peaks_cwt(secondDer,np.arange(1,45)).astype(int)
+	print 'Found peaks for elements second derivative'
 	ax2.plot(fillX,secondDer,linewidth=1,alpha=0.7,label='Element')
 	ax2.plot(fillX,ransecondDer,linewidth=1,alpha=0.7,label='Random')
 	ax2.scatter(peakMean,secondDer[peakMean],marker='.')#,color='#ae3e9e'
@@ -170,13 +173,16 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	ax2.set_title('Second Derivative of Fitted Mean',size=8)
 	sns.despine()
 	plt.savefig(pp, format='pdf')
+	print 'Plotted mean, first and second derivatives for elements and random regions'
 	
 	# Frequency of inflection points
-	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
+	gs = gridspec.GridSpec(1,1,height_ratios=[1])
 	ax3 = plt.subplot(gs[0])
 	inflectionList,infUCEpeaks = inflectionPoints(ATgroup,num,window)
+	raninflectionList,raninfUCEpeaks = inflectionPoints(ranATgroup,num,window)
 	IFbins = num/10
-	ax3.hist(inflectionList,IFbins,alpha=0.5)#, color='#ae3e9e'
+	ax3.hist(inflectionList,IFbins,alpha=0.3,label='Element')#, color='#ae3e9e'
+	ax3.hist(raninflectionList,IFbins,alpha=0.3,label='Random')#, color='#b1a1af'
 	ax3.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
 	ax3.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
 	ax3.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
@@ -184,24 +190,14 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	ax3.set_yticks(ax3.get_yticks()[::2])
 	ax3.set_ylabel('Frequency',size=8)
 	ax3.legend(loc=0,fontsize=5,labelspacing=0.1)
-	ax3.set_xlabel('Inflection Point Location for Elements',size=8)
-	
-	ax4 = plt.subplot(gs[1])
-	raninflectionList,raninfUCEpeaks = inflectionPoints(ranATgroup,num,window)
-	ax4.hist(raninflectionList,IFbins,alpha=0.5)#, color='#b1a1af'
-	ax4.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-	ax4.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-	ax4.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-	ax4.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-	ax4.set_yticks(ax4.get_yticks()[::2])
-	ax4.set_ylabel('Frequency',size=8)
-	ax4.legend(loc=0,fontsize=5,labelspacing=0.1)
-	ax4.set_xlabel('Inflection Point Location for Random Regions',size=8)
+	ax3.set_xlabel('Inflection Point Location',size=8)
 	
 	sns.despine()
 	plt.savefig(pp, format='pdf')
+	print 'Plotted inflection point frequency for elements and random regions'
 
 	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
+	gs.update(hspace=.65)
 	ax5 = plt.subplot(gs[0],sharex=ax0)
 	endRange = 25
 	widths = np.arange(1, endRange)
@@ -220,6 +216,7 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	
 	sns.despine()
 	plt.savefig(pp, format='pdf')
+	print 'Plotted continuous wavelet transformation for elements and random regions'
 	
 	gs = gridspec.GridSpec(3,3,height_ratios=[2,1,1])
 	gs.update(hspace=.65)
@@ -259,6 +256,7 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	frq3sd, Y3sd = performFourier(ysdUp)
 	ysdDown = downFlank(firstDer,num,uce,halfwindow,window)
 	frq4sd, Y4sd = performFourier(ysdDown)
+	print 'Performed fourier transform for elements'
 	
 	#FFT for sections of the smoothed second derivative
 	ax9 = plt.subplot(gs[2,0])
@@ -278,6 +276,7 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	
 	sns.despine()
 	plt.savefig(pp, format='pdf')
+	print 'Plotted short fourier transform and fast fourier transform for elements'
 	
 	gs = gridspec.GridSpec(3,3,height_ratios=[2,1,1])
 	gs.update(hspace=.65)
@@ -316,7 +315,8 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	ranfrq3sd,ranY3sd = performFourier(ranysdUp)
 	ranysdDown = downFlank(ranfirstDer,num,uce,halfwindow,window)
 	ranfrq4sd,ranY4sd = performFourier(ranysdDown)
-	
+	print 'Performed fourier transform for random regions'
+
 	#FFT for sections of the smoothed second derivative
 	ax14 = plt.subplot(gs[2,0])
 	ax14.plot(ranfrq3sd,abs(ranY3sd),linewidth=1)#, color='#863eae'
@@ -336,6 +336,7 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	sns.despine()
 	pp.savefig()
 	pp.close()
+	print 'Plotted short fourier transform and fast fourier transform for random regions'
 	
 	return infUCEpeaks
 

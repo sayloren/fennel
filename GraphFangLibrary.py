@@ -111,7 +111,8 @@ def graphFang(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 
 	sns.despine()
 	plt.savefig(pp, format='pdf')
-	
+	print 'Plotted the mean AT content and standard deviation'
+
 	# Separate out those with only a single nucleotide search
 	SingleNames = [names.index(i) for i in names if len(i) == 1]
 	SingleNamesVal = [names[i] for i in SingleNames]
@@ -188,6 +189,8 @@ def graphFang(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	ax6.legend(loc=0,fontsize=5,labelspacing=0.1)
 	ax6.set_xlabel('Standard Deviation Value',size=8)
 	ax6.set_title('Standard Deviation for Nucleotides within Random Region',size=8)
+	
+	print 'Plotted nucleotide means'
 
 	# For any search stings that are dinucleotides
 	if any(len(i) == 2 for i in names):
@@ -267,7 +270,8 @@ def graphFang(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 		ax10.legend(loc=0,fontsize=5,labelspacing=0.1)
 		ax10.set_xlabel('Standard Deviation Value',size=8)
 		ax10.set_title('Standard Deviation for Nucleotide String within Random Region',size=8)
-
+		
+		print 'Plotted dinucleotide means'
 
 	# For any search strings 3 bp long
 	if any(len(i) == 3 for i in names):
@@ -352,6 +356,8 @@ def graphFang(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 		ax14.set_xlabel('Standard Deviation Value',size=8)
 		ax14.set_title('Standard Deviation for Trinucleotides within Element',size=8)
 
+		print 'Plotted trinucleotide means'
+		
 	# For any search strings longer than 3
 	if any(len(i) > 3 for i in names):
 	
@@ -435,6 +441,8 @@ def graphFang(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 		ax18.set_xlabel('Standard Deviation Value',size=8)
 		ax18.set_title('Standard Deviation for Polynucleotides within Element',size=8)
 
+		print 'Plotted multinucleotide means'
+		
 	sns.despine()
 	pp.savefig()
 	pp.close()

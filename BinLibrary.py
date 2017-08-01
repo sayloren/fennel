@@ -30,7 +30,7 @@ def graphComb(n):
 	sns.set_style('ticks')
 	sns.set_palette("husl",n_colors=8)#(len(nucLine)*2)
 
-	plt.figure(figsize=(8,8))
+	plt.figure(figsize=(5,5))
 	plt.plot(yrange,equal,linewidth=2,alpha=0.9)#,color='#3e1638'
 	plt.axvline(x=n,linewidth=.05,linestyle=':',label='{:0.1e}'.format(equal[n]))#,color='#e7298a'
 	plt.axvspan(n-1,n+1,alpha=0.1)#,facecolor='#e7298a'

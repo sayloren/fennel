@@ -120,6 +120,7 @@ def graphMeth(pdMeth,rnMeth,fileName,num,uce,inuce,window):
 
 	sns.despine()
 	pp.savefig()
+	print 'Plotted methylation frequency across tissue types for elements'
 
 	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
 	gs.update(hspace=.5)
@@ -156,6 +157,7 @@ def graphMeth(pdMeth,rnMeth,fileName,num,uce,inuce,window):
 
 	sns.despine()
 	pp.savefig()
+	print 'Plotted methylation frequency across tissue types for random regions'
 
 	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
 	gs.update(hspace=.5)
@@ -189,6 +191,7 @@ def graphMeth(pdMeth,rnMeth,fileName,num,uce,inuce,window):
 	
 	sns.despine()
 	pp.savefig()
+	print 'Plotted methylation frequency across tissue types for random regions'
 
 	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
 	gs.update(hspace=.5)
@@ -366,6 +369,7 @@ def graphMeth(pdMeth,rnMeth,fileName,num,uce,inuce,window):
 	sns.despine()
 	pp.savefig()
 	pp.close()
+	print 'Plotted methylation frequency across elements for random regions'
 
 def main(pdMeth,rnMeth,fileName,num,uce,inuce,window):
 # 	warnings.filterwarnings("ignore",category=matplotlib.cbook.mplDeprecation)
