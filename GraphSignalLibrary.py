@@ -242,9 +242,9 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	ax8.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
 	ax8.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
 	ax8.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-	ax8.axvspan(window,(((num-uce)/2)-halfwindow),label='',alpha=0.1)#,facecolor = '#863eae'
-	ax8.axvspan((((num-uce)/2)-halfwindow),(((num-uce)/2)+uce-halfwindow),label='',alpha=0.1)#,facecolor = '#ae3e9e'
-	ax8.axvspan((((num-uce)/2)+uce-halfwindow),(num-window-window),label='',alpha=0.1)#,facecolor = '#ae3e66'
+	ax8.axvspan(window,(((num-uce)/2)-halfwindow),label='',alpha=0.1,facecolor = '#863eae')
+	ax8.axvspan((((num-uce)/2)-halfwindow),(((num-uce)/2)+uce-halfwindow),label='',alpha=0.1,facecolor = '#ae3e9e')
+	ax8.axvspan((((num-uce)/2)+uce-halfwindow),(num-window-window),label='',alpha=0.1,facecolor = '#ae3e66')
 	ax8.set_yticks(ax8.get_yticks()[::2])
 	ax8.set_xlabel('Position',size=6)
 	ax8.set_ylabel('Amplitude',size=8)
@@ -260,18 +260,18 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	
 	#FFT for sections of the smoothed second derivative
 	ax9 = plt.subplot(gs[2,0])
-	ax9.plot(frq3sd,abs(Y3sd),linewidth=1)#, color='#863eae'
+	ax9.plot(frq3sd,abs(Y3sd),linewidth=1, color='#863eae')
 	ax9.set_ylabel('|Y(freq)|',size=8)
 	ax9.set_xlabel('Freq(Hz)',size=6) #AT Rate Change
 	ax9.set_yticks(ax9.get_yticks()[::2])
 	ax10 = plt.subplot(gs[2,1],sharey=ax9)
 	plt.setp(ax10.get_yticklabels(), visible=False)
-	ax10.plot(frq2sd,abs(Y2sd),linewidth=1)#, color='#ae3e9e'
+	ax10.plot(frq2sd,abs(Y2sd),linewidth=1, color='#ae3e9e')
 	ax10.set_title('Power Series for Highlighted Regions, Elements',size=8)# Power Spectrum Analysis for FFT
 	ax10.set_xlabel('Freq(Hz)',size=6)
 	ax11 = plt.subplot(gs[2,2],sharey=ax9)
 	plt.setp(ax11.get_yticklabels(), visible=False)
-	ax11.plot(frq4sd,abs(Y4sd),linewidth=1)#, color='#ae3e66'
+	ax11.plot(frq4sd,abs(Y4sd),linewidth=1, color='#ae3e66')
 	ax11.set_xlabel('Freq(Hz)',size=6)
 	
 	sns.despine()
@@ -301,9 +301,9 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	ax13.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
 	ax13.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
 	ax13.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-	ax13.axvspan(window,(((num-uce)/2)-halfwindow),label='',alpha=0.1)#,facecolor = '#863eae'
-	ax13.axvspan((((num-uce)/2)-halfwindow),(((num-uce)/2)+uce-halfwindow),label='',alpha=0.1)#,facecolor = '#ae3e9e'
-	ax13.axvspan((((num-uce)/2)+uce-halfwindow),(num-window-window),label='',alpha=0.1)#,facecolor = '#ae3e66'
+	ax13.axvspan(window,(((num-uce)/2)-halfwindow),label='',alpha=0.1,facecolor = '#863eae')
+	ax13.axvspan((((num-uce)/2)-halfwindow),(((num-uce)/2)+uce-halfwindow),label='',alpha=0.1,facecolor = '#ae3e9e')
+	ax13.axvspan((((num-uce)/2)+uce-halfwindow),(num-window-window),label='',alpha=0.1,facecolor = '#ae3e66')
 	ax13.set_yticks(ax13.get_yticks()[::2])
 	ax13.set_xlabel('Position',size=6)
 	ax13.set_ylabel('Amplitude',size=8)
@@ -319,18 +319,18 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 
 	#FFT for sections of the smoothed second derivative
 	ax14 = plt.subplot(gs[2,0])
-	ax14.plot(ranfrq3sd,abs(ranY3sd),linewidth=1)#, color='#863eae'
+	ax14.plot(ranfrq3sd,abs(ranY3sd),linewidth=1, color='#863eae')
 	ax14.set_ylabel('|Y(freq)|',size=8)
 	ax14.set_xlabel('Freq(Hz)',size=6) #AT Rate Change
 	ax14.set_yticks(ax14.get_yticks()[::2])
 	ax15 = plt.subplot(gs[2,1],sharey=ax9)
 	plt.setp(ax15.get_yticklabels(), visible=False)
-	ax15.plot(ranfrq2sd,abs(ranY2sd),linewidth=1)#, color='#ae3e9e'
+	ax15.plot(ranfrq2sd,abs(ranY2sd),linewidth=1, color='#ae3e9e')
 	ax15.set_title('Power Series for Highlighted Regions, Random Regions',size=8)# Power Spectrum Analysis for FFT
 	ax15.set_xlabel('Freq(Hz)',size=6)
 	ax16 = plt.subplot(gs[2,2],sharey=ax9)
 	plt.setp(ax16.get_yticklabels(), visible=False)
-	ax16.plot(ranfrq4sd,abs(ranY4sd),linewidth=1)#, color='#ae3e66'
+	ax16.plot(ranfrq4sd,abs(ranY4sd),linewidth=1, color='#ae3e66')
 	ax16.set_xlabel('Freq(Hz)',size=6)
 
 	sns.despine()
