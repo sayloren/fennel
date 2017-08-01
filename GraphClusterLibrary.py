@@ -186,7 +186,7 @@ def graphCluster(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine
 	plt.setp(heatmap0.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
 	plt.setp(heatmap0.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
 	plt.setp(heatmap0.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-	plt.setp(heatmap0.ax_heatmap.set_title('Mean AT Content per UCE',size=12))
+	plt.setp(heatmap0.ax_heatmap.set_title('Mean AT Content per Element',size=12))
 	ATOrdered = heatmap0.dendrogram_row.reordered_ind # need to use this new index to get out the inter-uce relationships
 	
 	sns.despine()

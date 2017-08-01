@@ -36,7 +36,7 @@ def get_args():
 # 	parser.add_argument('-d',help='directory to look for external files')
 	parser.add_argument("efile", type=argparse.FileType('rU'), help='A file containing a list of paths to the element files with unique names separated by newlines')
 	parser.add_argument("mfile", type=argparse.FileType('rU'), help="A file containing a list of paths to the methylation files with unique names separated by newlines, with data for methylation position (chr, start,stop) and methylation % as fourth column'")
-# 	parser.add_argument("rfile",type=argparse.FileType('rU'), help="A file containing a list of paths to the random regions equable with your elements to plot in contrast")
+	parser.add_argument("rfile",type=argparse.FileType('rU'), help="A file containing a list of paths to the random regions equable with your elements to plot in contrast")
 
 	# Genome Files
 	parser.add_argument("-g", "--genome", type=str, default="hg19.genome")
@@ -55,11 +55,12 @@ def get_args():
 	parser.add_argument("-mf", "--methylationflank", type=int, default="20", help='The number of base pairs to look at outside of the element for the methylation clusterplots')
 
 	# Specify which groups and graphs to run
-	parser.add_argument('-type', "--elementype", default=[], nargs='*', choices=['all','intronic','exonic','intergenic'],help='which group types of element to run') # type
-	parser.add_argument('-dir', "--elementdirection", default=[], nargs='*', choices=['+','-','='], help='which group direction of element to run') # direction
+	parser.add_argument('-type', "--elementype", default=[], nargs='*', choices=['all','intronic','exonic','intergenic'],help='which group types of element to run')
+	parser.add_argument('-dir', "--elementdirection", default=[], nargs='*', choices=['+','-','='], help='which group direction of element to run')
 	parser.add_argument('-rc', "--reversecomplement",action='store_true', help='if reverse complement sorting required')
-	parser.add_argument('-p',"--plots",default=[],nargs='*',choices=['fangs','methylation','signal','interactive','cluster'],help='the available graphs to plot') # 'table', 'combinations'
-	parser.add_argument('-nuc',"--nucleotideline",default=['A','T'],nargs='+',help='type the nucleotide string combinations to search for in the element')#'CA','CT','CC','CG'
+	parser.add_argument('-p',"--plots",default=[],nargs='*',choices=['fangs','methylation','signal','interactive','cluster'],help='the available graphs to plot')
+	parser.add_argument('-nuc',"--nucleotideline",default=['A','T'],nargs='+',help='type the nucleotide string combinations to search for in the element')
+	parser.add_argument('-ran',"--randomregionline",default=['A','T'],nargs='+',help='type the nucleotide string combinations to search for in the random regions')
 	parser.add_argument('-str',"--stringname",type=str,help='string to add to the outfile name')
 
 	# Add additional descriptive file name information
@@ -93,8 +94,6 @@ def plotGraphs(pdMeth,slidingWinDF,names,fileName,num,uce,inuce,window,graphs,nu
 		GraphMethLibrary.main(slidingWinDF,pdMeth,fileName,num,uce,inuce,window)
 	if 'interactive' in graphs:
 		BokehLibrary.main(slidingWinDF,fileName,num,uce,inuce,window,nucLine)
-# 	if 'combinations' in graphs:
-# 		BinLibrary.main(base,combinations)
 	if 'cluster' in graphs:
 		ATOrderded = GraphClusterLibrary.main(slidingWinDF,pdMeth,names,fileName,num,uce,inuce,window,nucLine,methFlank) # need to use this new index to get out the inter-uce relationships
 
@@ -116,9 +115,10 @@ def main():
 	methPerThresh = args.thresholdpercentage
 	methFlank = args.methylationflank
 
-	# Element and methylation files
+	# Element, random regions and methylation files
 	eFiles = [line.strip() for line in args.efile]
 	mFiles = [line.strip() for line in args.mfile]
+	rFiles = [line.strip() for line in args.rfile]
 
 	# Genome files from UCSC
 	sizeGenome = args.genome
@@ -128,6 +128,7 @@ def main():
 	typeList = args.elementype
 	dirList = args.elementdirection
 	nucLine = args.nucleotideline
+	ranLine = args.randomregionline
 
 	# Reverse complement argument
 	revCom = args.reversecomplement
