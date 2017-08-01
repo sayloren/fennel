@@ -35,7 +35,7 @@ def graphComb(n):
 	plt.xlabel('Bin Size',size=12)
 	plt.ylabel('Probability',size=12)
 	plt.title('Equal Boundary for {0} Bins'.format(n),size=18)
-	plt.text(n,equal[n+2],'Probability is {:0.1e}'.format(equal[n]),size=6,clip_on=False)
+	plt.text(n+5,equal[n+10],'Probability is {:0.1e}'.format(equal[n]),size=12,clip_on=False)
 	sns.despine()
 	plt.savefig('Probability.pdf')
 

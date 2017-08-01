@@ -19,6 +19,16 @@ import scipy.stats as ss
 from scipy.stats import mstats
 import seaborn as sns
 
+# Get group, mean and standard deviation for AT
+def collectAT(dfWindow,names):
+	ATNames = [names.index(i) for i in names if 'A' in i or 'T' in i]
+	ATDataFrames = [dfWindow[i] for i in ATNames]
+	ATconcat = pd.concat(ATDataFrames,axis=1)
+	ATgroup = ATconcat.groupby(ATconcat.columns,axis=1).sum()
+	ATmean = ATgroup.mean()
+	ATstd = ATgroup.std()
+	return ATgroup, ATmean, ATstd
+
 # Make some graphs for fangs
 def graphFang(dfWindow,names,ranWindow,rannames,fileName,num,uce,inuce,window,nucLine):
 
@@ -26,13 +36,9 @@ def graphFang(dfWindow,names,ranWindow,rannames,fileName,num,uce,inuce,window,nu
 	fillX = range(0,(num-window))
 	halfwindow = ((window/2)+1)
 
-	# Get mean and standard deviation for AT
-	ATNames = [names.index(i) for i in names if 'A' in i or 'T' in i]
-	ATDataFrames = [dfWindow[i] for i in ATNames]
-	ATconcat = pd.concat(ATDataFrames,axis=1)
-	ATgroup = ATconcat.groupby(ATconcat.columns,axis=1).sum()
-	ATmean = ATgroup.mean()
-	ATstd = ATgroup.std()
+	# Get group, mean and standard deviation for AT
+	ATgroup,ATmean,ATstd = collectAT(dfWindow,names)
+	ranATgroup,ranATmean,ranATstd = collectAT(ranWindow,rannames)
 	
 	# Title info
 	info = str(fileName) + ', '+ str(len(ATgroup.index)) + ' - ' "UCES"
@@ -49,8 +55,10 @@ def graphFang(dfWindow,names,ranWindow,rannames,fileName,num,uce,inuce,window,nu
 	StopMean = ATgroup.loc[:,(((num-uce)/2)+(uce-inuce-halfwindow)):(((num-uce)/2)+uce-(halfwindow-window))].mean() # the boundary and 50inward
 	wilcoxPSRMean = ss.wilcoxon(StartMean,StopMean)
 	ax0 = plt.subplot(gs[0])
-	ax0.plot(fillX,ATmean,linewidth=1, color='#3e1638',label='AT')
-	ax0.fill_between(fillX,ATmean+ATstd,ATmean-ATstd,facecolor = '#63245a',label='',alpha=0.3)
+	ax0.plot(fillX,ATmean,linewidth=1, color='#3e1638',label='AT element')
+	ax0.plot(fillX,ranATmean,linewidth=1, color='#aba1b1',label='AT random')
+	ax0.fill_between(fillX,ATmean+ATstd,ATmean-ATstd,facecolor='#63245a',label='',alpha=0.3)
+	ax0.fill_between(fillX,ranATmean+ranATstd,ranATmean-ranATstd,facecolor='#c0a7bd',label='',alpha=0.3)
 	ax0.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
 	ax0.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
 	ax0.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
@@ -67,7 +75,8 @@ def graphFang(dfWindow,names,ranWindow,rannames,fileName,num,uce,inuce,window,nu
 
 	# Plot the std = 1
 	ax1 = plt.subplot(gs[1],sharex=ax0)
-	ax1.plot(fillX,ATstd,linewidth=1, color='#3e1638',label='AT')
+	ax1.plot(fillX,ATstd,linewidth=1,color='#3e1638',label='AT element')
+	ax1.plot(fillX,ranATstd,linewidth=1,color='#aba1b1',label='AT random')
 	ax1.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
 	ax1.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
 	ax1.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
@@ -79,16 +88,22 @@ def graphFang(dfWindow,names,ranWindow,rannames,fileName,num,uce,inuce,window,nu
 	ax1.set_title('Standard Deviation',size=8)
 	plt.setp(ax1.get_xticklabels(), visible=True)
 	ax1.legend(loc=0,fontsize=5,labelspacing=0.05)
+
+	sns.set_palette("husl")
 	
 	# Significances tests for SD populations
 	uceRegion = ATgroup.loc[:,(((num-uce)/2)-halfwindow):(((num-uce)/2)+uce-halfwindow)].std()
+	ranuceRegion = ranATgroup.loc[:,(((num-uce)/2)-halfwindow):(((num-uce)/2)+uce-halfwindow)].std()
 	bothStream = ATgroup.iloc[:,np.r_[0:(((num-uce)/2)-halfwindow),(((num-uce)/2)+uce-halfwindow):(num-window)]].std()
+	ranbothStream = ranATgroup.iloc[:,np.r_[0:(((num-uce)/2)-halfwindow),(((num-uce)/2)+uce-halfwindow):(num-window)]].std()
 	# Kruskal-Wallis test
 # 	kruskalSD = mstats.kruskalwallis(bothStream,uceRegion)
 # 	ax2.text(16.25,14.5,'KW P-value {:0.1e}'.format(kruskalSD[1]),size=6,clip_on=False)
 	ax2 = plt.subplot(gs[2])
-	ax2.hist(uceRegion,35,linewidth=0.3, color='#ae3e9e',label='UCE',alpha=0.5)
-	ax2.hist(bothStream,35,linewidth=0.3, color='#ae3e66',label='Surrounding Regions',alpha=0.5)
+	ax2.hist(uceRegion,35,linewidth=0.3,label='Element',alpha=0.5)# color='#ae3e9e'
+	ax2.hist(ranuceRegion,35,linewidth=0.3,label='Random',alpha=0.5)#color='#ae3e9e'
+	ax2.hist(bothStream,35,linewidth=0.3,label='Surrounding Element Regions',alpha=0.5)
+	ax2.hist(ranbothStream,35,linewidth=0.3,label='Surrounding Random Regions',alpha=0.5)
 	ax2.set_yticks(ax2.get_yticks()[::2])
 	ax2.set_ylabel('Frequency',size=8)
 	ax2.legend(loc=0,fontsize=5,labelspacing=0.1)
@@ -104,7 +119,6 @@ def graphFang(dfWindow,names,ranWindow,rannames,fileName,num,uce,inuce,window,nu
 	
 	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
 	gs.update(hspace=.5)
-	sns.set_palette("husl")
 	
 	# Nucleotides
 	ax3 = plt.subplot(gs[0,:],sharex=ax0)
