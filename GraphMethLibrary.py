@@ -126,7 +126,7 @@ def graphMeth(pdMeth,rnMeth,fileName,num,uce,inuce,window):
 
 	# Make heatmap for # methylation on pos strand (Frequency)
 	ax2 = plt.subplot(gs[0,:])
-	heatmap2 = sns.heatmap(ranFreqPlusTis,cmap='BuPu',ax=ax2,xticklabels=100)#cbar_ax=cbar5_ax,vmin=0,vmax=5
+	heatmap2 = sns.heatmap(ranFreqPlusTis,cmap='RdPu',ax=ax2,xticklabels=100)#cbar_ax=cbar5_ax,vmin=0,vmax=5
 	ax2.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
 	ax2.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
 	ax2.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
@@ -141,7 +141,7 @@ def graphMeth(pdMeth,rnMeth,fileName,num,uce,inuce,window):
 
 	# Make heatmap for # methylation on pos strand (Frequency)
 	ax3 = plt.subplot(gs[1,:],sharex=ax0)
-	heatmap3 = sns.heatmap(ranFreqMinusTis,cmap='BuPu',ax=ax3,xticklabels=100)#cbar_ax=cbar5_ax,vmin=0,vmax=5
+	heatmap3 = sns.heatmap(ranFreqMinusTis,cmap='RdPu',ax=ax3,xticklabels=100)#cbar_ax=cbar5_ax,vmin=0,vmax=5
 	ax3.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
 	ax3.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
 	ax3.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
@@ -195,7 +195,7 @@ def graphMeth(pdMeth,rnMeth,fileName,num,uce,inuce,window):
 
 	# Make heatmap for # methylation on pos strand (Frequency)
 	ax6 = plt.subplot(gs[0,:],sharex=ax0)
-	heatmap6 = sns.heatmap(ranFreqPlusID,cmap='BuPu',ax=ax6,xticklabels=100)#,vmin=0,vmax=5
+	heatmap6 = sns.heatmap(ranFreqPlusID,cmap='RdPu',ax=ax6,xticklabels=100)#,vmin=0,vmax=5
 	ax6.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
 	ax6.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
 	ax6.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
@@ -209,7 +209,7 @@ def graphMeth(pdMeth,rnMeth,fileName,num,uce,inuce,window):
 
 	# Make heatmap for # methylation on neg strand (Frequency)
 	ax7 = plt.subplot(gs[1,:],sharex=ax0)
-	heatmap7 = sns.heatmap(ranFreqMinusID,cmap='BuPu',ax=ax7,xticklabels=100)#,vmin=0,vmax=5
+	heatmap7 = sns.heatmap(ranFreqMinusID,cmap='RdPu',ax=ax7,xticklabels=100)#,vmin=0,vmax=5
 	ax7.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
 	ax7.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
 	ax7.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)

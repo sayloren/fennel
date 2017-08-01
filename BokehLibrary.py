@@ -19,20 +19,21 @@ from bokeh.models.widgets import Toggle
 # from numpy import sin, linspace, pi
 import pandas as pd
 import seaborn as sns
+from GraphFangLibrary import collectAT
 
 # Make interactive plots
 def bokehOut(dfWindow,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	fillX = range(0,(num-window))
-	# Get mean and standard deviation for AT
-	ATNames = [names.index(i) for i in names if 'A' in i or 'T' in i]
-	ATDataFrames = [slidingWinDF[i] for i in ATNames]
-	ATconcat = pd.concat(ATDataFrames,axis=1)
-	ATgroup = ATconcat.groupby(ATconcat.columns,axis=1).sum()
+	sns.set_palette("husl",n_colors=8)#(len(nucLine)*2)
 
-	source = ColumnDataSource(data=dict(x=fillX, mean=ATgroup.mean(), std=ATgroup.std()))
+	# Get group, mean and standard deviation for AT
+	ATgroup,ATmean,ATstd = collectAT(dfWindow,names)
+	ranATgroup,ranATmean,ranATstd = collectAT(ranWindow,names)
+
+	source = ColumnDataSource(data=dict(x=fillX,mean=ATgroup.mean(),std=ATgroup.std(),rmean=ranATgroup.mean(),rstd=ranATgroup.std()))
 	output_file('Interactive_{0}.html'.format(fileName))
 	p = figure(plot_width=1500, plot_height=600, min_border=10, min_border_left=50,toolbar_location="above",title="Mean AT Content Across Base Pair Position")
-	p.line('x','mean',line_width=2,color='#3e1638',source=source)
+	p.line('x','mean',line_width=2,source=source)#,color='#3e1638'
 	p.yaxis.axis_label = "% AT Content"
 	p.xaxis.axis_label = "Nucleotide Postion"
 	p.background_fill_color = "#fafafa"
