@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.cbook
+import scipy
 from scipy import cluster
 from scipy.spatial import distance
 from scipy.cluster import hierarchy
@@ -159,6 +160,7 @@ def dictColors(ATelement,huslPalette):
 	print 'Made dictionary for standard deviation'
 	return elementColors,positionColors
 
+# Make cluster classes based on the den values
 def getClusterClass(den,label='ivl'):
 # 	#http://www.nxn.se/valent/extract-cluster-elements-by-color-in-python
 	cluster_idxs = defaultdict(list)
@@ -167,11 +169,24 @@ def getClusterClass(den,label='ivl'):
 			i = (leg - 5.0)/10.0
 			if abs(i-int(i)) < 1e5:
 				cluster_idxs[c].append(int(i))
-	cluster_classes = Clusters()
-	for c, l in cluster_idx.items():
+	cluster_classes = {}
+	for c, l in cluster_idxs.items():
 		i_l = [den[label][i] for i in l]
 		cluster_classes[c] = i_l
 	return cluster_classes
+
+# Make a column for the cluster class values
+def makeClusterCol(ATelement,Elementclusters):
+	cluster = []
+	for i in ATelement.T.index:
+		included=False
+		for j in Elementclusters.keys():
+			if i in Elementclusters[j]:
+				cluster.append(j)
+				included=True
+		if not included:
+			cluster.append(None)
+	return cluster
 
 # Make some graphs for fangs
 def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,window,nucLine,methylationflank):
@@ -368,7 +383,6 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	# Make heatmap for # methylation on pos strand (Frequency)
 	heatmap8 = sns.clustermap(ranFreqPlusID,cmap='RdPu',xticklabels=50,col_cluster=False)
 	ylabels8 = heatmap8.ax_heatmap.get_yticklabels()
-# 	plt.setp(heatmap8.ax_heatmap.set_yticklabels(ylabels8,rotation=0))
 	plt.setp(heatmap8.ax_heatmap.set_yticks([]))
 	plt.setp(heatmap8.ax_heatmap.yaxis.tick_right())
 	plt.setp(heatmap8.ax_heatmap.set_ylabel('{0} Elements'.format(len(ranFreqPlusID.index)),size=10))
@@ -386,7 +400,6 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	# Make heatmap for # methylation on neg strand (Frequency)
 	heatmap9 = sns.clustermap(ranFreqMinusID,cmap='RdPu',xticklabels=50,col_cluster=False)
 	ylabels9 = heatmap9.ax_heatmap.get_yticklabels()
-# 	plt.setp(heatmap9.ax_heatmap.set_yticklabels(ylabels9,rotation=0))
 	plt.setp(heatmap9.ax_heatmap.set_yticks([]))
 	plt.setp(heatmap9.ax_heatmap.yaxis.tick_right())
 	plt.setp(heatmap9.ax_heatmap.set_ylabel('{0} Elements'.format(len(ranFreqMinusID.index)),size=10))
@@ -432,7 +445,6 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	# Make heatmap for # methylation on pos strand (Frequency)
 	heatmap12 = sns.clustermap(ranXPlus,cmap='RdPu')
 	ylabels12 = heatmap12.ax_heatmap.get_yticklabels()
-# 	plt.setp(heatmap12.ax_heatmap.set_yticklabels(ylabels12,rotation=0))
 	plt.setp(heatmap12.ax_heatmap.set_yticks([]))
 	plt.setp(heatmap12.ax_heatmap.yaxis.tick_right())
 	plt.setp(heatmap12.ax_heatmap.set_ylabel('{0} Elements'.format(len(ranFreqPlusID.index)),size=10))
@@ -446,7 +458,6 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	# Make heatmap for # methylation on neg strand (Frequency)
 	heatmap13 = sns.clustermap(ranXMinus,cmap='RdPu')
 	ylabels13 = heatmap13.ax_heatmap.get_yticklabels()
-# 	plt.setp(heatmap13.ax_heatmap.set_yticklabels(ylabels13,rotation=0))
 	plt.setp(heatmap13.ax_heatmap.set_yticks([]))
 	plt.setp(heatmap13.ax_heatmap.yaxis.tick_right())
 	plt.setp(heatmap13.ax_heatmap.set_ylabel('{0} Elements'.format(len(ranFreqMinusID.index)),size=10))
@@ -458,12 +469,37 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	pp.savefig()
 	print 'Plotted methylation frequency for element x position , random regions'
 	
+	# put the index in a list
 	UCEindex = ATelement.T.index.tolist()
-	ATsorted = [UCEindex[i] for i in ATOrdered]
 	RANindex = ranATelement.T.index.tolist()
+	
+	# reorder index based on clustering
+	ATsorted = [UCEindex[i] for i in ATOrdered]
 	RANsorted = [RANindex[i] for i in ranATOrdered]
+	
+	# put clusters into groups from denogram values
 	Elementclusters = getClusterClass(ATden)
 	Randomclusters = getClusterClass(ranATden)
+	
+	# make a column for the cluster value
+	ATcluster = makeClusterCol(ATelement,Elementclusters)
+	ranATcluster = makeClusterCol(ranATelement,Randomclusters)
+	
+	print ATcluster
+	
+# 	#add the cluster value to the dataframe
+# 	ATelement['cluster'] = ATcluster
+# 	ranATelement['cluster'] = ranATcluster
+# 
+# 	#just keep the cluster column
+# 	ATdrop = ATelement[['cluster']]
+# 	ranATdrop = ranATelement[['cluster']]
+# 
+# 	#move the id into the data frame
+# 	ATclusterindex = ATdrop.reset_index()
+# 	ranATclusterindex = ranATdrop.reset_index()
+# 	print ATclusterindex
+	
 
 # 	GraphTableLibrary.main(ATOrdered,ranATOrdered,'Cluster_{0}'.format(fileName))
 # 	print 'Created table for re-ordered mean AT cluster data'
@@ -474,7 +510,6 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	ATstdvalues = ATstdint.tolist()
 	print ATstdvalues
 	ATstdinitial = [cluster.vq.kmeans(ATstdvalues,i) for i in range(1,10)]
-# 	ATmeaninitial = [cluster.vq.kmeans(ATmean,i) for i in range(1,10)]
 	
 	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
 	gs.update(hspace=.5)
