@@ -337,12 +337,9 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	pp.savefig()
 	pp.close()
 	print 'Plotted short fourier transform and fast fourier transform for random regions'
-	
-	return infUCEpeaks
 
 def main(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
-	infUCEpeaks = ATgroup = graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine)
-	return infUCEpeaks
+	ATgroup = graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine)
 
 if __name__ == "__main__":
 	main()

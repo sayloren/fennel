@@ -15,7 +15,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import warnings
 import matplotlib.cbook
 
 # Transform the Frequency, Percentage and Coverage data into graphable data frames
@@ -372,7 +371,6 @@ def graphMeth(pdMeth,rnMeth,fileName,num,uce,inuce,window):
 	print 'Plotted methylation frequency across elements for random regions'
 
 def main(pdMeth,rnMeth,fileName,num,uce,inuce,window):
-# 	warnings.filterwarnings("ignore",category=matplotlib.cbook.mplDeprecation)
 	graphMeth(pdMeth,rnMeth,fileName,num,uce,inuce,window)
 
 if __name__ == "__main__":

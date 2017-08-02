@@ -5,11 +5,10 @@ Wren Saylor
 July 5 2017
 
 To Do:
-IO - Have input methylation data in separate callable folder, print output graphs to new folder
-Add verbose as a setting to args
 Table for each group % =
 Align Exonic by intron-exon shift
-Make sure random regions have correct total number and ratio of type
+Correct total and ratio for each type?
+Get slopes
 
 """
 
@@ -27,13 +26,11 @@ import GraphSignalLibrary
 import BokehLibrary
 import GraphTableLibrary
 import GraphClusterLibrary
-import os
 
 # set command line arguments
 def get_args():
 	# File lists
 	parser = argparse.ArgumentParser(description="Description")
-# 	parser.add_argument('-d',help='directory to look for external files')
 	parser.add_argument("efile", type=argparse.FileType('rU'), help='A file containing a list of paths to the element files with unique names separated by newlines')
 	parser.add_argument("mfile", type=argparse.FileType('rU'), help="A file containing a list of paths to the methylation files with unique names separated by newlines, with data for methylation position (chr, start,stop) and methylation % as fourth column'")
 	parser.add_argument("rfile",type=argparse.FileType('rU'), help="A file containing a list of paths to the random regions equable with your elements to plot in contrast")
@@ -63,14 +60,7 @@ def get_args():
 	parser.add_argument('-str',"--stringname",type=str,help='string to add to the outfile name')
 
 	# Add additional descriptive file name information
-# 	parser.add_argument('-v',help='verbose output from print statements',action="store_true")
 	return parser.parse_args()
-
-# Access the directory where the data is stored
-def getFilepaths(path):
-	relative_path = path
-	current_dir = os.getcwd()
-	return os.join(current_dir,relative_path)
 
 # for type and direction, separate the groups and run the analyses
 def groupSeparate(List,directionFeatures,typecolumn,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs):
@@ -88,18 +78,17 @@ def plotGraphs(pdMeth,rnMeth,dfWindow,names,ranWindow,fileName,num,uce,inuce,win
 	if 'fangs' in graphs:
 		GraphFangLibrary.main(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine)
 	if 'signal' in graphs:
-		inflectionPeaks = GraphSignalLibrary.main(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine)
+		GraphSignalLibrary.main(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine)
 	if 'methylation' in graphs:
 		GraphMethLibrary.main(pdMeth,rnMeth,fileName,num,uce,inuce,window)
 	if 'interactive' in graphs:
 		BokehLibrary.main(dfWindow,ranWindow,fileName,num,uce,inuce,window,nucLine)
 	if 'cluster' in graphs:
-		ATOrderded = GraphClusterLibrary.main(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,window,nucLine,methFlank) # need to use this new index to get out the inter-uce relationships
-# 	return inflectionPeaks,ATOrderded
+		GraphClusterLibrary.main(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,window,nucLine,methFlank)
 
-def plotTable(inflectionPeaks,ATOrderded):
+def plotTable():
 	if 'table' in graphs:
-		GraphTableLibrary.main(dfWindow,ranWindow,fileName,num,uce,inuce,window)
+		GraphTableLibrary.main(dfWindow,ranWindow,fileName)
 
 def main():
 	# Collect arguments
