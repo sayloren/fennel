@@ -469,7 +469,7 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	sns.despine()
 	pp.savefig()
 	print 'Plotted methylation frequency for element x position , random regions'
-# 	
+
 # 	# put the index in a list
 # 	UCEindex = ATelement.T.index.tolist()
 # 	RANindex = ranATelement.T.index.tolist()

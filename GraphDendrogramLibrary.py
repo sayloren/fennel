@@ -41,7 +41,6 @@ def graphDendrogram(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLi
 	# Title info
 	info = str(fileName) + ', '+ str(len(ATgroup.index)) + ' - ' "UCES"
 
-
 	# Plot settings
 	plt.suptitle(info,fontsize=10)
 	pp = PdfPages('Dendrogram_{0}.pdf'.format(fileName))
@@ -59,8 +58,6 @@ def graphDendrogram(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLi
 
 	plt.tight_layout()
 
-# 	cluster_classes = getClusterClass(den)
-	
 	sns.despine()
 	pp.savefig()
 	pp.close()
