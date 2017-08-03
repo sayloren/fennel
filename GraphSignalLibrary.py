@@ -120,6 +120,8 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	sns.set_style('ticks')
 	plt.suptitle(info,fontsize=10)
 	sns.set_palette("husl",n_colors=8)#(len(nucLine)*2)
+	plt.figure(figsize=(7,7))
+	plt.tight_layout()
 
 	# Filename
 	pp = PdfPages('Signal_{0}.pdf'.format(fileName))

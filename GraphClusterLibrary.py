@@ -194,7 +194,8 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	# Parameters that all graphs will use
 	fillX = range(0,(num-window))
 	halfwindow = ((window/2)+1)
-	
+	plt.figure(figsize=(7,7))
+
 	# Get group, mean and standard deviation for AT
 	ATgroup,ATmean,ATstd = collectAT(dfWindow,names)
 	ranATgroup,ranATmean,ranATstd = collectAT(ranWindow,names)

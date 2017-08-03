@@ -73,6 +73,8 @@ def graphMeth(pdMeth,rnMeth,fileName,num,uce,inuce,window):
 	info = str(fileName) + ', '+ str(len(pdMeth['id'].unique())) + ' - ' "UCES"
 	plt.suptitle(info,fontsize=10)
 	pp = PdfPages('Methylation_{0}.pdf'.format(fileName))
+	plt.figure(figsize=(7,7))
+	plt.tight_layout()
 
 	# Various combinations to plot on heatmaps
 	FreqPlusTis,FreqMinusTis = methIndex(pdMeth,'tissue','methFreq',num)
