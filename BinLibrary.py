@@ -36,7 +36,7 @@ def graphComb(n):
 	plt.axvspan(n-1,n+1,alpha=0.1)#,facecolor='#e7298a'
 	plt.xlabel('Bin Size',size=12)
 	plt.ylabel('Probability',size=12)
-	plt.title('Equal Boundary for {0} Bins'.format(n),size=18)
+	plt.title('Equal Boundary for {0} Bins'.format(n),size=16)
 # 	plt.legend(loc=2,fontsize=12,labelspacing=0.05)
 	plt.text(n-9,.9,'{:0.1e}'.format(equal[n]),size=12,clip_on=False)
 	plt.tight_layout()

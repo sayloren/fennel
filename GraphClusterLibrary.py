@@ -24,7 +24,6 @@ from scipy.spatial import distance
 from scipy.cluster import hierarchy
 from GraphFangLibrary import collectAT
 import GraphTableLibrary
-from collections import defaultdict
 
 def savePanda(pdData, strFilename):
 	pdData.to_csv(strFilename, sep='\t', header=False, index=False)
@@ -161,8 +160,10 @@ def dictColors(ATelement,huslPalette):
 	return elementColors,positionColors
 
 # Make cluster classes based on the den values
-def getClusterClass(den,label='ivl'):
-# 	#http://www.nxn.se/valent/extract-cluster-elements-by-color-in-python
+def getClusterClass(den):
+	#https://stackoverflow.com/questions/27924813/extracting-clusters-from-seaborn-clustermap
+	#http://www.nxn.se/valent/extract-cluster-elements-by-color-in-python
+	label='ivl'
 	cluster_idxs = defaultdict(list)
 	for c, pi in zip(den['color_list'],den['icoord']):
 		for leg in pi[1:3]:
@@ -176,17 +177,17 @@ def getClusterClass(den,label='ivl'):
 	return cluster_classes
 
 # Make a column for the cluster class values
-def makeClusterCol(ATelement,Elementclusters):
-	cluster = []
-	for i in ATelement.T.index:
-		included=False
-		for j in Elementclusters.keys():
-			if i in Elementclusters[j]:
-				cluster.append(j)
-				included=True
-		if not included:
-			cluster.append(None)
-	return cluster
+# def makeClusterCol(ATelement,Elementclusters):
+# 	cluster = []
+# 	for i in ATelement.T.index:
+# 		included=False
+# 		for j in Elementclusters.keys():
+# 			if i in Elementclusters[j]:
+# 				cluster.append(j)
+# 				included=True
+# 		if not included:
+# 			cluster.append(None)
+# 	return cluster
 
 # Make some graphs for fangs
 def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,window,nucLine,methylationflank):
@@ -212,7 +213,7 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	pp = PdfPages('Cluster_{0}.pdf'.format(fileName))
 	sns.set_palette("husl",n_colors=8)#(len(nucLine)*2)
 
-	# Use the row_colors to color those with similar SD?
+# 	Use the row_colors to color those with similar SD?
 	huslPalette = sns.husl_palette(8, s=.45)
 	elementColors,positionColors = dictColors(ATelement,huslPalette)
 	heatmap0 = sns.clustermap(ATelement.T,cmap='RdPu',vmin=0,vmax=100,xticklabels=50,col_cluster=False,row_colors=elementColors,col_colors=positionColors)
@@ -228,12 +229,12 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	plt.setp(heatmap0.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap0.ax_heatmap.set_title('Mean AT Content per Element',size=12))
 	ATOrdered = heatmap0.dendrogram_row.reordered_ind
-	ATden = scipy.cluster.hierarchy.dendrogram(heatmap0.dendrogram_row.linkage,labels=ATelement.T.index,color_threshold=0.60)
+# 	ATden = scipy.cluster.hierarchy.dendrogram(heatmap0.dendrogram_row.linkage,labels=ATelement.T.index,color_threshold=0.05)
 	
 	sns.despine()
 	pp.savefig()
-
-	# Use the row_colors to color those with similar SD?
+	
+# 	Use the row_colors to color those with similar SD?
 	ranelementColors,ranpositionColors = dictColors(ranATelement,huslPalette)
 	heatmap1 = sns.clustermap(ranATelement.T,cmap='RdPu',vmin=0,vmax=100,xticklabels=50,col_cluster=False,row_colors=ranelementColors,col_colors=ranpositionColors)
 	plt.setp(heatmap1.ax_heatmap.tick_params(labelsize=8))
@@ -248,13 +249,12 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	plt.setp(heatmap1.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap1.ax_heatmap.set_title('Mean AT Content per Random Region',size=12))
 	ranATOrdered = heatmap1.dendrogram_row.reordered_ind
-	ranATden = scipy.cluster.hierarchy.dendrogram(heatmap1.dendrogram_row.linkage,labels=ranATelement.T.index,color_threshold=0.60)
+# 	ranATden = scipy.cluster.hierarchy.dendrogram(heatmap1.dendrogram_row.linkage,labels=ranATelement.T.index,color_threshold=0.05)
 
 	sns.despine()
 	pp.savefig()
 	print 'Plotted cluster plot for mean AT content for all elements and random regions'
 
-	
 	# Various combinations to plot on heatmaps, just for element plus methylation flanks
 	# Frequency x Tissue x ID X Location
 	FreqPlusID,FreqMinusID = elemenetIndex(pdMeth,'id',num,uce,halfwindow,window,methylationflank)
@@ -469,25 +469,27 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	sns.despine()
 	pp.savefig()
 	print 'Plotted methylation frequency for element x position , random regions'
-	
-	# put the index in a list
-	UCEindex = ATelement.T.index.tolist()
-	RANindex = ranATelement.T.index.tolist()
-	
-	# reorder index based on clustering
-	ATsorted = [UCEindex[i] for i in ATOrdered]
-	RANsorted = [RANindex[i] for i in ranATOrdered]
-	
-	# put clusters into groups from denogram values
-	Elementclusters = getClusterClass(ATden)
-	Randomclusters = getClusterClass(ranATden)
-	
-	# make a column for the cluster value
-	ATcluster = makeClusterCol(ATelement,Elementclusters)
-	ranATcluster = makeClusterCol(ranATelement,Randomclusters)
-	
-	print ATcluster
-	
+# 	
+# 	# put the index in a list
+# 	UCEindex = ATelement.T.index.tolist()
+# 	RANindex = ranATelement.T.index.tolist()
+# 	
+# 	# reorder index based on clustering
+# 	ATsorted = [UCEindex[i] for i in ATOrdered]
+# 	RANsorted = [RANindex[i] for i in ranATOrdered]
+# 	
+# 	print ATden
+# 	
+# 	# put clusters into groups from denogram values
+# 	Elementclusters = getClusterClass(ATden)
+# 	Randomclusters = getClusterClass(ranATden)
+# 	
+# 	# make a column for the cluster value
+# 	ATcluster = makeClusterCol(ATelement,Elementclusters)
+# 	ranATcluster = makeClusterCol(ranATelement,Randomclusters)
+# 	
+# 	print ATcluster
+# 	
 # 	#add the cluster value to the dataframe
 # 	ATelement['cluster'] = ATcluster
 # 	ranATelement['cluster'] = ranATcluster
@@ -500,27 +502,24 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 # 	ATclusterindex = ATdrop.reset_index()
 # 	ranATclusterindex = ranATdrop.reset_index()
 # 	print ATclusterindex
-	
-
+# 
 # 	GraphTableLibrary.main(ATOrdered,ranATOrdered,'Cluster_{0}'.format(fileName))
 # 	print 'Created table for re-ordered mean AT cluster data'
 # 
 # 	#https://stats.stackexchange.com/questions/9850/how-to-plot-data-output-of-clustering
-# 	#https://stackoverflow.com/questions/27924813/extracting-clusters-from-seaborn-clustermap
-	ATstdint = ATstd.astype(int)
-	ATstdvalues = ATstdint.tolist()
-	print ATstdvalues
-	ATstdinitial = [cluster.vq.kmeans(ATstdvalues,i) for i in range(1,10)]
-	
-	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
-	gs.update(hspace=.5)
-
-	ax14 = plt.subplot(gs[0,:])
-	ax14.plot([var for (cent,var) in ATstdinitial])
-	cent,var = ATstdinitial[3]
-	assignmetn,cdist = cluster.vq.vq(ATstdvalues,cent)
-	ax15 = plt.subplot(gs[1,:])
-	ax15.scatter(ATstdvalues[:,0],ATstdvalues[:,1],c=assignment)
+# 	ATstdint = ATstd.astype(int)
+# 	ATstdvalues = ATstdint.tolist()
+# 	ATstdinitial = [cluster.vq.kmeans(ATstdvalues,i) for i in range(1,10)]
+# 	
+# 	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
+# 	gs.update(hspace=.5)
+# 
+# 	ax14 = plt.subplot(gs[0,:])
+# 	ax14.plot([var for (cent,var) in ATstdinitial])
+# 	cent,var = ATstdinitial[3]
+# 	assignmetn,cdist = cluster.vq.vq(ATstdvalues,cent)
+# 	ax15 = plt.subplot(gs[1,:])
+# 	ax15.scatter(ATstdvalues[:,0],ATstdvalues[:,1],c=assignment)
 
 	sns.despine()
 	pp.savefig()

@@ -50,7 +50,6 @@ def graphFang(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	plt.suptitle(info,fontsize=10)
 	pp = PdfPages('Fangs_{0}.pdf'.format(fileName))
 	plt.figure(figsize=(7,7))
-	plt.tight_layout()
 
 	sns.set_palette("husl",n_colors=8)#(len(nucLine)*2)
 

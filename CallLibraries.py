@@ -26,6 +26,7 @@ import GraphSignalLibrary
 import BokehLibrary
 import GraphTableLibrary
 import GraphClusterLibrary
+import GraphDendrogramLibrary
 
 # set command line arguments
 def get_args():
@@ -55,7 +56,7 @@ def get_args():
 	parser.add_argument('-type', "--elementype", default=[], nargs='*', choices=['all','intronic','exonic','intergenic'],help='which group types of element to run')
 	parser.add_argument('-dir', "--elementdirection", default=[], nargs='*', choices=['+','-','='], help='which group direction of element to run')
 	parser.add_argument('-rc', "--reversecomplement",action='store_true', help='if reverse complement sorting required')
-	parser.add_argument('-p',"--plots",default=[],nargs='*',choices=['fangs','methylation','signal','interactive','cluster'],help='the available graphs to plot')
+	parser.add_argument('-p',"--plots",default=[],nargs='*',choices=['fang','methylation','signal','interactive','cluster','dendrogram'],help='the available graphs to plot')
 	parser.add_argument('-nuc',"--nucleotideline",default=['A','T'],nargs='+',help='type the nucleotide string combinations to search for in the element')
 	parser.add_argument('-str',"--stringname",type=str,help='string to add to the outfile name')
 
@@ -75,7 +76,7 @@ def groupSeparate(List,directionFeatures,typecolumn,fileName,binDir,mFiles,num,u
 
 # the plotting options, if in the list of plot flags, run graph
 def plotGraphs(pdMeth,rnMeth,dfWindow,names,ranWindow,fileName,num,uce,inuce,window,graphs,nucLine,methFlank):
-	if 'fangs' in graphs:
+	if 'fang' in graphs:
 		GraphFangLibrary.main(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine)
 	if 'signal' in graphs:
 		GraphSignalLibrary.main(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine)
@@ -85,6 +86,8 @@ def plotGraphs(pdMeth,rnMeth,dfWindow,names,ranWindow,fileName,num,uce,inuce,win
 		BokehLibrary.main(dfWindow,ranWindow,fileName,num,uce,inuce,window,nucLine)
 	if 'cluster' in graphs:
 		GraphClusterLibrary.main(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,window,nucLine,methFlank)
+	if 'dendrogram' in graphs:
+		GraphDendrogramLibrary.main(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLine,methFlank)
 
 def plotTable():
 	if 'table' in graphs:

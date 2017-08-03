@@ -74,7 +74,6 @@ def graphMeth(pdMeth,rnMeth,fileName,num,uce,inuce,window):
 	plt.suptitle(info,fontsize=10)
 	pp = PdfPages('Methylation_{0}.pdf'.format(fileName))
 	plt.figure(figsize=(7,7))
-	plt.tight_layout()
 
 	# Various combinations to plot on heatmaps
 	FreqPlusTis,FreqMinusTis = methIndex(pdMeth,'tissue','methFreq',num)
@@ -370,6 +369,7 @@ def graphMeth(pdMeth,rnMeth,fileName,num,uce,inuce,window):
 	sns.despine()
 	pp.savefig()
 	pp.close()
+
 	print 'Plotted methylation frequency across elements for random regions'
 
 def main(pdMeth,rnMeth,fileName,num,uce,inuce,window):
