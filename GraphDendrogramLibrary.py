@@ -3,6 +3,9 @@ Script to graph the dendrogram connections
 
 Wren Saylor
 August 4 2017
+
+To Do:
+The arm colors don't work yet, need to change thresholding
 """
 import argparse
 from fastcluster import linkage

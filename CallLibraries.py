@@ -11,7 +11,7 @@ Correct total and ratio for each type?
 Get slopes
 Print data out to tables
 k means / scikit learn
-dendrogram color clusters
+dendrogram color clusters (what clustering parameters are used in literature, how do uces compare to other clustered groups)
 
 """
 

@@ -3,6 +3,10 @@ Script to graph k means
 
 Wren Saylor
 August 4 2017
+
+To Do:
+Doesn't work yet, need to convert list of list to array fo list
+Look at other element clustering to get params, and compare (how similar are other groups to uces?)
 """
 
 import argparse
@@ -14,10 +18,13 @@ import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+from matplotlib.backends.backend_pdf import PdfPages
 from GraphFangLibrary import collectAT
+from scipy import cluster
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
 
 def graphKmean(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLine,methylationflank):
-# 	#https://stats.stackexchange.com/questions/9850/how-to-plot-data-output-of-clustering
 
 	# Parameters that all graphs will use
 	fillX = range(0,(num-window))
@@ -37,22 +44,38 @@ def graphKmean(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLine,me
 	# Plot settings
 	sns.set_style('ticks')
 	plt.suptitle(info,fontsize=10)
-	pp = PdfPages('Cluster_{0}.pdf'.format(fileName))
-	sns.set_palette("husl",n_colors=8)#(len(nucLine)*2)
+	pp = PdfPages('Kmeans_{0}.pdf'.format(fileName))
+	sns.set_palette("husl",n_colors=8)
+	
+	# get the average first/last inset
+	upinset = ATgroup.T[(((num-uce)/2)-halfwindow):(((num-uce)/2)-halfwindow+inuce)].mean()
+	downinset = ATgroup.T[(((num-uce)/2)+uce-halfwindow-inuce):(((num-uce)/2)+uce-halfwindow)].mean()
 
-	ATstdint = ATstd.astype(int)
-	ATstdvalues = ATstdint.tolist()
-	ATstdinitial = [cluster.vq.kmeans(ATstdvalues,i) for i in range(1,10)]
+	ATlist = [list(a) for a in zip(upinset,downinset)]
+	ATarray = np.array(ATlist)
+	print ATarray
+	
+	#https://stackoverflow.com/questions/42398403/python-k-means-clustering-array
+# 	kmeans = KMeans(n_clusters=5,random_state=0).fit(ATarray)
+	# see labels
+	#print kmeans.labels_
+	# predict new points
+	#kmeans.predict([],[])
+	# see where the centres of clusters are
+	#kmeans.cluster_centers_
+	
 	
 	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
 	gs.update(hspace=.5)
-
+	
+# 	#https://stats.stackexchange.com/questions/9850/how-to-plot-data-output-of-clustering
+	ATstdinitial = [cluster.vq.kmeans(ATarray,i) for i in range(1,10)]
 	ax0 = plt.subplot(gs[0,:])
 	ax0.plot([var for (cent,var) in ATstdinitial])
 	cent,var = ATstdinitial[3]
-	assignmetn,cdist = cluster.vq.vq(ATstdvalues,cent)
+	assignment,cdist = cluster.vq.vq(ATarray,cent)
 	ax1 = plt.subplot(gs[1,:])
-	ax1.scatter(ATstdvalues[:,0],ATstdvalues[:,1],c=assignment)
+	ax1.scatter(ATarray[:,0],ATarray[:,1],c=assignment)
 
 def main(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLine,methylationflank):
 	graphKmean(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLine,methylationflank)
