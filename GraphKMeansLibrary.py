@@ -7,6 +7,7 @@ August 4 2017
 To Do:
 Doesn't work yet, need to convert list of list to array fo list
 Look at other element clustering to get params, and compare (how similar are other groups to uces?)
+http://scikit-learn.org/stable/modules/clustering.html#dbscan
 """
 
 import argparse

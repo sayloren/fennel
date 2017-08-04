@@ -5,13 +5,15 @@ Wren Saylor
 July 5 2017
 
 To Do:
-Table for each group % =
-Align Exonic by intron-exon shift
-Correct total and ratio for each type?
-Get slopes
-Print data out to tables
 k means / scikit learn
 dendrogram color clusters (what clustering parameters are used in literature, how do uces compare to other clustered groups)
+cluster by difference between boundaries
+snps, nucleosomes, replication origins/forks, tss
+
+more constrined = boundary graph from emperical spread
+idxloc for methlation
+c/g available
+AT balance random
 
 """
 
@@ -22,6 +24,7 @@ import FangsLibrary
 import MethylationLibrary
 import RevCompLibrary
 import TypeLibrary
+import ExonicInsetLibrary
 import BinLibrary
 import GraphFangLibrary
 import GraphMethLibrary
@@ -31,6 +34,7 @@ import GraphTableLibrary
 import GraphClusterLibrary
 import GraphDendrogramLibrary
 import GraphKMeansLibrary
+import pandas as pd
 
 # set command line arguments
 def get_args():
@@ -45,6 +49,7 @@ def get_args():
 # 	parser.add_argument("-n", "--nucleosome", type=str, help="A bedgraph file with data for nucleosome positions, form 'chr, start, stop, occupancy'")
 # 	parser.add_argument("-s", "--snp", type=str, help="A file with data for snps, form 'chr, start, stop(start+size alt-mutated), ref, ref_size, alt, alt_size, af_adj'")
 	parser.add_argument("-fa", "--fasta", type=str, default="hg19.fa")
+	parser.add_argument("-ex", "--exons", type=str, default="hg19_0based_exons.bed",help='A file containing all exonic regions in format "chr start stop direction"')
 
 	# Integer Parameters
 	parser.add_argument("-t", "--total", type=int, default="600", help='total size of region to look at (region + flanks), should be an even number, suggested to be at least triple your element')
@@ -63,6 +68,7 @@ def get_args():
 	parser.add_argument('-p',"--plots",default=[],nargs='*',choices=['fang','methylation','signal','interactive','cluster','dendrogram','kmean'],help='the available graphs to plot')
 	parser.add_argument('-nuc',"--nucleotideline",default=['A','T'],nargs='+',help='type the nucleotide string combinations to search for in the element')
 	parser.add_argument('-str',"--stringname",type=str,help='string to add to the outfile name')
+	parser.add_argument('-align', "--exonicalign",action='store_true', help='if want to align by exonic/intronic crossover')
 
 	# Add additional descriptive file name information
 	return parser.parse_args()
@@ -95,9 +101,20 @@ def plotGraphs(pdMeth,rnMeth,dfWindow,names,ranWindow,fileName,num,uce,inuce,win
 	if 'kmean' in graphs:
 		GraphKMeansLibrary.main(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLine,methFlank)
 
-def plotTable():
-	if 'table' in graphs:
-		GraphTableLibrary.main(dfWindow,ranWindow,fileName)
+# make a table for element and random region
+def plotTable(TableData,Title,ranTableData,ranTitle,fileName):
+	GraphTableLibrary.main(TableData,Title,ranTableData,ranTitle,fileName)
+
+# collect the counts for how many of each boundary direction for each type
+def collectCounts(rangeFeatures):
+	grouptype = rangeFeatures.groupby('type')['compareBoundaries'].value_counts()
+	pdgroup = pd.DataFrame(grouptype)
+	pdgroup.columns = ['counts']
+	pvtable = pd.pivot_table(pdgroup,index=['type'],columns=['compareBoundaries'],values=['counts'])
+	pvtable.columns.name = None
+	pvtable.index.name = None
+	pvtable.loc['all']= pvtable.sum()
+	return pvtable
 
 def main():
 	# Collect arguments
@@ -121,6 +138,7 @@ def main():
 	# Genome files from UCSC
 	sizeGenome = args.genome
 	faGenome = args.fasta
+	Exonicregions = args.exons
 
 	# Lists with the types and directions to use
 	typeList = args.elementype
@@ -129,6 +147,7 @@ def main():
 
 	# Reverse complement argument
 	revCom = args.reversecomplement
+	exonicInset = args.exonicalign
 
 	# Which plots to run
 	graphs = args.plots
@@ -149,18 +168,17 @@ def main():
 			randomFeatures = ElementLibrary.main(num,uce,inuce,window,binDir,randomFile,sizeGenome,faGenome)
 			# separate by direction
 			randirFeatures = DirectionLibrary.main(randomFeatures,randomFile,binDir)
-
+			
+			# Make table for the count of each direction for each type element
+			elementGroup = collectCounts(rangeFeatures)
+			randomGroup = collectCounts(randirFeatures)
+			plotTable(elementGroup,'Counts for Elements',randomGroup,'Counts for Random Regions','Direction_Count_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}'.format(uce,inuce,num,binDir,window,fileName,randomFile,stringName))
+			
 			# All elements
 			if 'all' in typeList:
 				typeList.remove('all')
-				allWindow, allNames = FangsLibrary.main(rangeFeatures['combineString'],rangeFeatures['id'],num,uce,inuce,window,nucLine)
-				ranWindow, ranNames = FangsLibrary.main(randomFeatures['combineString'],randomFeatures['id'],num,uce,inuce,window,nucLine)
-				if any(x in graphs for x in ['methylation','cluster']):
-					pdMeth = MethylationLibrary.main(mFiles,rangeFeatures,num,uce,inuce,methCovThresh,methPerThresh,faGenome)
-					rnMeth = MethylationLibrary.main(mFiles,randomFeatures,num,uce,inuce,methCovThresh,methPerThresh,faGenome)
-				else:
-					pdMeth = None
-					rnMeth = None
+				pdMeth,allWindow, allNames = TypeLibrary.main(rangeFeatures,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+				rnMeth,ranWindow, ranNames = TypeLibrary.main(randomFeatures,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 				plotGraphs(pdMeth,rnMeth,allWindow,allNames,ranWindow,'all_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}'.format(uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
 				if revCom:
 					revMeth,revWindow,revNames = RevCompLibrary.main(directionFeatures,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
@@ -186,6 +204,20 @@ def main():
 					typeBool,typeMeth,typeWindow,typeNames = groupSeparate(type,directionFeatures,'type',fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 					rantypeBool,rantypeMeth,rantypeWindow,rantypeNames = groupSeparate(type,randirFeatures,'type',randomFile,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 					plotGraphs(typeMeth,rantypeMeth,typeWindow,typeNames,rantypeWindow,'{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}_{9}'.format(type,dir,uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
+
+			# Re-align by exon/intron crossover
+			if exonicInset:
+				alignFeatures,rcalignFeatures = ExonicInsetLibrary.main(rangeFeatures,Exonicregions,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs)
+				ranalignFeatures,rcranalignFeatures = ExonicInsetLibrary.main(randomFeatures,Exonicregions,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs)
+				# should giving the directionality come befor or after the realign? doing after for now...
+				alignMeth,alignWindow,alignNames = TypeLibrary.main(alignFeatures,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+				ranalignMeth,ranalignWindow,ranalignNames = TypeLibrary.main(ranalignFeatures,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+				plotGraphs(alignMeth,ranalignMeth,alignWindow,alignNames,ranalignWindow,'align_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}'.format(uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
+				if revCom:
+					rcalignMeth,rcalignWindow,rcalignNames = TypeLibrary.main(rcalignFeatures,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+					rcranalignMeth,rcranalignWindow,rcranalignNames = TypeLibrary.main(rcranalignFeatures,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+					plotGraphs(revalignMeth,ranrevalignMeth,revalignWindow,revalignNames,ranrevalignWindow,'revComp_align_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}'.format(uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
+				# use the exons directionality to separate the elements into groups to plot
 
 if __name__ == "__main__":
 	main()

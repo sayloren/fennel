@@ -195,7 +195,7 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	plt.setp(heatmap0.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
 	plt.setp(heatmap0.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap0.ax_heatmap.set_title('Mean AT Content per Element',size=12))
-	ATOrdered = heatmap0.dendrogram_row.reordered_ind
+# 	ATOrdered = heatmap0.dendrogram_row.reordered_ind
 	
 	sns.despine()
 	pp.savefig()
@@ -214,7 +214,7 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	plt.setp(heatmap1.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
 	plt.setp(heatmap1.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap1.ax_heatmap.set_title('Mean AT Content per Random Region',size=12))
-	ranATOrdered = heatmap1.dendrogram_row.reordered_ind
+# 	ranATOrdered = heatmap1.dendrogram_row.reordered_ind
 
 	sns.despine()
 	pp.savefig()
@@ -435,16 +435,16 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	pp.savefig()
 	print 'Plotted methylation frequency for element x position , random regions'
 
-	# put the index in a list
-	UCEindex = ATelement.T.index.tolist()
-	RANindex = ranATelement.T.index.tolist()
-	
-	# reorder index based on clustering
-	ATsorted = [UCEindex[i] for i in ATOrdered]
-	RANsorted = [RANindex[i] for i in ranATOrdered]
-
-	GraphTableLibrary.main(ATOrdered,ranATOrdered,'Cluster_{0}'.format(fileName))
-	print 'Created table for re-ordered mean AT cluster data'
+# 	#put the index in a list
+# 	UCEindex = ATelement.T.index.tolist()
+# 	RANindex = ranATelement.T.index.tolist()
+# 	
+# 	reorder index based on clustering
+# 	ATsorted = [UCEindex[i] for i in ATOrdered]
+# 	RANsorted = [RANindex[i] for i in ranATOrdered]
+# 
+# 	GraphTableLibrary.main(ATOrdered,ranATOrdered,'Cluster_{0}'.format(fileName))
+# 	print 'Created table for re-ordered mean AT cluster data'
 
 	sns.despine()
 	pp.savefig()

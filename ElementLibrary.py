@@ -58,7 +58,7 @@ def btRange(rangeFeatures,faGenome):#,methFeature
 
 # get the reverse complement
 def reverseComplement(sequence):
-	seqDict = {'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C'}
+	seqDict = {'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C','N':'N'}
 	return "".join([seqDict[base] for base in reversed(sequence)])
 
 # save file from bedtool
