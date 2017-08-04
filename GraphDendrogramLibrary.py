@@ -22,7 +22,36 @@ from scipy.cluster.hierarchy import dendrogram, set_link_color_palette
 from scipy.spatial import distance
 from scipy.cluster import hierarchy
 from GraphFangLibrary import collectAT
-import seaborn as sns
+
+# Make cluster classes based on the den values
+def getClusterClass(den):
+	#https://stackoverflow.com/questions/27924813/extracting-clusters-from-seaborn-clustermap
+	#http://www.nxn.se/valent/extract-cluster-elements-by-color-in-python
+	label='ivl'
+	cluster_idxs = defaultdict(list)
+	for c, pi in zip(den['color_list'],den['icoord']):
+		for leg in pi[1:3]:
+			i = (leg - 5.0)/10.0
+			if abs(i-int(i)) < 1e5:
+				cluster_idxs[c].append(int(i))
+	cluster_classes = {}
+	for c, l in cluster_idxs.items():
+		i_l = [den[label][i] for i in l]
+		cluster_classes[c] = i_l
+	return cluster_classes
+
+# Make a column for the cluster class values
+def makeClusterCol(ATelement,Elementclusters):
+	cluster = []
+	for i in ATelement.T.index:
+		included=False
+		for j in Elementclusters.keys():
+			if i in Elementclusters[j]:
+				cluster.append(j)
+				included=True
+		if not included:
+			cluster.append(None)
+	return cluster
 
 # Make some graphs for fangs
 def graphDendrogram(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLine,methylationflank):
