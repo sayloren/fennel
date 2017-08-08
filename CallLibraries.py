@@ -24,7 +24,7 @@ import FangsLibrary
 import MethylationLibrary
 import RevCompLibrary
 import TypeLibrary
-import ExonicInsetLibrary
+import OverlapLibrary
 import BinLibrary
 import GraphFangLibrary
 import GraphMethLibrary
@@ -49,7 +49,7 @@ def get_args():
 # 	parser.add_argument("-n", "--nucleosome", type=str, help="A bedgraph file with data for nucleosome positions, form 'chr, start, stop, occupancy'")
 # 	parser.add_argument("-s", "--snp", type=str, help="A file with data for snps, form 'chr, start, stop(start+size alt-mutated), ref, ref_size, alt, alt_size, af_adj'")
 	parser.add_argument("-fa", "--fasta", type=str, default="hg19.fa")
-	parser.add_argument("-ex", "--exons", type=str, default="hg19_0based_exons.bed",help='A file containing all exonic regions in format "chr start stop direction"')
+	parser.add_argument("-o", "--overlapingelements", type=str, default="hg19_0based_exons.bed",help='A file containing all elements to check for overlaps in format "chr start stop", using for exons, but can be anything')#direction
 
 	# Integer Parameters
 	parser.add_argument("-t", "--total", type=int, default="600", help='total size of region to look at (region + flanks), should be an even number, suggested to be at least triple your element')
@@ -68,7 +68,7 @@ def get_args():
 	parser.add_argument('-p',"--plots",default=[],nargs='*',choices=['fang','methylation','signal','interactive','cluster','dendrogram','kmean'],help='the available graphs to plot')
 	parser.add_argument('-nuc',"--nucleotideline",default=['A','T'],nargs='+',help='type the nucleotide string combinations to search for in the element')
 	parser.add_argument('-str',"--stringname",type=str,help='string to add to the outfile name')
-	parser.add_argument('-align', "--exonicalign",action='store_true', help='if want to align by exonic/intronic crossover')
+	parser.add_argument('-align', "--elementalign",action='store_true', help='if want to align by exonic/intronic crossover')
 
 	# Add additional descriptive file name information
 	return parser.parse_args()
@@ -138,7 +138,7 @@ def main():
 	# Genome files from UCSC
 	sizeGenome = args.genome
 	faGenome = args.fasta
-	Exonicregions = args.exons
+	Overlapregions = args.overlapingelements
 
 	# Lists with the types and directions to use
 	typeList = args.elementype
@@ -147,7 +147,7 @@ def main():
 
 	# Reverse complement argument
 	revCom = args.reversecomplement
-	exonicInset = args.exonicalign
+	overlapInset = args.elementalign
 
 	# Which plots to run
 	graphs = args.plots
@@ -206,17 +206,18 @@ def main():
 					plotGraphs(typeMeth,rantypeMeth,typeWindow,typeNames,rantypeWindow,'{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}_{9}'.format(type,dir,uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
 
 			# Re-align by exon/intron crossover
-			if exonicInset:
-				alignFeatures,rcalignFeatures = ExonicInsetLibrary.main(rangeFeatures,Exonicregions,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs)
-				ranalignFeatures,rcranalignFeatures = ExonicInsetLibrary.main(randomFeatures,Exonicregions,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs)
-				# should giving the directionality come befor or after the realign? doing after for now...
-				alignMeth,alignWindow,alignNames = TypeLibrary.main(alignFeatures,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-				ranalignMeth,ranalignWindow,ranalignNames = TypeLibrary.main(ranalignFeatures,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-				plotGraphs(alignMeth,ranalignMeth,alignWindow,alignNames,ranalignWindow,'align_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}'.format(uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
-				if revCom:
-					rcalignMeth,rcalignWindow,rcalignNames = TypeLibrary.main(rcalignFeatures,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-					rcranalignMeth,rcranalignWindow,rcranalignNames = TypeLibrary.main(rcranalignFeatures,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-					plotGraphs(revalignMeth,ranrevalignMeth,revalignWindow,revalignNames,ranrevalignWindow,'revComp_align_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}'.format(uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
+			if overlapInset:
+				alignFeatures,rcalignFeatures = OverlapLibrary.main(rangeFeatures,Overlapregions,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs)
+
+# 				ranalignFeatures,rcranalignFeatures = ExonicInsetLibrary.main(randomFeatures,Overlapregions,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs)
+# 				# should giving the directionality come befor or after the realign? doing after for now...
+# 				alignMeth,alignWindow,alignNames = TypeLibrary.main(alignFeatures,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+# 				ranalignMeth,ranalignWindow,ranalignNames = TypeLibrary.main(ranalignFeatures,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+# 				plotGraphs(alignMeth,ranalignMeth,alignWindow,alignNames,ranalignWindow,'align_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}'.format(uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
+# 				if revCom:
+# 					rcalignMeth,rcalignWindow,rcalignNames = TypeLibrary.main(rcalignFeatures,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+# 					rcranalignMeth,rcranalignWindow,rcranalignNames = TypeLibrary.main(rcranalignFeatures,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+# 					plotGraphs(revalignMeth,ranrevalignMeth,revalignWindow,revalignNames,ranrevalignWindow,'revComp_align_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}'.format(uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
 				# use the exons directionality to separate the elements into groups to plot
 
 if __name__ == "__main__":
