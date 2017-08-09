@@ -39,11 +39,11 @@ def getRange(btFeatures,fileName,num,uce,inuce):
 	midFeatures['chr'] = midFeatures.loc[:,0]
 	midFeatures['size'] = midFeatures.loc[:,2].astype(int)-midFeatures.loc[:,1].astype(int)
 	rangeFeatures = midFeatures[['type','id','size','chr','sBoundary','start','sEdge','sCenter','eCenter','eEdge','end','eBoundary']]
-# 	print 'Getting the coordinates for the area to graph, {0} from the middle of the element, {1} inset from the edges, {2} flanking regions'.format()
+	print 'Getting the coordinates for the area to examine, {0} from the middle of the element, {1} inset from the edges'.format((midFeatures['eCenter']-midFeatures['sCenter']).mean(),(midFeatures['sEdge']-midFeatures['start']).mean())
 	return rangeFeatures
 
 # get the strings for sliding window regions
-def btRange(rangeFeatures,faGenome):#,methFeature
+def btRange(rangeFeatures,faGenome):
 	rangeFeatures['sBoundarySeq'] = simpleFasta(getFeatures(rangeFeatures[['chr','sBoundary','start']].values.tolist()),faGenome)
 	rangeFeatures['sEdgeSeq'] = simpleFasta(getFeatures(rangeFeatures[['chr','start','sEdge']].values.tolist()),faGenome)
 	rangeFeatures['MiddleSeq'] = simpleFasta(getFeatures(rangeFeatures[['chr','sCenter','eCenter']].values.tolist()),faGenome)

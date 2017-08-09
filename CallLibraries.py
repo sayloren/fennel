@@ -207,18 +207,17 @@ def main():
 
 			# Re-align by exon/intron crossover
 			if overlapInset:
-				alignFeatures,rcalignFeatures = OverlapLibrary.main(rangeFeatures,Overlapregions,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs)
+				crossboundary,completeelement,interiorelement = OverlapLibrary.main(rangeFeatures,Overlapregions,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs)
+				crossboundary.name = 'Crossboundary'
+				completeelement.name = 'WithinExon'
+				interiorelement.name = 'ContainsExon'
+				rancrossboundary,rancompleteelement,raninteriorelement = OverlapLibrary.main(randomFeatures,Overlapregions,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs)
+				# should giving the directionality come befor or after the realign? doing after for now...
+				for element,random in zip([crossboundary,completeelement,interiorelement],[rancrossboundary,rancompleteelement,raninteriorelement]):
+					alignMeth,alignWindow,alignNames = TypeLibrary.main(element,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+					ranalignMeth,ranalignWindow,ranalignNames = TypeLibrary.main(random,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+					plotGraphs(alignMeth,ranalignMeth,alignWindow,alignNames,ranalignWindow,'align_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}'.format(element.name,uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
 
-# 				ranalignFeatures,rcranalignFeatures = ExonicInsetLibrary.main(randomFeatures,Overlapregions,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs)
-# 				# should giving the directionality come befor or after the realign? doing after for now...
-# 				alignMeth,alignWindow,alignNames = TypeLibrary.main(alignFeatures,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-# 				ranalignMeth,ranalignWindow,ranalignNames = TypeLibrary.main(ranalignFeatures,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-# 				plotGraphs(alignMeth,ranalignMeth,alignWindow,alignNames,ranalignWindow,'align_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}'.format(uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
-# 				if revCom:
-# 					rcalignMeth,rcalignWindow,rcalignNames = TypeLibrary.main(rcalignFeatures,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-# 					rcranalignMeth,rcranalignWindow,rcranalignNames = TypeLibrary.main(rcranalignFeatures,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-# 					plotGraphs(revalignMeth,ranrevalignMeth,revalignWindow,revalignNames,ranrevalignWindow,'revComp_align_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}'.format(uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
-				# use the exons directionality to separate the elements into groups to plot
 
 if __name__ == "__main__":
 	main()
