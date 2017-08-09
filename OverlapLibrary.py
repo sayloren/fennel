@@ -100,29 +100,38 @@ def rangebyClass(df,num,uce,inuce,faGenome):
 	else:
 		interiorelement = None
 	# Exonic cross boundary shift (still need to separate by intergenic/intronic)
-	if len(df[(df['startdifference'] <= -1) & (df['enddifference'] >= 0)]) != 0: # elements overlap at the upstream boundary
-		features = df[(df['startdifference'] <= -1) & (df['enddifference'] >= 0)]
-		features.reset_index(drop=True,inplace=True)
-		features['startCoord'] = features['oend'] - centerElement
-		features['crossBoundary'] = features['oend']
-		features['endCoord'] = features['oend'] + centerElement
-		features['combineString'] = simpleFasta(getFeatures(features[['chr','startCoord','endCoord']].values.tolist()),faGenome)
-		features['combineString'] = features['combineString'].str.upper()
+# 	if len(df[(df['startdifference'] <= -1) & (df['enddifference'] >= 0)]) != 0: # elements overlap at the upstream boundary
+# 		features = df[(df['startdifference'] <= -1) & (df['enddifference'] >= 0)]
+# 		features.reset_index(drop=True,inplace=True)
+# 		features['sEdge'] = features['oend']
+# 		features['sCenter'] = features['oend'] + (inregion/2)
+# 		features['eCenter'] = features['oend'] + uce - (inregion/2)
+# 		features['eEdge'] = features['oend'] + uce
+# 		features['sBoundary'] = features['oend'] - flankSize
+# 		features['eBoundary'] = features['eEdge'] + flankSize
+# 		features['combineString'] = simpleFasta(getFeatures(features[['chr','sBoundary','eBoundary']].values.tolist()),faGenome)
+# 		features['combineString'] = features['combineString'].str.upper()
+# 		features['reverseComplement'] = features.apply(lambda row: reverseComplement(row['combineString']),axis=1) # may use once combine features?
+# 
+# 		features['size'] = features['combineString'].str.len() # check length of string
+# 		startout = features[['chr','startCoord','endCoord','combineString','id']]
+# 		startout.columns = ['chr','start','end','combineString','id']
+# 	else:
+# 		startout = None
+# 	if len(df[(df['startdifference'] >= 0) & (df['enddifference'] <= -1)]) != 0: # elements overlap at the downstream boundary
+# 		features = df[(df['startdifference'] >= 0) & (df['enddifference'] <= -1)]
+# 		features.reset_index(drop=True,inplace=True)
+# 		features['sEdge'] = features['ostart']
+# 		features['sCenter'] = features['ostart'] + (inregion/2)
+# 		features['eCenter'] = features['ostart'] + uce - (inregion/2)
+# 		features['eEdge'] = features['ostart'] + uce
+# 		features['sBoundary'] = features['ostart'] - flankSize
+# 		features['eBoundary'] = features['eEdge'] + flankSize
+# 		features['combineString'] = simpleFasta(getFeatures(features[['chr','sBoundary','eBoundary']].values.tolist()),faGenome)
+# 		features['combineString'] = features['combineString'].str.upper()
+# 		features['reverseComplement'] = features.apply(lambda row: reverseComplement(row['combineString']),axis=1) # may use once combine features?
+
 		features['size'] = features['combineString'].str.len() # check length of string
-		startout = features[['chr','startCoord','endCoord','combineString','id']]
-		startout.columns = ['chr','start','end','combineString','id']
-	else:
-		startout = None
-	if len(df[(df['startdifference'] >= 0) & (df['enddifference'] <= -1)]) != 0: # elements overlap at the downstream boundary
-		features = df[(df['startdifference'] >= 0) & (df['enddifference'] <= -1)]
-		features.reset_index(drop=True,inplace=True)
-		features['startCoord'] = features['ostart'] - centerElement
-		features['crossBoundary'] = features['ostart']
-		features['endCoord'] = features['ostart'] + centerElement
-		features['combineString'] = simpleFasta(getFeatures(features[['chr','startCoord','endCoord']].values.tolist()),faGenome)
-		features['combineString'] = features['combineString'].str.upper()
-		features['size'] = features['combineString'].str.len() # check length of string
-		features['reverseComplement'] = features.apply(lambda row: reverseComplement(row['combineString']),axis=1)
 		endout = features[['chr','startCoord','endCoord','reverseComplement','id']]
 		endout.columns = ['chr','start','end','combineString','id']
 	else:

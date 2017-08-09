@@ -11,9 +11,10 @@ cluster by difference between boundaries
 snps, nucleosomes, replication origins/forks, tss
 
 more constrined = boundary graph from emperical spread
-idxloc for methlation
 c/g available
 AT balance random
+exons - split intron/intergenic, rc sorting, include exon direcitonality, move cross boundary to tss
+which are consitently = 
 
 """
 
@@ -217,7 +218,6 @@ def main():
 					alignMeth,alignWindow,alignNames = TypeLibrary.main(element,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 					ranalignMeth,ranalignWindow,ranalignNames = TypeLibrary.main(random,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 					plotGraphs(alignMeth,ranalignMeth,alignWindow,alignNames,ranalignWindow,'align_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}'.format(element.name,uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
-
 
 if __name__ == "__main__":
 	main()
