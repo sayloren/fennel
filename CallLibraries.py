@@ -36,6 +36,7 @@ import GraphClusterLibrary
 import GraphDendrogramLibrary
 import GraphKMeansLibrary
 import pandas as pd
+import RevCompOverlapLibrary
 
 # set command line arguments
 def get_args():
@@ -75,14 +76,14 @@ def get_args():
 	return parser.parse_args()
 
 # for type and direction, separate the groups and run the analyses
-def groupSeparate(List,directionFeatures,typecolumn,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs):
+def groupSeparate(List,directionFeatures,typecolumn,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs,typecol):
 
 	# subset by bool presence
 	bool = (directionFeatures[directionFeatures[typecolumn] == List])
 
 	# if there is nothing in that set, skip
 	if len(bool.index) != 0:
-		Meth,dfWindow,Names = TypeLibrary.main(bool,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+		Meth,dfWindow,Names = TypeLibrary.main(bool,typecol,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 	return bool,Meth,dfWindow,Names
 
 # the plotting options, if in the list of plot flags, run graph
@@ -115,7 +116,8 @@ def collectCounts(rangeFeatures):
 	pvtable.columns.name = None
 	pvtable.index.name = None
 	pvtable.loc['all']= pvtable.sum()
-	return pvtable
+	pvout = pvtable.xs('counts', axis=1, drop_level=True)
+	return pvout
 
 def main():
 	# Collect arguments
@@ -165,6 +167,9 @@ def main():
 		
 		# for each random file provided
 		for randomFile in rFiles:
+			# Collect out filename labels 
+			paramlabels = '{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}'.format(uce,inuce,num,binDir,window,fileName,randomFile,stringName)
+			
 			# get the region info to work with
 			randomFeatures = ElementLibrary.main(num,uce,inuce,window,binDir,randomFile,sizeGenome,faGenome)
 			# separate by direction
@@ -172,54 +177,55 @@ def main():
 			
 			# Make table for the count of each direction for each type element
 			elementGroup = collectCounts(rangeFeatures)
-			elementGroup = elementGroup.xs('counts', axis=1, drop_level=True)
 			randomGroup = collectCounts(randirFeatures)
-			randomGroup = randomGroup.xs('counts', axis=1, drop_level=True)
-			plotTable(elementGroup,'Elements',randomGroup,'Random Regions','Direction_Count_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}'.format(uce,inuce,num,binDir,window,fileName,randomFile,stringName))
+			plotTable(elementGroup,'Elements',randomGroup,'Random Regions','Direction_Count_{0}'.format(paramlabels))
 			
 			# All elements
 			if 'all' in typeList:
 				typeList.remove('all')
-				pdMeth,allWindow, allNames = TypeLibrary.main(rangeFeatures,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-				rnMeth,ranWindow, ranNames = TypeLibrary.main(randomFeatures,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-				plotGraphs(pdMeth,rnMeth,allWindow,allNames,ranWindow,'all_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}'.format(uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
+				pdMeth,allWindow, allNames = TypeLibrary.main(rangeFeatures,'combineString',fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+				rnMeth,ranWindow, ranNames = TypeLibrary.main(randomFeatures,'combineString',fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+				plotGraphs(pdMeth,rnMeth,allWindow,allNames,ranWindow,'all_{0}'.format(paramlabels),num,uce,inuce,window,graphs,nucLine,methFlank)
 				if revCom:
 					revMeth,revWindow,revNames = RevCompLibrary.main(directionFeatures,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 					ranrevMeth,ranrevWindow,ranrevNames = RevCompLibrary.main(randirFeatures,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-					plotGraphs(revMeth,ranrevMeth,revWindow,revNames,ranrevWindow,'revComp_all_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}'.format(uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
+					plotGraphs(revMeth,ranrevMeth,revWindow,revNames,ranrevWindow,'revComp_all_{0}'.format(paramlabels),num,uce,inuce,window,graphs,nucLine,methFlank)
 
 # 			# By Type
 			for type in typeList:
-				typeBool,typeMeth,typeWindow,typeNames = groupSeparate(type,directionFeatures,'type',fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-				rantypeBool,rantypeMeth,rantypeWindow,rantypeNames = groupSeparate(type,randirFeatures,'type',randomFile,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-				plotGraphs(typeMeth,rantypeMeth,typeWindow,typeNames,rantypeWindow,'{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}'.format(type,uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
+				typeBool,typeMeth,typeWindow,typeNames = groupSeparate(type,directionFeatures,'type',fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs,'combineString')
+				rantypeBool,rantypeMeth,rantypeWindow,rantypeNames = groupSeparate(type,randirFeatures,'type',randomFile,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs,'combineString')
+				plotGraphs(typeMeth,rantypeMeth,typeWindow,typeNames,rantypeWindow,'{0}_{1}'.format(type,paramlabels),num,uce,inuce,window,graphs,nucLine,methFlank)
 				if revCom:
 					typercMeth,typercWindow,typercNames = RevCompLibrary.main(typeBool,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 					rantypercMeth,rantypercWindow,rantypercNames = RevCompLibrary.main(rantypeBool,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-					plotGraphs(typercMeth,rantypercMeth,typercWindow,typercNames,rantypercWindow,'revComp_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}'.format(type,uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
+					plotGraphs(typercMeth,rantypercMeth,typercWindow,typercNames,rantypercWindow,'revComp_{0}_{1}'.format(type,paramlabels),num,uce,inuce,window,graphs,nucLine,methFlank)
 
 			# By Direction
 			for dir in dirList:
-				dirBool,dirMeth,dirWindow,dirNames = groupSeparate(dir,directionFeatures,'compareBoundaries',fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-				randirBool,randirMeth,randirWindow,randirNames = groupSeparate(dir,randirFeatures,'compareBoundaries',randomFile,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-				plotGraphs(dirMeth,randirMeth,dirWindow,dirNames,randirWindow,'all_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}'.format(dir,uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
+				dirBool,dirMeth,dirWindow,dirNames = groupSeparate(dir,directionFeatures,'compareBoundaries',fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs,'combineString')
+				randirBool,randirMeth,randirWindow,randirNames = groupSeparate(dir,randirFeatures,'compareBoundaries',randomFile,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs,'combineString')
+				plotGraphs(dirMeth,randirMeth,dirWindow,dirNames,randirWindow,'all_{0}_{1}'.format(dir,paramlabels),num,uce,inuce,window,graphs,nucLine,methFlank)
 				for type in typeList:
-					typeBool,typeMeth,typeWindow,typeNames = groupSeparate(type,directionFeatures,'type',fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-					rantypeBool,rantypeMeth,rantypeWindow,rantypeNames = groupSeparate(type,randirFeatures,'type',randomFile,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-					plotGraphs(typeMeth,rantypeMeth,typeWindow,typeNames,rantypeWindow,'{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}_{9}'.format(type,dir,uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
+					typeBool,typeMeth,typeWindow,typeNames = groupSeparate(type,directionFeatures,'type',fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs,'combineString')
+					rantypeBool,rantypeMeth,rantypeWindow,rantypeNames = groupSeparate(type,randirFeatures,'type',randomFile,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs,'combineString')
+					plotGraphs(typeMeth,rantypeMeth,typeWindow,typeNames,rantypeWindow,'{0}_{1}_{2}'.format(type,dir,paramlabels),num,uce,inuce,window,graphs,nucLine,methFlank)
 
 			# Re-align by exon/intron crossover
 			if overlapInset:
-				crossboundary,completeelement,interiorelement = OverlapLibrary.main(rangeFeatures,Overlapregions,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs)
-				crossboundary.name = 'Crossboundary'
+				startcrossboundary,endcrossboundary,completeelement,interiorelement = OverlapLibrary.main(rangeFeatures,Overlapregions,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs)
+				crossMeth,crossWindow,crossNames  = RevCompOverlapLibrary.main(startcrossboundary,endcrossboundary,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 				completeelement.name = 'WithinExon'
 				interiorelement.name = 'ContainsExon'
-				rancrossboundary,rancompleteelement,raninteriorelement = OverlapLibrary.main(randomFeatures,Overlapregions,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs)
+				ranstartcrossboundary,ranendcrossboundary,rancompleteelement,raninteriorelement = OverlapLibrary.main(randomFeatures,Overlapregions,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs)
+				rancrossMeth,rancrossWindow,rancrossNames  = RevCompOverlapLibrary.main(ranstartcrossboundary,ranendcrossboundary,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+				plotGraphs(crossMeth,rancrossMeth,crossWindow,crossNames,rancrossWindow,'align_Crossboundary_{0}'.format(paramlabels),num,uce,inuce,window,graphs,nucLine,methFlank)
 				# should giving the directionality come befor or after the realign? doing after for now...
-				for element,random in zip([crossboundary,completeelement,interiorelement],[rancrossboundary,rancompleteelement,raninteriorelement]):
-					alignMeth,alignWindow,alignNames = TypeLibrary.main(element,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-					ranalignMeth,ranalignWindow,ranalignNames = TypeLibrary.main(random,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-					plotGraphs(alignMeth,ranalignMeth,alignWindow,alignNames,ranalignWindow,'align_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}'.format(element.name,uce,inuce,num,binDir,window,fileName,randomFile,stringName),num,uce,inuce,window,graphs,nucLine,methFlank)
+				# if endcrossboundary use reverse complement...and reverse complement sort the within and contains exon groups
+				for element,random in zip([completeelement,interiorelement],[rancompleteelement,raninteriorelement]):
+					alignMeth,alignWindow,alignNames = TypeLibrary.main(element,'combineString',fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+					ranalignMeth,ranalignWindow,ranalignNames = TypeLibrary.main(random,'combineString',fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+					plotGraphs(alignMeth,ranalignMeth,alignWindow,alignNames,ranalignWindow,'align_{0}_{1}'.format(element.name,paramlabels),num,uce,inuce,window,graphs,nucLine,methFlank)
 
 if __name__ == "__main__":
 	main()

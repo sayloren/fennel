@@ -114,15 +114,16 @@ def rangebyClass(df,num,uce,inuce,faGenome):
 		features['combineString'] = simpleFasta(getFeatures(features[['chr','sBoundary','eBoundary']].values.tolist()),faGenome)
 		features['combineString'] = features['combineString'].str.upper()
 		features['size'] = features['combineString'].str.len() # check length of string
-		startout = features[['chr','sBoundary','newstart','sEdge','sCenter','eCenter','eEdge','newend','eBoundary','combineString','id']]
-		startout.columns = ['chr','sBoundary','start','sEdge','sCenter','eCenter','eEdge','end','eBoundary','combineString','id']
+		features['reverseComplement'] = features.apply(lambda row: reverseComplement(row['combineString']),axis=1) # may use once combine features?
+		startcrossboundary = features[['chr','sBoundary','newstart','sEdge','sCenter','eCenter','eEdge','newend','eBoundary','combineString','reverseComplement','id']]
+		startcrossboundary.columns = ['chr','sBoundary','start','sEdge','sCenter','eCenter','eEdge','end','eBoundary','combineString','reverseComplement','id']
 	else:
-		startout = None
+		startcrossboundary = None
 	if len(df[(df['startdifference'] >= 0) & (df['enddifference'] <= -1)]) != 0: # elements overlap at the downstream boundary
 		features = df[(df['startdifference'] >= 0) & (df['enddifference'] <= -1)]
 		features.reset_index(drop=True,inplace=True)
-		features['newstart'] = features['ostart']
-		features['newend'] = features['ostart'] + uce
+		features['newstart'] = features['ostart'] - uce
+		features['newend'] = features['ostart']
 		features['sEdge'] = features['newstart'] + inuce
 		features['eEdge'] = features['newend'] - inuce
 		features['sCenter'] = features['newstart'] + (inregion/2)
@@ -133,20 +134,17 @@ def rangebyClass(df,num,uce,inuce,faGenome):
 		features['combineString'] = features['combineString'].str.upper()
 		features['reverseComplement'] = features.apply(lambda row: reverseComplement(row['combineString']),axis=1)
 		features['size'] = features['combineString'].str.len() # check length of string
-		endout = features[['chr','sBoundary','newstart','sEdge','sCenter','eCenter','eEdge','newend','eBoundary','reverseComplement','id']]
-		endout.columns = ['chr','sBoundary','start','sEdge','sCenter','eCenter','eEdge','end','eBoundary','combineString','id']
+		endcrossboundary = features[['chr','sBoundary','newstart','sEdge','sCenter','eCenter','eEdge','newend','eBoundary','combineString','reverseComplement','id']]
+		endcrossboundary.columns = ['chr','sBoundary','start','sEdge','sCenter','eCenter','eEdge','end','eBoundary','combineString','reverseComplement','id']
 	else:
-		endout = None
-	boundaryframes = [startout,endout]
-	crossboundary = pd.concat(boundaryframes)
-	crossboundary.reset_index(drop=True,inplace=True)
-	return crossboundary,completeelement,interiorelement
+		endcrossboundary = None
+	return startcrossboundary,endcrossboundary,completeelement,interiorelement
 
 def main(rangeFeatures,exonicInset,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs):
 	exonFeature = eachFileProcess(exonicInset)
 	exonicFeatures, overlapTable = exonIntersect(rangeFeatures,exonFeature,num,uce,inuce,faGenome)
-	crossboundary,completeelement,interiorelement = rangebyClass(exonicFeatures,num,uce,inuce,faGenome)
-	return crossboundary,completeelement,interiorelement
+	startcrossboundary,endcrossboundary,completeelement,interiorelement = rangebyClass(exonicFeatures,num,uce,inuce,faGenome)
+	return startcrossboundary,endcrossboundary,completeelement,interiorelement
 
 if __name__ == "__main__":
 	main()
