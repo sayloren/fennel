@@ -22,40 +22,31 @@ def graphTable(TableData,Title,ranTableData,ranTitle,fileName):
 	info = str(fileName)
 # 	plt.suptitle(info,fontsize=10)
 	pp = PdfPages('Table_{0}.pdf'.format(fileName))
-	gs = gridspec.GridSpec(3,1,height_ratios=[1,1,1])
-	gs.update(hspace=.1)
 	plt.tight_layout()
-	plt.figure(figsize=(12,6))
-
-	ax0 = plt.subplot(gs[0])
-	ax0.set_frame_on(False)
-	ax0.set_yticks([])
-	ax0.set_xticks([])
-	Table0 = ax0.table(cellText=TableData.values,rowLabels=TableData.index,colLabels=TableData.columns,cellLoc='center',rowLoc='center',loc='center')
-	ax0.set_title(Title,size=14)
-	Table0.set_fontsize(14)
+	plt.figure(figsize=(14,6))
 	
-	ax1 = plt.subplot(gs[1])
-	ax1.set_frame_on(False)
-	ax1.set_yticks([])
-	ax1.set_xticks([])
-	Table1 = ax1.table(cellText=ranTableData.values,rowLabels=ranTableData.index,colLabels=ranTableData.columns,cellLoc='center',rowLoc='center',loc='center')
-	ax1.set_title(ranTitle,size=14)
-	Table1.set_fontsize(14)
+	allData = pd.concat([TableData,ranTableData])#,keys=['elements','random']
 
 	outchisquare = []
 	for x,y in zip(TableData,ranTableData):
 		outchisquare.append(chisquare(TableData[x],ranTableData[y]))
 	pdchi = pd.DataFrame(outchisquare)
 	pdchi.index = TableData.T.index
-	ax2 = plt.subplot(gs[2])
-	ax2.set_frame_on(False)
-	ax2.set_yticks([])
-	ax2.set_xticks([])
-	Table2 = ax2.table(cellText=pdchi.values.round(3),rowLabels=pdchi.index,colLabels=pdchi.columns,cellLoc='center',rowLoc='center',loc='center')
-	ax2.set_title('Chi Square Test',size=14)
-	Table2.set_fontsize(14)
 	
+	allData.columns.name = None
+	printTable = pd.concat([allData.T,pdchi],axis=1)
+
+	gs = gridspec.GridSpec(1,1,height_ratios=[1])
+	ax0 = plt.subplot(gs[0])
+	ax0.set_frame_on(False)
+	ax0.set_yticks([])
+	ax0.set_xticks([])
+	Table0 = ax0.table(cellText=[['']*2],colLabels=['Observed', 'Expected','Chi Square'],loc='center',bbox=[0, 0.6, 0.8, 0.1])
+	Table1 = ax0.table(cellText=[['']],colLabels=['Chi Square'],loc='center', bbox=[0.8, 0.6, 0.2, 0.1])
+	Table2 = ax0.table(cellText=printTable.values.round(3),rowLabels=printTable.index,colLabels=printTable.columns,cellLoc='center',rowLoc='center',loc='center', bbox=[0, 0.35, 1.0, 0.3])
+	ax0.set_title('Chi Square Test for {0} and {1}'.format(Title, ranTitle),size=24)
+	Table2.set_fontsize(24)
+
 	sns.despine()
 	plt.savefig(pp, format='pdf')
 	pp.close()

@@ -172,8 +172,10 @@ def main():
 			
 			# Make table for the count of each direction for each type element
 			elementGroup = collectCounts(rangeFeatures)
+			elementGroup = elementGroup.xs('counts', axis=1, drop_level=True)
 			randomGroup = collectCounts(randirFeatures)
-			plotTable(elementGroup,'Counts for Elements',randomGroup,'Counts for Random Regions','Direction_Count_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}'.format(uce,inuce,num,binDir,window,fileName,randomFile,stringName))
+			randomGroup = randomGroup.xs('counts', axis=1, drop_level=True)
+			plotTable(elementGroup,'Elements',randomGroup,'Random Regions','Direction_Count_{0}_{1}_{2}_{3}_{4}_{5}_{6}_{7}'.format(uce,inuce,num,binDir,window,fileName,randomFile,stringName))
 			
 			# All elements
 			if 'all' in typeList:

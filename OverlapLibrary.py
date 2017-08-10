@@ -131,15 +131,15 @@ def rangebyClass(df,num,uce,inuce,faGenome):
 # 		features['combineString'] = features['combineString'].str.upper()
 # 		features['reverseComplement'] = features.apply(lambda row: reverseComplement(row['combineString']),axis=1) # may use once combine features?
 
-		features['size'] = features['combineString'].str.len() # check length of string
-		endout = features[['chr','startCoord','endCoord','reverseComplement','id']]
-		endout.columns = ['chr','start','end','combineString','id']
-	else:
-		endout = None
-	boundaryframes = [startout,endout]
-	crossboundary = pd.concat(boundaryframes)
-	crossboundary.reset_index(drop=True,inplace=True)
-	return crossboundary,completeelement,interiorelement
+# 		features['size'] = features['combineString'].str.len() # check length of string
+# 		endout = features[['chr','startCoord','endCoord','reverseComplement','id']]
+# 		endout.columns = ['chr','start','end','combineString','id']
+# 	else:
+# 		endout = None
+# 	boundaryframes = [startout,endout]
+# 	crossboundary = pd.concat(boundaryframes)
+# 	crossboundary.reset_index(drop=True,inplace=True)
+# 	return crossboundary,completeelement,interiorelement
 
 def main(rangeFeatures,exonicInset,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs):
 	exonFeature = eachFileProcess(exonicInset)
