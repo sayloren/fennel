@@ -88,9 +88,14 @@ def graphMeth(pdMeth,rnMeth,fileName,num,uce,inuce,window):
 	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
 	gs.update(hspace=.5)
 
-	# Make heatmap for # methylation on pos strand (Frequency)
+	nostrandFreqTis = FreqPlusTis.add(FreqMinusTis,fill_value=0)
+	nostrandranFreqTis = ranFreqPlusTis.add(ranFreqMinusTis,fill_value=0)
+	nostrandFreqID = FreqPlusID.add(FreqMinusID,fill_value=0)
+	nostrandranFreqID = ranFreqPlusID.add(ranFreqMinusID,fill_value=0)
+
+# 	Make heatmap for # methylation on pos strand (Frequency)
 	ax0 = plt.subplot(gs[0,:])
-	heatmap0 = sns.heatmap(FreqPlusTis,cmap='RdPu',ax=ax0,xticklabels=100)#cbar_ax=cbar5_ax,vmin=0,vmax=5
+	heatmap0 = sns.heatmap(nostrandFreqTis,cmap='RdPu',ax=ax0,xticklabels=100)#cbar_ax=cbar5_ax,vmin=0,vmax=5
 	ax0.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
 	ax0.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
 	ax0.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
@@ -98,14 +103,14 @@ def graphMeth(pdMeth,rnMeth,fileName,num,uce,inuce,window):
 	ax0.set_ylabel('Sample',size=8)
 	ax0.set_xlabel('Position',size=6)
 	ax0.tick_params(labelsize=8)
-	ylabels0 = FreqPlusTis.index
+	ylabels0 = nostrandFreqTis.index
 	ax0.set_yticklabels(ylabels0,minor=False,rotation=0)
-	ax0.set_yticks(np.arange(FreqPlusTis.shape[0]) + 0.5, minor=False)
-	ax0.set_title('Methylation Frequency on Plus Strand for Elements',size=8)
+	ax0.set_yticks(np.arange(nostrandFreqTis.shape[0]) + 0.5, minor=False)
+	ax0.set_title('Methylation Frequency for Elements',size=8)
 
-	# Make heatmap for # methylation on pos strand (Frequency)
-	ax1 = plt.subplot(gs[1,:],sharex=ax0)
-	heatmap1 = sns.heatmap(FreqMinusTis,cmap='RdPu',ax=ax1,xticklabels=100)#cbar_ax=cbar5_ax,vmin=0,vmax=5
+# 	Make heatmap for # methylation on pos strand (Frequency)
+	ax1 = plt.subplot(gs[1,:])
+	heatmap1 = sns.heatmap(nostrandranFreqTis,cmap='RdPu',ax=ax1,xticklabels=100)#cbar_ax=cbar5_ax,vmin=0,vmax=5
 	ax1.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
 	ax1.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
 	ax1.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
@@ -113,116 +118,182 @@ def graphMeth(pdMeth,rnMeth,fileName,num,uce,inuce,window):
 	ax1.set_ylabel('Sample',size=8)
 	ax1.set_xlabel('Position',size=6)
 	ax1.tick_params(labelsize=8)
-	ylabels1 = FreqMinusTis.index
+	ylabels1 = nostrandranFreqTis.index
 	ax1.set_yticklabels(ylabels1,minor=False,rotation=0)
-	ax1.set_yticks(np.arange(FreqMinusTis.shape[0]) + 0.5, minor=False)
-	ax1.set_title('Methylation Frequency on Minus Strand for Elements',size=8)
+	ax1.set_yticks(np.arange(nostrandranFreqTis.shape[0]) + 0.5, minor=False)
+	ax1.set_title('Methylation Frequency for Random Regions',size=8)
 
 	sns.despine()
 	pp.savefig()
-	print 'Plotted methylation frequency across tissue types for elements'
+	print 'Plotted methylation frequency across tissue types'
 
 	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
 	gs.update(hspace=.5)
 
-	# Make heatmap for # methylation on pos strand (Frequency)
-	ax2 = plt.subplot(gs[0,:])
-	heatmap2 = sns.heatmap(ranFreqPlusTis,cmap='RdPu',ax=ax2,xticklabels=100)#cbar_ax=cbar5_ax,vmin=0,vmax=5
+# 	Make heatmap for # methylation on pos strand (Frequency)
+	ax2 = plt.subplot(gs[0,:],sharex=ax0)
+	heatmap2 = sns.heatmap(nostrandFreqID,cmap='RdPu',ax=ax2,xticklabels=100)#,vmin=0,vmax=5
 	ax2.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
 	ax2.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
 	ax2.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
 	ax2.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
-	ax2.set_ylabel('Sample',size=8)
+	ax2.set_ylabel('{0} Elements'.format(len(nostrandFreqID.index)),size=8)
 	ax2.set_xlabel('Position',size=6)
 	ax2.tick_params(labelsize=8)
-	ylabels2 = ranFreqPlusTis.index
-	ax2.set_yticklabels(ylabels2,minor=False,rotation=0)
-	ax2.set_yticks(np.arange(ranFreqPlusTis.shape[0]) + 0.5, minor=False)
-	ax2.set_title('Methylation Frequency on Plus Strand for Random Regions',size=8)
+	ax2.set_yticklabels([])
+	ax2.set_yticks(np.arange(nostrandFreqID.shape[0]) + 0.5, minor=False)
+	ax2.set_title('Methylation Frequency for Elements',size=8)
 
-	# Make heatmap for # methylation on pos strand (Frequency)
+# 	Make heatmap for # methylation on pos strand (Frequency)
 	ax3 = plt.subplot(gs[1,:],sharex=ax0)
-	heatmap3 = sns.heatmap(ranFreqMinusTis,cmap='RdPu',ax=ax3,xticklabels=100)#cbar_ax=cbar5_ax,vmin=0,vmax=5
+	heatmap3 = sns.heatmap(nostrandranFreqID,cmap='RdPu',ax=ax3,xticklabels=100)#,vmin=0,vmax=5
 	ax3.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
 	ax3.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
 	ax3.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
 	ax3.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
-	ax3.set_ylabel('Sample',size=8)
+	ax3.set_ylabel('{0} Elements'.format(len(nostrandranFreqID.index)),size=8)
 	ax3.set_xlabel('Position',size=6)
 	ax3.tick_params(labelsize=8)
-	ylabels3 = ranFreqMinusTis.index
-	ax3.set_yticklabels(ylabels3,minor=False,rotation=0)
-	ax3.set_yticks(np.arange(ranFreqMinusTis.shape[0]) + 0.5, minor=False)
-	ax3.set_title('Methylation Frequency on Minus Strand for Random Regions',size=8)
+	ax3.set_yticklabels([])
+	ax3.set_yticks(np.arange(nostrandranFreqID.shape[0]) + 0.5, minor=False)
+	ax3.set_title('Methylation Frequency for Random Regions',size=8)
 
-	sns.despine()
-	pp.savefig()
-	print 'Plotted methylation frequency across tissue types for random regions'
-
-	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
-	gs.update(hspace=.5)
-
-	# Make heatmap for # methylation on pos strand (Frequency)
-	ax4 = plt.subplot(gs[0,:],sharex=ax0)
-	heatmap2 = sns.heatmap(FreqPlusID,cmap='RdPu',ax=ax4,xticklabels=100)#,vmin=0,vmax=5
-	ax4.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
-	ax4.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
-	ax4.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
-	ax4.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
-	ax4.set_ylabel('{0} Elements'.format(len(FreqPlusID.index)),size=8)
-	ax4.set_xlabel('Position',size=6)
-	ax4.tick_params(labelsize=8)
-	ax4.set_yticklabels([])
+# Frequency of Methylation Separated by Strand
+# 	Make heatmap for # methylation on pos strand (Frequency)
+# 	ax0 = plt.subplot(gs[0,:])
+# 	heatmap0 = sns.heatmap(FreqPlusTis,cmap='RdPu',ax=ax0,xticklabels=100)#cbar_ax=cbar5_ax,vmin=0,vmax=5
+# 	ax0.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
+# 	ax0.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
+# 	ax0.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
+# 	ax0.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
+# 	ax0.set_ylabel('Sample',size=8)
+# 	ax0.set_xlabel('Position',size=6)
+# 	ax0.tick_params(labelsize=8)
+# 	ylabels0 = FreqPlusTis.index
+# 	ax0.set_yticklabels(ylabels0,minor=False,rotation=0)
+# 	ax0.set_yticks(np.arange(FreqPlusTis.shape[0]) + 0.5, minor=False)
+# 	ax0.set_title('Methylation Frequency on Plus Strand for Elements',size=8)
+# 
+# 	Make heatmap for # methylation on pos strand (Frequency)
+# 	ax1 = plt.subplot(gs[1,:],sharex=ax0)
+# 	heatmap1 = sns.heatmap(FreqMinusTis,cmap='RdPu',ax=ax1,xticklabels=100)#cbar_ax=cbar5_ax,vmin=0,vmax=5
+# 	ax1.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
+# 	ax1.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
+# 	ax1.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
+# 	ax1.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
+# 	ax1.set_ylabel('Sample',size=8)
+# 	ax1.set_xlabel('Position',size=6)
+# 	ax1.tick_params(labelsize=8)
+# 	ylabels1 = FreqMinusTis.index
+# 	ax1.set_yticklabels(ylabels1,minor=False,rotation=0)
+# 	ax1.set_yticks(np.arange(FreqMinusTis.shape[0]) + 0.5, minor=False)
+# 	ax1.set_title('Methylation Frequency on Minus Strand for Elements',size=8)
+# 
+# 	sns.despine()
+# 	pp.savefig()
+# 	print 'Plotted methylation frequency across tissue types for elements'
+# 
+# 	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
+# 	gs.update(hspace=.5)
+# 
+# 	Make heatmap for # methylation on pos strand (Frequency)
+# 	ax2 = plt.subplot(gs[0,:])
+# 	heatmap2 = sns.heatmap(ranFreqPlusTis,cmap='RdPu',ax=ax2,xticklabels=100)#cbar_ax=cbar5_ax,vmin=0,vmax=5
+# 	ax2.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
+# 	ax2.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
+# 	ax2.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
+# 	ax2.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
+# 	ax2.set_ylabel('Sample',size=8)
+# 	ax2.set_xlabel('Position',size=6)
+# 	ax2.tick_params(labelsize=8)
+# 	ylabels2 = ranFreqPlusTis.index
+# 	ax2.set_yticklabels(ylabels2,minor=False,rotation=0)
+# 	ax2.set_yticks(np.arange(ranFreqPlusTis.shape[0]) + 0.5, minor=False)
+# 	ax2.set_title('Methylation Frequency on Plus Strand for Random Regions',size=8)
+# 
+# 	Make heatmap for # methylation on pos strand (Frequency)
+# 	ax3 = plt.subplot(gs[1,:],sharex=ax0)
+# 	heatmap3 = sns.heatmap(ranFreqMinusTis,cmap='RdPu',ax=ax3,xticklabels=100)#cbar_ax=cbar5_ax,vmin=0,vmax=5
+# 	ax3.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
+# 	ax3.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
+# 	ax3.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
+# 	ax3.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
+# 	ax3.set_ylabel('Sample',size=8)
+# 	ax3.set_xlabel('Position',size=6)
+# 	ax3.tick_params(labelsize=8)
+# 	ylabels3 = ranFreqMinusTis.index
+# 	ax3.set_yticklabels(ylabels3,minor=False,rotation=0)
+# 	ax3.set_yticks(np.arange(ranFreqMinusTis.shape[0]) + 0.5, minor=False)
+# 	ax3.set_title('Methylation Frequency on Minus Strand for Random Regions',size=8)
+# 
+# 	sns.despine()
+# 	pp.savefig()
+# 	print 'Plotted methylation frequency across tissue types for random regions'
+# 
+# 	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
+# 	gs.update(hspace=.5)
+# 
+# 	Make heatmap for # methylation on pos strand (Frequency)
+# 	ax4 = plt.subplot(gs[0,:],sharex=ax0)
+# 	heatmap2 = sns.heatmap(FreqPlusID,cmap='RdPu',ax=ax4,xticklabels=100)#,vmin=0,vmax=5
+# 	ax4.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
+# 	ax4.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
+# 	ax4.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
+# 	ax4.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
+# 	ax4.set_ylabel('{0} Elements'.format(len(FreqPlusID.index)),size=8)
+# 	ax4.set_xlabel('Position',size=6)
+# 	ax4.tick_params(labelsize=8)
+# 	ax4.set_yticklabels([])
 # 	ax4.set_yticks(np.arange(FreqPlusID.shape[0]) + 0.5, minor=False)
-	ax4.set_title('Methylation Frequency on Plus Strand for Elements',size=8)
-
-	# Make heatmap for # methylation on neg strand (Frequency)
-	ax5 = plt.subplot(gs[1,:],sharex=ax0)
-	heatmap3 = sns.heatmap(FreqMinusID,cmap='RdPu',ax=ax5,xticklabels=100)#,vmin=0,vmax=5
-	ax5.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
-	ax5.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
-	ax5.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
-	ax5.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
-	ax5.set_ylabel('{0} Elements'.format(len(FreqMinusID.index)),size=8)
-	ax5.set_xlabel('Position',size=6)
-	ax5.tick_params(labelsize=8)
-	ax5.set_yticklabels([])
-	ax5.set_title('Methylation Frequency on Minus Strand for Elements',size=8)
-	
-	sns.despine()
-	pp.savefig()
-	print 'Plotted methylation frequency across tissue types for random regions'
-
-	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
-	gs.update(hspace=.5)
-
-	# Make heatmap for # methylation on pos strand (Frequency)
-	ax6 = plt.subplot(gs[0,:],sharex=ax0)
-	heatmap6 = sns.heatmap(ranFreqPlusID,cmap='RdPu',ax=ax6,xticklabels=100)#,vmin=0,vmax=5
-	ax6.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
-	ax6.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
-	ax6.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
-	ax6.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
-	ax6.set_ylabel('{0} Elements'.format(len(ranFreqPlusID.index)),size=8)
-	ax6.set_xlabel('Position',size=6)
-	ax6.tick_params(labelsize=8)
-	ax6.set_yticklabels([])
+# 	ax4.set_title('Methylation Frequency on Plus Strand for Elements',size=8)
+# 
+# 	Make heatmap for # methylation on neg strand (Frequency)
+# 	ax5 = plt.subplot(gs[1,:],sharex=ax0)
+# 	heatmap3 = sns.heatmap(FreqMinusID,cmap='RdPu',ax=ax5,xticklabels=100)#,vmin=0,vmax=5
+# 	ax5.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
+# 	ax5.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
+# 	ax5.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
+# 	ax5.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
+# 	ax5.set_ylabel('{0} Elements'.format(len(FreqMinusID.index)),size=8)
+# 	ax5.set_xlabel('Position',size=6)
+# 	ax5.tick_params(labelsize=8)
+# 	ax5.set_yticklabels([])
+# 	ax5.set_title('Methylation Frequency on Minus Strand for Elements',size=8)
+# 	
+# 	sns.despine()
+# 	pp.savefig()
+# 	print 'Plotted methylation frequency across tissue types for random regions'
+# 
+# 	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
+# 	gs.update(hspace=.5)
+# 
+# 	Make heatmap for # methylation on pos strand (Frequency)
+# 	ax6 = plt.subplot(gs[0,:],sharex=ax0)
+# 	heatmap6 = sns.heatmap(ranFreqPlusID,cmap='RdPu',ax=ax6,xticklabels=100)#,vmin=0,vmax=5
+# 	ax6.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
+# 	ax6.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
+# 	ax6.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
+# 	ax6.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
+# 	ax6.set_ylabel('{0} Elements'.format(len(ranFreqPlusID.index)),size=8)
+# 	ax6.set_xlabel('Position',size=6)
+# 	ax6.tick_params(labelsize=8)
+# 	ax6.set_yticklabels([])
 # 	ax6.set_yticks(np.arange(FreqPlusID.shape[0]) + 0.5, minor=False)
-	ax6.set_title('Methylation Frequency on Plus Strand for Random Regions',size=8)
-
-	# Make heatmap for # methylation on neg strand (Frequency)
-	ax7 = plt.subplot(gs[1,:],sharex=ax0)
-	heatmap7 = sns.heatmap(ranFreqMinusID,cmap='RdPu',ax=ax7,xticklabels=100)#,vmin=0,vmax=5
-	ax7.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
-	ax7.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
-	ax7.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
-	ax7.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
-	ax7.set_ylabel('{0} Elements'.format(len(ranFreqMinusID.index)),size=8)
-	ax7.set_xlabel('Position',size=6)
-	ax7.tick_params(labelsize=8)
-	ax7.set_yticklabels([])
-	ax7.set_title('Methylation Frequency on Minus Strand for Random Regions',size=8)
-
+# 	ax6.set_title('Methylation Frequency on Plus Strand for Random Regions',size=8)
+# 
+# 	Make heatmap for # methylation on neg strand (Frequency)
+# 	ax7 = plt.subplot(gs[1,:],sharex=ax0)
+# 	heatmap7 = sns.heatmap(ranFreqMinusID,cmap='RdPu',ax=ax7,xticklabels=100)#,vmin=0,vmax=5
+# 	ax7.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
+# 	ax7.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5)
+# 	ax7.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
+# 	ax7.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5)
+# 	ax7.set_ylabel('{0} Elements'.format(len(ranFreqMinusID.index)),size=8)
+# 	ax7.set_xlabel('Position',size=6)
+# 	ax7.tick_params(labelsize=8)
+# 	ax7.set_yticklabels([])
+# 	ax7.set_title('Methylation Frequency on Minus Strand for Random Regions',size=8)
+# 	
 # Percentage and Coverage Graphs
 # 	
 # 	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
@@ -369,8 +440,7 @@ def graphMeth(pdMeth,rnMeth,fileName,num,uce,inuce,window):
 	sns.despine()
 	pp.savefig()
 	pp.close()
-
-	print 'Plotted methylation frequency across elements for random regions'
+	print 'Plotted methylation frequency across elements'
 
 def main(pdMeth,rnMeth,fileName,num,uce,inuce,window):
 	graphMeth(pdMeth,rnMeth,fileName,num,uce,inuce,window)
