@@ -20,8 +20,8 @@ from scipy.stats import mstats
 import seaborn as sns
 
 # Get group, mean and standard deviation for AT
-def collectAT(dfWindow,names):
-	ATNames = [names.index(i) for i in names if 'A' in i or 'T' in i]
+def collectDiNuc(dfWindow,names,nuc1,nuc2):
+	ATNames = [names.index(i) for i in names if nuc1 in i or nuc2 in i]
 	ATDataFrames = [dfWindow[i] for i in ATNames]
 	ATconcat = pd.concat(ATDataFrames,axis=1)
 	ATgroup = ATconcat.groupby(ATconcat.columns,axis=1).sum()
@@ -37,8 +37,10 @@ def graphFang(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	halfwindow = ((window/2)+1)
 
 	# Get group, mean and standard deviation for AT
-	ATgroup,ATmean,ATstd = collectAT(dfWindow,names)
-	ranATgroup,ranATmean,ranATstd = collectAT(ranWindow,names)
+	ATgroup,ATmean,ATstd = collectDiNuc(dfWindow,names,'A','T')
+	CGgroup,CGmean,CGstd = collectDiNuc(dfWindow,names,'C','G')
+	ranATgroup,ranATmean,ranATstd = collectDiNuc(ranWindow,names,'A','T')
+	ranCGgroup,ranCGmean,ranCGstd = collectDiNuc(ranWindow,names,'C','G')
 	
 	# Title info
 	info = str(fileName) + ', '+ str(len(ATgroup.index)) + ' - ' "UCES"

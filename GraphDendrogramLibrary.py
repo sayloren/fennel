@@ -24,7 +24,7 @@ from scipy import cluster
 from scipy.cluster.hierarchy import dendrogram, set_link_color_palette
 from scipy.spatial import distance
 from scipy.cluster import hierarchy
-from GraphFangLibrary import collectAT
+from GraphFangLibrary import collectDiNuc
 
 # Make cluster classes based on the den values
 def getClusterClass(den):
@@ -64,8 +64,8 @@ def graphDendrogram(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLi
 	halfwindow = ((window/2)+1)
 
 	# Get group, mean and standard deviation for AT
-	ATgroup,ATmean,ATstd = collectAT(dfWindow,names)
-	ranATgroup,ranATmean,ranATstd = collectAT(ranWindow,names)
+	ATgroup,ATmean,ATstd = collectDiNuc(dfWindow,names,'A','T')
+	ranATgroup,ranATmean,ranATstd = collectDiNuc(ranWindow,names,'A','T')
 	ATelement = ATgroup.T[(((num-uce)/2)-halfwindow-methylationflank):(((num-uce)/2)+uce-halfwindow+methylationflank)]
 	ranATelement = ranATgroup.T[(((num-uce)/2)-halfwindow-methylationflank):(((num-uce)/2)+uce-halfwindow+methylationflank)]
 	print 'Extracted just element and methylation flank, size {0}'.format(len(ATelement))

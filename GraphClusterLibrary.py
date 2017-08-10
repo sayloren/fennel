@@ -22,7 +22,7 @@ import scipy
 from scipy import cluster
 from scipy.spatial import distance
 from scipy.cluster import hierarchy
-from GraphFangLibrary import collectAT
+from GraphFangLibrary import collectDiNuc
 import GraphTableLibrary
 
 # Reduce each id/tissue x location to get a corresponding tissue/id list of associations
@@ -165,8 +165,8 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	plt.figure(figsize=(7,7))
 
 	# Get group, mean and standard deviation for AT
-	ATgroup,ATmean,ATstd = collectAT(dfWindow,names)
-	ranATgroup,ranATmean,ranATstd = collectAT(ranWindow,names)
+	ATgroup,ATmean,ATstd = collectDiNuc(dfWindow,names,'A','T')
+	ranATgroup,ranATmean,ranATstd = collectDiNuc(ranWindow,names,'A','T')
 	ATelement = ATgroup.T[(((num-uce)/2)-halfwindow-methylationflank):(((num-uce)/2)+uce-halfwindow+methylationflank)]
 	ranATelement = ranATgroup.T[(((num-uce)/2)-halfwindow-methylationflank):(((num-uce)/2)+uce-halfwindow+methylationflank)]
 	print 'Extracted just element and methylation flank, size {0}'.format(len(ATelement))

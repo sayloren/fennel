@@ -23,7 +23,7 @@ from scipy.interpolate import splrep, splev
 from scipy import signal
 from scipy.stats import mstats
 import seaborn as sns
-from GraphFangLibrary import collectAT
+from GraphFangLibrary import collectDiNuc
 
 # Get just the elemenet
 def justElement(region,num,uce,halfwindow,window):
@@ -110,8 +110,8 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	halfwindow = ((window/2)+1)
 
 	# Get group, mean and standard deviation for AT
-	ATgroup,ATmean,ATstd = collectAT(dfWindow,names)
-	ranATgroup,ranATmean,ranATstd = collectAT(ranWindow,names)
+	ATgroup,ATmean,ATstd = collectDiNuc(dfWindow,names,'A','T')
+	ranATgroup,ranATmean,ranATstd = collectDiNuc(ranWindow,names,'A','T')
 
 	# File name
 	info = str(fileName) + ', '+ str(len(ATgroup.index)) + ' - ' "UCES"

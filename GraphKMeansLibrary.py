@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from matplotlib.backends.backend_pdf import PdfPages
-from GraphFangLibrary import collectAT
+from GraphFangLibrary import collectDiNuc
 from scipy import cluster
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
@@ -33,8 +33,8 @@ def graphKmean(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLine,me
 	plt.figure(figsize=(7,7))
 
 	# Get group, mean and standard deviation for AT
-	ATgroup,ATmean,ATstd = collectAT(dfWindow,names)
-	ranATgroup,ranATmean,ranATstd = collectAT(ranWindow,names)
+	ATgroup,ATmean,ATstd = collectDiNuc(dfWindow,names,'A','T')
+	ranATgroup,ranATmean,ranATstd = collectDiNuc(ranWindow,names,'A','T')
 	ATelement = ATgroup.T[(((num-uce)/2)-halfwindow-methylationflank):(((num-uce)/2)+uce-halfwindow+methylationflank)]
 	ranATelement = ranATgroup.T[(((num-uce)/2)-halfwindow-methylationflank):(((num-uce)/2)+uce-halfwindow+methylationflank)]
 	print 'Extracted just element and methylation flank, size {0}'.format(len(ATelement))
