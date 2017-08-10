@@ -19,7 +19,7 @@ from bokeh.models.widgets import Toggle
 # from numpy import sin, linspace, pi
 import pandas as pd
 import seaborn as sns
-from GraphFangLibrary import collectAT
+from GraphFangLibrary import collectDiNuc
 
 # Make interactive plots
 def bokehOut(dfWindow,ranWindow,fileName,num,uce,inuce,window,nucLine):
@@ -27,8 +27,8 @@ def bokehOut(dfWindow,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	sns.set_palette("husl",n_colors=8)#(len(nucLine)*2)
 
 	# Get group, mean and standard deviation for AT
-	ATgroup,ATmean,ATstd = collectAT(dfWindow,names)
-	ranATgroup,ranATmean,ranATstd = collectAT(ranWindow,names)
+	ATgroup,ATmean,ATstd = collectDiNuc(dfWindow,names,'A','T')
+	ranATgroup,ranATmean,ranATstd = collectDiNuc(ranWindow,names,'A','T')
 
 	source = ColumnDataSource(data=dict(x=fillX,mean=ATgroup.mean(),std=ATgroup.std(),rmean=ranATgroup.mean(),rstd=ranATgroup.std()))
 	output_file('Interactive_{0}.html'.format(fileName))

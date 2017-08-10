@@ -232,9 +232,5 @@ def main():
 # 						ranalignrcMeth,ranalignrcWindow,ranalignrcNames = RevCompLibrary.main(alignranFeatures,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 # 						plotGraphs(alignrcMeth,ranalignrcMeth,alignrcWindow,alignrcNames,ranalignrcWindow,'align_{0}_{1}'.format(element.name,paramlabels),num,uce,inuce,window,graphs,nucLine,methFlank)
 
-
-
-
-
 if __name__ == "__main__":
 	main()

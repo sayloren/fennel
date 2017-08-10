@@ -45,8 +45,6 @@ def graphTable(TableData,Title,ranTableData,ranTitle,fileName):
 	Table1 = ax0.table(cellText=[['']],colLabels=['Chi Square'],loc='center', bbox=[0.8, 0.6, 0.2, 0.1])
 	Table2 = ax0.table(cellText=printTable.values.round(3),rowLabels=printTable.index,colLabels=printTable.columns,cellLoc='center',rowLoc='center',loc='center', bbox=[0, 0.35, 1.0, 0.3])
 	ax0.set_title('Chi Square Test for {0} and {1}'.format(Title, ranTitle),size=24)
-	Table0.set_fontsize(26)
-	Table1.set_fontsize(26)
 	Table2.set_fontsize(22)
 
 	sns.despine()
