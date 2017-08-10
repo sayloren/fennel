@@ -65,9 +65,9 @@ def rangebyClass(df,num,uce,inuce,faGenome):
 		features['combineString'] = features['sBoundarySeq'].astype(str) +features['MiddleSeq'].astype(str) + features['eBoundarySeq'].astype(str)
 		features['combineString'] = features['combineString'].str.upper()
 		features['size'] = features['combineString'].str.len() # check length of string
-		features['reverseComplement'] = features.apply(lambda row: reverseComplement(row['combineString']),axis=1) # may use once combine features?
-		completeelement = features[['chr','sBoundary','start','sEdge','sCenter','eCenter','eEdge','end','eBoundary','combineString','reverseComplement','id']]
-		completeelement.columns = ['chr','sBoundary','start','sEdge','sCenter','eCenter','eEdge','end','eBoundary','combineString','reverseComplement','id']
+		features['reverseComplement'] = features.apply(lambda row: reverseComplement(row['combineString']),axis=1)
+		completeelement = features[['chr','sBoundary','start','sEdge','sCenter','eCenter','eEdge','end','eBoundary','combineString','reverseComplement','feature','id']]
+		completeelement.columns = ['chr','sBoundary','start','sEdge','sCenter','eCenter','eEdge','end','eBoundary','combineString','reverseComplement','feature','id']
 	else:
 		completeelement = None
 	# Exonic regions that contain an exon - was going to align by interior exon, buuuut, its tricky
@@ -94,9 +94,9 @@ def rangebyClass(df,num,uce,inuce,faGenome):
 		features['combineString'] = features['sBoundarySeq'].astype(str) + features['sEdgeSeq'].astype(str) + features['MiddleSeq'].astype(str) + features['eEdgeSeq'].astype(str) + features['eBoundarySeq'].astype(str)
 		features['combineString'] = features['combineString'].str.upper()
 		features['size'] = features['combineString'].str.len() # check length of string
-		features['reverseComplement'] = features.apply(lambda row: reverseComplement(row['combineString']),axis=1) # may use once combine features?
-		interiorelement = features[['chr','sBoundary','start','sEdge','sCenter','eCenter','eEdge','end','eBoundary','combineString','reverseComplement','id']]
-		interiorelement.columns = ['chr','sBoundary','start','sEdge','sCenter','eCenter','eEdge','end','eBoundary','combineString','reverseComplement','id']
+		features['reverseComplement'] = features.apply(lambda row: reverseComplement(row['combineString']),axis=1)
+		interiorelement = features[['chr','sBoundary','start','sEdge','sCenter','eCenter','eEdge','end','eBoundary','combineString','reverseComplement','feature','id']]
+		interiorelement.columns = ['chr','sBoundary','start','sEdge','sCenter','eCenter','eEdge','end','eBoundary','combineString','reverseComplement','feature','id']
 	else:
 		interiorelement = None
 	# Exonic cross boundary shift (still need to separate by intergenic/intronic)
@@ -114,9 +114,10 @@ def rangebyClass(df,num,uce,inuce,faGenome):
 		features['combineString'] = simpleFasta(getFeatures(features[['chr','sBoundary','eBoundary']].values.tolist()),faGenome)
 		features['combineString'] = features['combineString'].str.upper()
 		features['size'] = features['combineString'].str.len() # check length of string
-		features['reverseComplement'] = features.apply(lambda row: reverseComplement(row['combineString']),axis=1) # may use once combine features?
-		startcrossboundary = features[['chr','sBoundary','newstart','sEdge','sCenter','eCenter','eEdge','newend','eBoundary','combineString','reverseComplement','id']]
-		startcrossboundary.columns = ['chr','sBoundary','start','sEdge','sCenter','eCenter','eEdge','end','eBoundary','combineString','reverseComplement','id']
+		features['feature'] = simpleFasta(getFeatures(features[['chr','newstart','newend']].values.tolist()),faGenome)
+		features['reverseComplement'] = features.apply(lambda row: reverseComplement(row['combineString']),axis=1)
+		startcrossboundary = features[['chr','sBoundary','newstart','sEdge','sCenter','eCenter','eEdge','newend','eBoundary','combineString','reverseComplement','feature','id']]
+		startcrossboundary.columns = ['chr','sBoundary','start','sEdge','sCenter','eCenter','eEdge','end','eBoundary','combineString','reverseComplement','feature','id']
 	else:
 		startcrossboundary = None
 	if len(df[(df['startdifference'] >= 0) & (df['enddifference'] <= -1)]) != 0: # elements overlap at the downstream boundary
@@ -130,12 +131,13 @@ def rangebyClass(df,num,uce,inuce,faGenome):
 		features['eCenter'] = features['newend'] - (inregion/2)
 		features['sBoundary'] = features['newstart'] - flankSize
 		features['eBoundary'] = features['newend'] + flankSize
+		features['feature'] = simpleFasta(getFeatures(features[['chr','newstart','newend']].values.tolist()),faGenome)
 		features['combineString'] = simpleFasta(getFeatures(features[['chr','sBoundary','eBoundary']].values.tolist()),faGenome)
 		features['combineString'] = features['combineString'].str.upper()
 		features['reverseComplement'] = features.apply(lambda row: reverseComplement(row['combineString']),axis=1)
 		features['size'] = features['combineString'].str.len() # check length of string
-		endcrossboundary = features[['chr','sBoundary','newstart','sEdge','sCenter','eCenter','eEdge','newend','eBoundary','combineString','reverseComplement','id']]
-		endcrossboundary.columns = ['chr','sBoundary','start','sEdge','sCenter','eCenter','eEdge','end','eBoundary','combineString','reverseComplement','id']
+		endcrossboundary = features[['chr','sBoundary','newstart','sEdge','sCenter','eCenter','eEdge','newend','eBoundary','combineString','reverseComplement','feature','id']]
+		endcrossboundary.columns = ['chr','sBoundary','start','sEdge','sCenter','eCenter','eEdge','end','eBoundary','combineString','reverseComplement','feature','id']
 	else:
 		endcrossboundary = None
 	return startcrossboundary,endcrossboundary,completeelement,interiorelement

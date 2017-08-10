@@ -13,8 +13,9 @@ snps, nucleosomes, replication origins/forks, tss
 more constrined = boundary graph from emperical spread
 c/g available
 AT balance random
-exons - split intron/intergenic, rc sorting, include exon direcitonality, move cross boundary to tss
+exons - split intron/intergenic, include exon direcitonality, move cross boundary to tss
 which are consitently = 
+AT liklihood (emperical)
 
 """
 
@@ -220,12 +221,20 @@ def main():
 				ranstartcrossboundary,ranendcrossboundary,rancompleteelement,raninteriorelement = OverlapLibrary.main(randomFeatures,Overlapregions,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs)
 				rancrossMeth,rancrossWindow,rancrossNames  = RevCompOverlapLibrary.main(ranstartcrossboundary,ranendcrossboundary,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 				plotGraphs(crossMeth,rancrossMeth,crossWindow,crossNames,rancrossWindow,'align_Crossboundary_{0}'.format(paramlabels),num,uce,inuce,window,graphs,nucLine,methFlank)
-				# should giving the directionality come befor or after the realign? doing after for now...
-				# if endcrossboundary use reverse complement...and reverse complement sort the within and contains exon groups
 				for element,random in zip([completeelement,interiorelement],[rancompleteelement,raninteriorelement]):
 					alignMeth,alignWindow,alignNames = TypeLibrary.main(element,'combineString',fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 					ranalignMeth,ranalignWindow,ranalignNames = TypeLibrary.main(random,'combineString',fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 					plotGraphs(alignMeth,ranalignMeth,alignWindow,alignNames,ranalignWindow,'align_{0}_{1}'.format(element.name,paramlabels),num,uce,inuce,window,graphs,nucLine,methFlank)
+# 					if revCom: # maybe use group separate?
+# 						aligndirFeatures = DirectionLibrary.main(element,fileName,binDir)
+# 						alignranFeatures = DirectionLibrary.main(random,fileName,binDir)
+# 						alignrcMeth,alignrcWindow,alignrcNames = RevCompLibrary.main(aligndirFeatures,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+# 						ranalignrcMeth,ranalignrcWindow,ranalignrcNames = RevCompLibrary.main(alignranFeatures,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+# 						plotGraphs(alignrcMeth,ranalignrcMeth,alignrcWindow,alignrcNames,ranalignrcWindow,'align_{0}_{1}'.format(element.name,paramlabels),num,uce,inuce,window,graphs,nucLine,methFlank)
+
+
+
+
 
 if __name__ == "__main__":
 	main()
