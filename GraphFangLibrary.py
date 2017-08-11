@@ -38,9 +38,7 @@ def graphFang(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 
 	# Get group, mean and standard deviation for AT
 	ATgroup,ATmean,ATstd = collectDiNuc(dfWindow,names,'A','T')
-	CGgroup,CGmean,CGstd = collectDiNuc(dfWindow,names,'C','G')
 	ranATgroup,ranATmean,ranATstd = collectDiNuc(ranWindow,names,'A','T')
-	ranCGgroup,ranCGmean,ranCGstd = collectDiNuc(ranWindow,names,'C','G')
 	
 	# Title info
 	info = str(fileName) + ', '+ str(len(ATgroup.index)) + ' - ' "UCES"
@@ -448,58 +446,60 @@ def graphFang(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 		plt.savefig(pp, format='pdf')
 		print 'Plotted multinucleotide means'
 
-# 	['CG','C','G'] in names: #if all(len(i) > 3 for i in names):
+	if set(['CG','C','G']).issubset(names):
+		CGgroup,CGmean,CGstd = collectDiNuc(dfWindow,names,'C','G')
+		ranCGgroup,ranCGmean,ranCGstd = collectDiNuc(ranWindow,names,'C','G')
 
-	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
-	gs.update(hspace=.8) # setting the space between the graphs
+		gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
+		gs.update(hspace=.8) # setting the space between the graphs
 
-	# Separate out those with only a double nucleotide search
-	CpGNames = [names.index(i) for i in names if i == 'CG']
-	CpGNamesVal = [names[i] for i in CpGNames]
-	CpGDataFrames = [dfWindow[i] for i in CpGNames]
-	ranCpGDataFrames = [ranWindow[i] for i in CpGNames]
+		# Separate out those with only a double nucleotide search
+		CpGNames = [names.index(i) for i in names if i == 'CG']
+		CpGNamesVal = [names[i] for i in CpGNames]
+		CpGDataFrames = [dfWindow[i] for i in CpGNames]
+		ranCpGDataFrames = [ranWindow[i] for i in CpGNames]
 
-	# Plot actual C Gs available, to CpG presence
-	ax19 = plt.subplot(gs[0],sharex=ax0)
-	ax19.plot(fillX,CGmean,linewidth=1,label='C and G element')#, color='#3e1638'
-	ax19.plot(fillX,ranCGmean,linewidth=1,label='C and G random')#, color='#aba1b1'
-	for dfNuc,lNuc in zip(CpGDataFrames,CpGNamesVal):
-		ax19.plot(fillX,dfNuc.mean(),linewidth=1,label='{0} element'.format(lNuc))
-	for dfNuc,lNuc in zip(ranCpGDataFrames,CpGNamesVal):
-		ax19.plot(fillX,dfNuc.mean(),linewidth=1,label='{0} random'.format(lNuc))
-# 	ax19.fill_between(fillX,CGmean+CGstd,CGmean-CGstd,label='',alpha=0.2)#,facecolor='#63245a'
-# 	ax19.fill_between(fillX,ranCGmean+ranCGstd,ranCGmean-ranCGstd,label='',alpha=0.2)#,facecolor='#c0a7bd'
-	ax19.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-	ax19.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-	ax19.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-	ax19.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-	ax19.set_ylabel('% CG Content',size=8)
-	ax19.set_xlabel('Position',size=6)
-	ax19.legend(loc=0,fontsize=5,labelspacing=0.1)
-	ax19.set_title('Mean CG Content With Standard Deviation',size=8)
-	ax19.set_yticks(ax19.get_yticks()[::2])
-	plt.xlim(0,num)
+		# Plot actual C Gs available, to CpG presence
+		ax19 = plt.subplot(gs[0],sharex=ax0)
+		ax19.plot(fillX,CGmean,linewidth=1,label='C and G element')#, color='#3e1638'
+		ax19.plot(fillX,ranCGmean,linewidth=1,label='C and G random')#, color='#aba1b1'
+		for dfNuc,lNuc in zip(CpGDataFrames,CpGNamesVal):
+			ax19.plot(fillX,dfNuc.mean(),linewidth=1,label='{0} element'.format(lNuc))
+		for dfNuc,lNuc in zip(ranCpGDataFrames,CpGNamesVal):
+			ax19.plot(fillX,dfNuc.mean(),linewidth=1,label='{0} random'.format(lNuc))
+# 		ax19.fill_between(fillX,CGmean+CGstd,CGmean-CGstd,label='',alpha=0.2)#,facecolor='#63245a'
+# 		ax19.fill_between(fillX,ranCGmean+ranCGstd,ranCGmean-ranCGstd,label='',alpha=0.2)#,facecolor='#c0a7bd'
+		ax19.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
+		ax19.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
+		ax19.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
+		ax19.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
+		ax19.set_ylabel('% CG Content',size=8)
+		ax19.set_xlabel('Position',size=6)
+		ax19.legend(loc=0,fontsize=5,labelspacing=0.1)
+		ax19.set_title('Mean CG Content With Standard Deviation',size=8)
+		ax19.set_yticks(ax19.get_yticks()[::2])
+		plt.xlim(0,num)
 
-	# Plot the std = 1
-	ax20 = plt.subplot(gs[1],sharex=ax0)
-	ax20.plot(fillX,CGstd,linewidth=1,label='C and G element')
-	ax20.plot(fillX,ranCGstd,linewidth=1,label='C and G random')
-	for dfNuc,lNuc in zip(CpGDataFrames,CpGNamesVal):
-		ax20.plot(fillX,dfNuc.std(),linewidth=1,label='{0} element'.format(lNuc))
-	for dfNuc,lNuc in zip(ranCpGDataFrames,CpGNamesVal):
-		ax20.plot(fillX,dfNuc.std(),linewidth=1,label='{0} random'.format(lNuc))
-	ax20.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-	ax20.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-	ax20.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-	ax20.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-	ax20.set_yticks(ax1.get_yticks()[::2])
-	ax20.set_xlabel('Position',size=6)
-	ax20.set_ylabel('SD',size=8)
-	ax20.set_title('Standard Deviation',size=8)
-	plt.setp(ax20.get_xticklabels(), visible=True)
-	ax20.legend(loc=0,fontsize=5,labelspacing=0.05)
-	
-	print 'Plotted the mean CG content and standard deviation'
+		# Plot the std = 1
+		ax20 = plt.subplot(gs[1],sharex=ax0)
+		ax20.plot(fillX,CGstd,linewidth=1,label='C and G element')
+		ax20.plot(fillX,ranCGstd,linewidth=1,label='C and G random')
+		for dfNuc,lNuc in zip(CpGDataFrames,CpGNamesVal):
+			ax20.plot(fillX,dfNuc.std(),linewidth=1,label='{0} element'.format(lNuc))
+		for dfNuc,lNuc in zip(ranCpGDataFrames,CpGNamesVal):
+			ax20.plot(fillX,dfNuc.std(),linewidth=1,label='{0} random'.format(lNuc))
+		ax20.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
+		ax20.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
+		ax20.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
+		ax20.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
+		ax20.set_yticks(ax1.get_yticks()[::2])
+		ax20.set_xlabel('Position',size=6)
+		ax20.set_ylabel('SD',size=8)
+		ax20.set_title('Standard Deviation',size=8)
+		plt.setp(ax20.get_xticklabels(), visible=True)
+		ax20.legend(loc=0,fontsize=5,labelspacing=0.05)
+		
+		print 'Plotted the mean CG content and standard deviation'
 	
 	sns.despine()
 	pp.savefig()

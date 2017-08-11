@@ -65,11 +65,11 @@ def get_args():
 	parser.add_argument("-mf", "--methylationflank", type=int, default="20", help='The number of base pairs to look at outside of the element for the methylation clusterplots')
 
 	# Specify which groups and graphs to run
-	parser.add_argument('-type', "--elementype", default=[], nargs='*', choices=['all','intronic','exonic','intergenic'],help='which group types of element to run')
+	parser.add_argument('-type', "--elementype", default=['all'], nargs='*', choices=['all','intronic','exonic','intergenic'],help='which group types of element to run')
 	parser.add_argument('-dir', "--elementdirection", default=[], nargs='*', choices=['+','-','='], help='which group direction of element to run')
 	parser.add_argument('-rc', "--reversecomplement",action='store_true', help='if reverse complement sorting required')
 	parser.add_argument('-p',"--plots",default=[],nargs='*',choices=['fang','methylation','signal','interactive','cluster','dendrogram','kmean'],help='the available graphs to plot')
-	parser.add_argument('-nuc',"--nucleotideline",default=['A','T','C','G','CG'],nargs='+',help='type the nucleotide string combinations to search for in the element')
+	parser.add_argument('-nuc',"--nucleotideline",default=['A','T'],nargs='+',help='type the nucleotide string combinations to search for in the element')
 	parser.add_argument('-str',"--stringname",type=str,help='string to add to the outfile name')
 	parser.add_argument('-align', "--elementalign",action='store_true', help='if want to align by exonic/intronic crossover')
 

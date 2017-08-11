@@ -32,7 +32,6 @@ def graphTable(TableData,Title,ranTableData,ranTitle,fileName):
 		outchisquare.append(chisquare(TableData[x],ranTableData[y]))
 	pdchi = pd.DataFrame(outchisquare)
 	pdchi.index = TableData.T.index
-	print pdchi
 	
 	allData.columns.name = None
 	printTable = pd.concat([allData.T,pdchi],axis=1)

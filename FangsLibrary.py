@@ -15,7 +15,7 @@ def compactWindow(features,label,num,uce,inuce,window,searchList):
 		while end < n:
 			current = element[start:end]
 			for key in searchList:
-				percentage = eval('100*float(current.count(key))/float(len(current))')
+				percentage = float(100*current.count(key)/len(current))
 				outList[key].append(percentage)
 			start, end = start + s, end + s
 		outElement[id].append(outList)

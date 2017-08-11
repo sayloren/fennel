@@ -35,8 +35,10 @@ def makeOverlaptable(df):
 	end = df[(df['startdifference'] >= 0) & (df['enddifference'] <= -1)].count() # how many elements overlap at the downstream boundary
 	interior = df[(df['startdifference'] <= -1) & (df['enddifference'] <= -1)].count() # how many elements contain an exon
 	crossboundary = start + end
-# 	multi = df[df.duplicated(subset='id',keep='first')].count() # number of elements that fit into two categories
-	total = df.count() # get the total number of elements intersecting exons - minus those that overlap two exons
+	multi = df[df.duplicated(subset='id',keep='first')].count() # number of elements that fit into two categories
+	multiid = df[df.duplicated(subset='id',keep=False)].groupby('id').min()
+	print 'Elements {0} where represented in two groups'.format(multiid.index)
+	total = df.count() - multi # get the total number of elements intersecting exons - minus those that overlap two exons
 	frames = [complete,crossboundary,interior,total]
 	overlapTable = pd.concat(frames,axis=1)
 	overlapTable.columns = ['embedded','crossboundary','contains','total']
