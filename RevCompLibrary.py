@@ -22,7 +22,7 @@ def methDirection(negStr,posStr,mFiles,num,uce,inuce,methCovThresh,methPerThresh
 	rangeDict = dict(zip(originalRange,reverseRange))
 	
 	# Zip reverse complement sequence for replacing the nucleotides for neg methylation
-	seqDict = {'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C'}
+	seqDict = {'A':'T','T':'A','C':'G','G':'C','N':'N'}
 
 	# Convert neg Meth df
 	negMeth['methLocNew'] = negMeth.methLoc.map(rangeDict)
