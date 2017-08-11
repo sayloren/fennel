@@ -36,6 +36,7 @@ import GraphDendrogramLibrary
 import GraphKMeansLibrary
 import pandas as pd
 import RevCompOverlapLibrary
+import BinLibrary
 
 # set command line arguments
 def get_args():
@@ -174,9 +175,9 @@ def main():
 			# separate by direction
 			randirFeatures,randirBins = DirectionLibrary.main(randomFeatures,randomFile,binDir)
 			
-			# Plot probabilty for bin values
-			BinLibrary.main(binDir,directionBins,randirBins)
-			
+			# Plot boundary probabilities
+			BinLibrary.main(binDir,directionBins,randirBins,paramlabels)
+
 			# Make table for the count of each direction for each type element
 			elementGroup = collectCounts(rangeFeatures)
 			randomGroup = collectCounts(randirFeatures)

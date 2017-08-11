@@ -61,13 +61,13 @@ def collectEmperical(rangeFeatures,binDir):
 
 def empericalATspread(element,size):
 	totalSteps=[]
-	for i in np.arange(1,size):
+	for i in np.arange(1,size*2):
 		pairStep = calculateAT(element,i)
 		totalSteps.append(pairStep)
 	return totalSteps
 
 def main(rangeFeatures,fileName,binDir):
-	directionBins,directionFeatures = evalN(rangeFeatures,fileName,binDir)
+	directionFeatures,directionBins = evalN(rangeFeatures,fileName,binDir)
 	return directionFeatures,directionBins
 
 if __name__ == "__main__":
