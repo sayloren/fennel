@@ -29,9 +29,8 @@ from ElementLibrary import simpleFasta
 # Threshold methylation data by coverage and percentage
 def methThreshold(methFeatures,methCovThresh,methPerThresh):
 	pdmethFeatures = bedtoolToPanda(methFeatures)
-	pdmethCovThresh = (pdmethFeatures[pdmethFeatures.loc[:,3] >= methCovThresh])
-	pdmethPerThresh = (pdmethCovThresh[pdmethCovThresh.loc[:,4] >= methPerThresh])
-	btmethThresh = pandaToBedtool(pdmethPerThresh)
+	pdmethThresh = (pdmethFeatures[(pdmethFeatures.loc[:,3] >= methCovThresh) & (pdmethFeatures.loc[:,4] >= methPerThresh)])
+	btmethThresh = pandaToBedtool(pdmethThresh)
 	print 'Methylation coverage is being thresholded at {0} and percentage at {1}'.format(methCovThresh, methPerThresh)
 	return btmethThresh
 
