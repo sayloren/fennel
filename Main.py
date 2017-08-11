@@ -162,7 +162,7 @@ def main():
 		# get the region info to work with
 		rangeFeatures = ElementLibrary.main(num,uce,inuce,window,binDir,fileName,sizeGenome,faGenome)
 		# separate by direction
-		directionFeatures = DirectionLibrary.main(rangeFeatures,fileName,binDir)
+		directionFeatures,directionBins = DirectionLibrary.main(rangeFeatures,fileName,binDir)
 		
 		# for each random file provided
 		for randomFile in rFiles:
@@ -172,7 +172,10 @@ def main():
 			# get the region info to work with
 			randomFeatures = ElementLibrary.main(num,uce,inuce,window,binDir,randomFile,sizeGenome,faGenome)
 			# separate by direction
-			randirFeatures = DirectionLibrary.main(randomFeatures,randomFile,binDir)
+			randirFeatures,randirBins = DirectionLibrary.main(randomFeatures,randomFile,binDir)
+			
+			# Plot probabilty for bin values
+			BinLibrary.main(binDir,directionBins,randirBins)
 			
 			# Make table for the count of each direction for each type element
 			elementGroup = collectCounts(rangeFeatures)

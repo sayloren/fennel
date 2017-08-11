@@ -15,7 +15,7 @@ import numpy as np
 from scipy.special import comb
 import seaborn as sns
 
-def graphComb(n,emp):
+def graphComb(n,emp,ranemp):
 	# called birthday problem
 	yrange = np.arange(0,n*2)
 	equal = []
@@ -43,8 +43,8 @@ def graphComb(n,emp):
 	sns.despine()
 	plt.savefig('Probability.pdf')
 
-def main(n,emp):
-	graphComb(n,emp)
+def main(n,emp,ranemp):
+	graphComb(n,emp,ranemp)
 
 if __name__ == "__main__":
 	main()

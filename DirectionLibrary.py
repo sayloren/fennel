@@ -7,7 +7,6 @@ July 5 2017
 import argparse
 import numpy as np
 import pandas as pd
-import BinLibrary
 
 def calculateAT(element,size):
 	start = element[:size]
@@ -69,8 +68,7 @@ def empericalATspread(element,size):
 
 def main(rangeFeatures,fileName,binDir):
 	directionBins,directionFeatures = evalN(rangeFeatures,fileName,binDir)
-	BinLibrary.main(binDir,directionBins)
-	return directionFeatures
+	return directionFeatures,directionBins
 
 if __name__ == "__main__":
 	main()
