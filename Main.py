@@ -10,12 +10,10 @@ dendrogram color clusters (what clustering parameters are used in literature, ho
 cluster by difference between boundaries
 snps, nucleosomes, replication origins/forks, tss
 
-more constrined = boundary graph from emperical spread
-c/g available
 AT balance random
 exons - split intron/intergenic, include exon direcitonality, move cross boundary to tss
 which are consitently = 
-AT liklihood (emperical)
+AT liklihood, more constrined = boundary graph from emperical spread
 
 """
 
