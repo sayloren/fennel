@@ -19,6 +19,8 @@ def graphComb(n,emp,ranemp,paramlabels):
 	# called birthday problem
 	yrange = np.arange(0,n*2)
 	equal = []
+	equalemp = []
+	equalranemp = []
 	for y in yrange:
 		if y >= 0:
 			t = y+1.0 # include 0%
@@ -27,11 +29,13 @@ def graphComb(n,emp,ranemp,paramlabels):
 		else:
 			equal.append(0)
 	
+	
 	sns.set_style('ticks')
 	sns.set_palette("husl",n_colors=8)#(len(nucLine)*2)
 
 	plt.figure(figsize=(3.5,3.5))
 	plt.plot(yrange,equal,linewidth=2,alpha=0.9)#,color='#3e1638'
+# 	ax0.fill_between(fillX,ATmean+ATstd,ATmean-ATstd,label='',alpha=0.2)#,facecolor='#63245a'
 	plt.axvline(x=n,linewidth=.05,linestyle=':')#,color='#e7298a',label='{:0.1e}'.format(equal[n])
 	plt.axvspan(n-1,n+1,alpha=0.1)#,facecolor='#e7298a'
 	plt.xlabel('Bin Size',size=12)
@@ -44,7 +48,6 @@ def graphComb(n,emp,ranemp,paramlabels):
 	plt.savefig('Probability_{0}.pdf'.format(paramlabels))
 
 def main(n,emp,ranemp,paramlabels):
-	print emp
 	graphComb(n,emp,ranemp,paramlabels)
 
 if __name__ == "__main__":
