@@ -210,7 +210,7 @@ def graphFang(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 		ranDoubleDataFrames = [ranWindow[i] for i in DoubleNames]
 		
 		# Might still want to return the actual CpN location for how many are methylated
-		ax7 = plt.subplot(gs[0],sharex=ax0)
+		ax7 = plt.subplot(gs[0,:],sharex=ax0)
 		for dfNuc,lNuc in zip(DoubleDataFrames,DoubleNamesVal):
 			ax7.plot(fillX,dfNuc.mean(),linewidth=1,label=lNuc)
 		ax7.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
@@ -223,14 +223,9 @@ def graphFang(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 		ax7.set_yticks(ax7.get_yticks()[::2])
 		ax7.legend(loc=0,fontsize=5,labelspacing=0.05)
 
-# 		Plot SD for CpNs
-# 		Kruskal-Wallis test
-# 		kruskalSD = mstats.kruskalwallis(uceRegionCpA,uceRegionCpT,uceRegionCpC,uceRegionCpG)
-# 		ax8.text(16.25,14.5,'KW P-value {:0.1e}'.format(kruskalSD[1]),size=6,clip_on=False)
-		ax8 = plt.subplot(gs[1])
+		ax8 = plt.subplot(gs[1,:])
 		for dfNuc,lNuc in zip(DoubleDataFrames,DoubleNamesVal):
 			elRegion = dfNuc.loc[:,(((num-uce)/2)-halfwindow):(((num-uce)/2)+uce-halfwindow)].std()
-			# elFlank = dfNuc.iloc[:,np.r_[0:(((num-uce)/2)-halfwindow),(((num-uce)/2)+uce-halfwindow):(num-window)]].std()
 			ax8.hist(elRegion,25,linewidth=0.3,label=lNuc,alpha=0.5)
 		ax8.set_yticks(ax8.get_yticks()[::2])
 		ax8.set_ylabel('Frequency',size=8)
@@ -244,7 +239,7 @@ def graphFang(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 		gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
 		gs.update(hspace=.5)
 
-		ax9 = plt.subplot(gs[0],sharex=ax0)
+		ax9 = plt.subplot(gs[0,:],sharex=ax0)
 		for dfNuc,lNuc in zip(ranDoubleDataFrames,DoubleNamesVal):
 			ax9.plot(fillX,dfNuc.mean(),linewidth=1,label=lNuc)
 		ax9.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
@@ -257,11 +252,7 @@ def graphFang(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 		ax9.set_yticks(ax9.get_yticks()[::2])
 		ax9.legend(loc=0,fontsize=5,labelspacing=0.05)
 
-# 		Plot SD for CpNs
-# 		Kruskal-Wallis test
-# 		kruskalSD = mstats.kruskalwallis(uceRegionCpA,uceRegionCpT,uceRegionCpC,uceRegionCpG)
-# 		ax8.text(16.25,14.5,'KW P-value {:0.1e}'.format(kruskalSD[1]),size=6,clip_on=False)
-		ax10 = plt.subplot(gs[1])
+		ax10 = plt.subplot(gs[1,:])
 		for dfNuc,lNuc in zip(ranDoubleDataFrames,DoubleNamesVal):
 			elRegion = dfNuc.loc[:,(((num-uce)/2)-halfwindow):(((num-uce)/2)+uce-halfwindow)].std()
 			# elFlank = dfNuc.iloc[:,np.r_[0:(((num-uce)/2)-halfwindow),(((num-uce)/2)+uce-halfwindow):(num-window)]].std()
@@ -446,7 +437,7 @@ def graphFang(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 		plt.savefig(pp, format='pdf')
 		print 'Plotted multinucleotide means'
 
-	if set(['CG','C','G']).issubset(names):
+	if set(['C','G','CG']) <= set(names):#set(['CG','C','G']).issubset(names):
 		CGgroup,CGmean,CGstd = collectDiNuc(dfWindow,names,'C','G')
 		ranCGgroup,ranCGmean,ranCGstd = collectDiNuc(ranWindow,names,'C','G')
 
@@ -461,43 +452,33 @@ def graphFang(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 
 		# Plot actual C Gs available, to CpG presence
 		ax19 = plt.subplot(gs[0],sharex=ax0)
-		ax19.plot(fillX,CGmean,linewidth=1,label='C and G element')#, color='#3e1638'
-		ax19.plot(fillX,ranCGmean,linewidth=1,label='C and G random')#, color='#aba1b1'
 		for dfNuc,lNuc in zip(CpGDataFrames,CpGNamesVal):
-			ax19.plot(fillX,dfNuc.mean(),linewidth=1,label='{0} element'.format(lNuc))
+			ax19.plot(fillX,100*dfNuc.mean()/CGmean,linewidth=1,label='CG used for CpG in Element')
 		for dfNuc,lNuc in zip(ranCpGDataFrames,CpGNamesVal):
-			ax19.plot(fillX,dfNuc.mean(),linewidth=1,label='{0} random'.format(lNuc))
-# 		ax19.fill_between(fillX,CGmean+CGstd,CGmean-CGstd,label='',alpha=0.2)#,facecolor='#63245a'
-# 		ax19.fill_between(fillX,ranCGmean+ranCGstd,ranCGmean-ranCGstd,label='',alpha=0.2)#,facecolor='#c0a7bd'
+			ax19.plot(fillX,dfNuc.mean()/ranCGmean*100,linewidth=1,label='CG used for CpG in Random Region')
 		ax19.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
 		ax19.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
 		ax19.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
 		ax19.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-		ax19.set_ylabel('% CG Content',size=8)
+		ax19.set_ylabel('% CG used for CpG',size=8)
 		ax19.set_xlabel('Position',size=6)
 		ax19.legend(loc=0,fontsize=5,labelspacing=0.1)
-		ax19.set_title('Mean CG Content With Standard Deviation',size=8)
+		ax19.set_title('% Available CG used for CpG',size=8)
 		ax19.set_yticks(ax19.get_yticks()[::2])
 		plt.xlim(0,num)
 
-		# Plot the std = 1
-		ax20 = plt.subplot(gs[1],sharex=ax0)
-		ax20.plot(fillX,CGstd,linewidth=1,label='C and G element')
-		ax20.plot(fillX,ranCGstd,linewidth=1,label='C and G random')
+		ax20 = plt.subplot(gs[1])
 		for dfNuc,lNuc in zip(CpGDataFrames,CpGNamesVal):
-			ax20.plot(fillX,dfNuc.std(),linewidth=1,label='{0} element'.format(lNuc))
+			elRegion = dfNuc.loc[:,(((num-uce)/2)-halfwindow):(((num-uce)/2)+uce-halfwindow)].std()#/CGstd*100
+			ax20.hist(elRegion,20,linewidth=0.3,label='CG used for CpG in Element',alpha=0.5)
 		for dfNuc,lNuc in zip(ranCpGDataFrames,CpGNamesVal):
-			ax20.plot(fillX,dfNuc.std(),linewidth=1,label='{0} random'.format(lNuc))
-		ax20.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-		ax20.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-		ax20.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-		ax20.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-		ax20.set_yticks(ax1.get_yticks()[::2])
-		ax20.set_xlabel('Position',size=6)
-		ax20.set_ylabel('SD',size=8)
-		ax20.set_title('Standard Deviation',size=8)
-		plt.setp(ax20.get_xticklabels(), visible=True)
-		ax20.legend(loc=0,fontsize=5,labelspacing=0.05)
+			elRegion = dfNuc.loc[:,(((num-uce)/2)-halfwindow):(((num-uce)/2)+uce-halfwindow)].std()#/ranCGstd*100
+			ax20.hist(elRegion,20,linewidth=0.3,label='CG used for CpG in Random Region',alpha=0.5)
+		ax20.set_yticks(ax20.get_yticks()[::2])
+		ax20.set_ylabel('Frequency',size=8)
+		ax20.legend(loc=0,fontsize=5,labelspacing=0.1)
+		ax20.set_xlabel('Standard Deviation Value',size=8)
+		ax20.set_title('Standard Deviation within the Element',size=8)
 		
 		print 'Plotted the mean CG content and standard deviation'
 	
