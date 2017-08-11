@@ -23,7 +23,7 @@ def graphTable(TableData,Title,ranTableData,ranTitle,fileName):
 # 	plt.suptitle(info,fontsize=10)
 	pp = PdfPages('Table_{0}.pdf'.format(fileName))
 	plt.tight_layout()
-	plt.figure(figsize=(14,6))
+	plt.figure(figsize=(16,6))
 	
 	allData = pd.concat([TableData,ranTableData])#,keys=['elements','random']
 
@@ -32,6 +32,7 @@ def graphTable(TableData,Title,ranTableData,ranTitle,fileName):
 		outchisquare.append(chisquare(TableData[x],ranTableData[y]))
 	pdchi = pd.DataFrame(outchisquare)
 	pdchi.index = TableData.T.index
+	print pdchi
 	
 	allData.columns.name = None
 	printTable = pd.concat([allData.T,pdchi],axis=1)

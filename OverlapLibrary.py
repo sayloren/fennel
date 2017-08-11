@@ -34,11 +34,12 @@ def makeOverlaptable(df):
 	start = df[(df['startdifference'] <= -1) & (df['enddifference'] >= 0)].count() # how many elements overlap at the upstream boundary
 	end = df[(df['startdifference'] >= 0) & (df['enddifference'] <= -1)].count() # how many elements overlap at the downstream boundary
 	interior = df[(df['startdifference'] <= -1) & (df['enddifference'] <= -1)].count() # how many elements contain an exon
-	multi = df[df.duplicated(subset='id',keep='first')].count() # number of elements that fit into two categories
-	total = df.count()-multi # get the total number of elements intersecting exons - minus those that overlap two exons
-	frames = [complete,start,end,interior,multi,total]
+	crossboundary = start + end
+# 	multi = df[df.duplicated(subset='id',keep='first')].count() # number of elements that fit into two categories
+	total = df.count() # get the total number of elements intersecting exons - minus those that overlap two exons
+	frames = [complete,crossboundary,interior,total]
 	overlapTable = pd.concat(frames,axis=1)
-	overlapTable.columns = ['complete','upstream','downstream','interior','multiple','total']
+	overlapTable.columns = ['embedded','crossboundary','contains','total']
 	overlapTable = overlapTable.head(1)
 	overlapTable.index = ['overlaps']
 	return overlapTable
@@ -145,8 +146,9 @@ def rangebyClass(df,num,uce,inuce,faGenome):
 def main(rangeFeatures,exonicInset,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs):
 	exonFeature = eachFileProcess(exonicInset)
 	exonicFeatures, overlapTable = exonIntersect(rangeFeatures,exonFeature,num,uce,inuce,faGenome)
+	
 	startcrossboundary,endcrossboundary,completeelement,interiorelement = rangebyClass(exonicFeatures,num,uce,inuce,faGenome)
-	return startcrossboundary,endcrossboundary,completeelement,interiorelement
+	return startcrossboundary,endcrossboundary,completeelement,interiorelement,overlapTable
 
 if __name__ == "__main__":
 	main()

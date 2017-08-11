@@ -214,12 +214,13 @@ def main():
 
 			# Re-align by exon/intron crossover
 			if overlapInset:
-				startcrossboundary,endcrossboundary,completeelement,interiorelement = OverlapLibrary.main(rangeFeatures,Overlapregions,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs)
+				startcrossboundary,endcrossboundary,completeelement,interiorelement,overlapTable = OverlapLibrary.main(rangeFeatures,Overlapregions,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs)
 				crossMeth,crossWindow,crossNames  = RevCompOverlapLibrary.main(startcrossboundary,endcrossboundary,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 				completeelement.name = 'WithinExon'
 				interiorelement.name = 'ContainsExon'
-				ranstartcrossboundary,ranendcrossboundary,rancompleteelement,raninteriorelement = OverlapLibrary.main(randomFeatures,Overlapregions,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs)
+				ranstartcrossboundary,ranendcrossboundary,rancompleteelement,raninteriorelement,ranoverlapTable = OverlapLibrary.main(randomFeatures,Overlapregions,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs)
 				rancrossMeth,rancrossWindow,rancrossNames  = RevCompOverlapLibrary.main(ranstartcrossboundary,ranendcrossboundary,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+				plotTable(overlapTable.T,'Exonic Elements',ranoverlapTable.T,'Exonic Random Regions','Exonic_overlap_Count_{0}'.format(paramlabels))
 				plotGraphs(crossMeth,rancrossMeth,crossWindow,crossNames,rancrossWindow,'align_Crossboundary_{0}'.format(paramlabels),num,uce,inuce,window,graphs,nucLine,methFlank)
 				for element,random in zip([completeelement,interiorelement],[rancompleteelement,raninteriorelement]):
 					alignMeth,alignWindow,alignNames = TypeLibrary.main(element,'combineString',fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
