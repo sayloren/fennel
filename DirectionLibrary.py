@@ -12,8 +12,8 @@ def calculateAT(element,size):
 	start = element[:size]
 	end = element[-size:]
 	perSize = []
-	perSize.append(eval('100*int(start.count("A") + start.count("a") + start.count("T") + start.count("t"))/len(start)'))
-	perSize.append(eval('100*int(end.count("A") + end.count("a") + end.count("T") + end.count("t"))/len(end)'))
+	perSize.append(eval('100*float(start.count("A") + start.count("a") + start.count("T") + start.count("t"))/len(start)'))
+	perSize.append(eval('100*float(end.count("A") + end.count("a") + end.count("T") + end.count("t"))/len(end)'))
 	return perSize
 
 # out put directionality, as inferred by comparing first and last n base pairs from input parameters
@@ -39,24 +39,28 @@ def evalN(rangeFeatures,fileName,binDir):
 def collectEmperical(rangeFeatures,binDir):
 	# Perform min,max collection
 	rangeAT = rangeFeatures.apply(lambda row: (empericalATspread(row['feature'],binDir)),axis=1)
-
-	# Separate Start from End
-	outstart = []
-	outend = []
-	for row in rangeAT:
-		pdElementstart = pd.DataFrame(item[0] for item in rangeAT[0])
-		outstart.append(pdElementstart)
-		pdElementend = pd.DataFrame(item[1] for item in rangeAT[1])
-		outend.append(pdElementend)
+	pdAT = pd.DataFrame(rangeAT.values.tolist())
 	
-	# Separate data frames by Start v End and Min v Max
-	pdATCollectStartMin = pd.concat(outstart,axis=1).min(axis=1)
-	pdATCollectEndMin = pd.concat(outend,axis=1).min(axis=1)
-	pdATCollectStartMax = pd.concat(outstart,axis=1).max(axis=1)
-	pdATCollectEndMax = pd.concat(outend,axis=1).max(axis=1)
+	# Separate Start from End
+	splitAT = pd.concat(dict([(row[0],row[1].apply(lambda y: pd.Series(y))) for row in pdAT.iterrows()]),axis=1)
+	
+	outcollect = []
+	for column in splitAT:
+		outcollect.append(splitAT[column[0]])
+	outcat = pd.concat(outcollect,axis=1)
+	outcat /= 100 # convert to decimal
 
-	pdBins = pd.concat([pdATCollectStartMin,pdATCollectEndMin,pdATCollectStartMax,pdATCollectEndMax],axis=1)
-	pdBins.columns=['StartMin','StopMin','StartMax','StopMax']
+	# Separate data frames by Start v End and Min v Max
+	pdATCollectStartMin = outcat[[outcat.columns[0]]].min(axis=1)
+	pdATCollectEndMin = outcat[[outcat.columns[1]]].min(axis=1)
+	pdATCollectStartMax = outcat[[outcat.columns[0]]].max(axis=1)
+	pdATCollectEndMax = outcat[[outcat.columns[1]]].max(axis=1)
+
+	Min = pdATCollectStartMin * pdATCollectEndMin
+	Max = pdATCollectStartMax * pdATCollectEndMax
+
+	pdBins = pd.concat([Min,Max],axis=1)
+	pdBins.columns=['Min','Max']
 	return pdBins
 
 def empericalATspread(element,size):
