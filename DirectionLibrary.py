@@ -39,10 +39,16 @@ def evalN(rangeFeatures,fileName,binDir):
 def collectEmperical(rangeFeatures,binDir):
 	# Perform min,max collection
 	rangeAT = rangeFeatures.apply(lambda row: (empericalATspread(row['feature'],binDir)),axis=1)
-	pdAT = pd.DataFrame(rangeAT.values.tolist())
+	pdrangeAT = pd.DataFrame(rangeAT.values.tolist())
 	
-	# Separate Start from End
-	splitAT = pd.concat(dict([(row[0],row[1].apply(lambda y: pd.Series(y))) for row in pdAT.iterrows()]),axis=1)
+	# Get direction collection
+	equalAT = rangeFeatures.apply(lambda row: (empericalN(row['feature'],binDir)),axis=1)
+	pdequalAT = pd.DataFrame(equalAT.values.tolist())
+	countAT = pdequalAT.apply(pd.value_counts)
+	equalCounts = countAT.loc['=']/len(pdequalAT.index)
+	
+	# Separate Start from End for min and max
+	splitAT = pd.concat(dict([(row[0],row[1].apply(lambda y: pd.Series(y))) for row in pdrangeAT.iterrows()]),axis=1)
 	
 	outcollect = []
 	for column in splitAT:
@@ -57,21 +63,21 @@ def collectEmperical(rangeFeatures,binDir):
 	pdATCollectStartMax = outcat[[outcat.columns[0]]].max(axis=1)
 	pdATCollectEndMax = outcat[[outcat.columns[1]]].max(axis=1)
 	
-	pdATCollectStartUpperQuant = outcat[[outcat.columns[0]]].quantile(q=.75,axis=1)
-	pdATCollectEndUpperQuant = outcat[[outcat.columns[1]]].quantile(q=.75,axis=1)
-
-	pdATCollectStartLowerQuant = outcat[[outcat.columns[0]]].quantile(q=.25,axis=1)
-	pdATCollectEndLowerQuant = outcat[[outcat.columns[1]]].quantile(q=.25,axis=1)
-
-
-	Upper = pdATCollectStartUpperQuant * pdATCollectEndUpperQuant
-	Lower = pdATCollectStartLowerQuant * pdATCollectEndLowerQuant
+	# Quantiles
+# 	pdATCollectStartUpperQuant = outcat[[outcat.columns[0]]].quantile(q=.75,axis=1)
+# 	pdATCollectEndUpperQuant = outcat[[outcat.columns[1]]].quantile(q=.75,axis=1)
+# 
+# 	pdATCollectStartLowerQuant = outcat[[outcat.columns[0]]].quantile(q=.25,axis=1)
+# 	pdATCollectEndLowerQuant = outcat[[outcat.columns[1]]].quantile(q=.25,axis=1)
+# 
+# 	Upper = pdATCollectStartUpperQuant * pdATCollectEndUpperQuant
+# 	Lower = pdATCollectStartLowerQuant * pdATCollectEndLowerQuant
 
 	Min = pdATCollectStartMin * pdATCollectEndMin
 	Max = pdATCollectStartMax * pdATCollectEndMax
 
-	pdBins = pd.concat([Min,Lower,Upper,Max],axis=1)
-	pdBins.columns=['Min','Lower','Upper','Max']
+	pdBins = pd.concat([Min,Max,equalCounts],axis=1)
+	pdBins.columns=['Min','Max','Equal']
 	return pdBins
 
 def empericalATspread(element,size):
@@ -79,6 +85,17 @@ def empericalATspread(element,size):
 	for i in np.arange(1,size*2):
 		pairStep = calculateAT(element,i)
 		totalSteps.append(pairStep)
+	return totalSteps
+	
+def empericalN(element,size):
+	totalSteps=[]
+	for i in np.arange(1,size*2):
+		perSize = calculateAT(element,i)
+		# give + - = depending on which side has larger AT content
+		if perSize[0] > perSize[1]: outList = '+'
+		if perSize[1] > perSize[0]: outList = '-'
+		if perSize[1] == perSize[0]: outList = '='
+		totalSteps.append(outList)
 	return totalSteps
 
 def main(rangeFeatures,fileName,binDir):

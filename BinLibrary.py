@@ -38,15 +38,17 @@ def graphComb(n,emp,ranemp,paramlabels):
 
 	plt.figure(figsize=(3.5,3.5))
 	plt.plot(yrange,equal,linewidth=2,alpha=0.9,label='Theoretical')
-	plt.fill_between(yrange,emp['Min'],emp['Max'],alpha=0.2,label='Observed Range')
-	plt.fill_between(yrange,ranemp['Min'],ranemp['Max'],alpha=0.2,label='Random Range')
+	plt.plot(yrange,emp['Equal'],linewidth=2,alpha=0.9,label='Observed')
+	plt.plot(yrange,ranemp['Equal'],linewidth=2,alpha=0.9,label='Random')
+# 	plt.fill_between(yrange,emp['Min'],emp['Max'],alpha=0.2)#,label='Observed Range'
+# 	plt.fill_between(yrange,ranemp['Min'],ranemp['Max'],alpha=0.2)#,label='Random Range'
 	plt.axvline(x=n,linewidth=.05,linestyle=':')#label='{:0.1e}'.format(equal[n])
 	plt.axvspan(n-1,n+1,alpha=0.1)#,facecolor='#e7298a'
 	plt.xlabel('Bin Size',size=12)
 	plt.ylabel('Probability',size=12)
 	plt.title('Equal Boundary for {0} Bins'.format(n),size=16)
 	plt.legend(loc=0,fontsize=6,labelspacing=0.05)
-	plt.text(n-9,.5,'{:0.1e}'.format(equal[n]),size=12,clip_on=False)
+# 	plt.text(n-9,.5,'{:0.1e}'.format(equal[n]),size=12,clip_on=False)
 	plt.tight_layout()
 	sns.despine()
 	plt.savefig('Probability_{0}.pdf'.format(paramlabels))
