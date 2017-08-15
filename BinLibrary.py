@@ -15,11 +15,12 @@ import numpy as np
 from scipy.special import comb
 import seaborn as sns
 
-def runProbability(yrange,prange):
+def runProbability(yrange):
+	# https://math.stackexchange.com/questions/151810/probability-of-3-heads-in-10-coin-flips
 	equal = []
-	for y,p in zip(yrange,prange):
+	for y in yrange:
 		if y >= 0:
-			t = y + 1.0 # include 0% don't think this is needed
+			t = y + 1.0 # include 0%
 			k = t**2.0 # probability space
 			equal.append(t/k)
 		else:
@@ -29,9 +30,9 @@ def runProbability(yrange,prange):
 def graphComb(n,emp,ranemp,paramlabels):
 # https://betterexplained.com/articles/understanding-the-birthday-paradox/
 	yrange = np.arange(1,n*2)
-	prange = np.empty(n*2)
-	prange.fill(0.5)
-	equal = runProbability(yrange,prange)
+# 	prange = np.empty(n*2)
+# 	prange.fill(0.5)
+	equal = runProbability(yrange)
 	
 	sns.set_style('ticks')
 	sns.set_palette("husl",n_colors=8)#(len(nucLine)*2)

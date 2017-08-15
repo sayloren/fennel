@@ -28,12 +28,15 @@ def compareN(element,size):
 # with the results from compareN per each element, evaluate directionality into new column
 def evalN(rangeFeatures,fileName,binDir):
 	rangeFeatures['compareBoundaries'] = rangeFeatures.apply(lambda row: (compareN(row['feature'],binDir)),axis=1)
-	compareEnds = pd.DataFrame(rangeFeatures[['chr','start','end','compareBoundaries']])
-	# put bin size calibration here
-	print 'Sorting the element boundaries by bin size {0}'.format(binDir)
+	rangeFeatures['compareBoundariesRange'] = rangeFeatures.apply(lambda row: (empericalN(row['feature'],binDir)),axis=1)
+	rangeFeatures['equalBoundariesCount'] = rangeFeatures.apply(lambda row: row['compareBoundariesRange'].count('='),axis=1)
+	rangeFeatures['plusBoundariesCount'] = rangeFeatures.apply(lambda row: row['compareBoundariesRange'].count('+'),axis=1)
+	rangeFeatures['minusBoundariesCount'] = rangeFeatures.apply(lambda row: row['compareBoundariesRange'].count('-'),axis=1)
+	print rangeFeatures[['plusBoundariesCount','minusBoundariesCount','equalBoundariesCount']]
 	
+	compareEnds = pd.DataFrame(rangeFeatures[['chr','start','end','compareBoundaries']])
+	print 'Sorting the element boundaries by bin size {0}'.format(binDir)
 	rangeBins = collectEmperical(rangeFeatures,binDir)
-	# for after rc sorting too?
 	return rangeFeatures,rangeBins
 
 def collectEmperical(rangeFeatures,binDir):

@@ -11,9 +11,12 @@ cluster by difference between boundaries
 snps, nucleosomes, replication origins/forks, tss
 
 AT balance random
-exons - split intron/intergenic, include exon direcitonality, move cross boundary to tss
+exons - split intron/intergenic, include exon direcitonality, move cross boundary to tss, rc sorting
 which are consitently = 
-AT liklihood, more constrined = boundary graph from emperical spread
+
+global vars
+unittest
+liscense
 
 """
 
