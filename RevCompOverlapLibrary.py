@@ -20,6 +20,7 @@ def dirOverlapsLine(posStr,negStr,mFiles,num,uce,inuce,window,methCovThresh,meth
 	return groupMeth,compWindow,compNames
 
 def main(posStr,negStr,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs):
+	print 'Running RevCompOverlapLibrary'
 	groupMeth,compWindow,compNames = dirOverlapsLine(posStr,negStr,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 # 	print 'Completed reverse complements sorting for {0}  items and {1} neg items'.format(len(posStr,negStr.index))
 	return groupMeth,compWindow,compNames

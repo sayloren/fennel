@@ -48,6 +48,7 @@ def dfWindow(outDataFrame):
 	return collectNucDF, names
 
 def main(features,label,num,uce,inuce,window,nucLine):
+	print 'Running FangsLibrary'
 	outDataFrame, names = compactWindow(features,label,num,uce,inuce,window,nucLine)
 	return outDataFrame, names
 

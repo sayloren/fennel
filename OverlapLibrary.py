@@ -146,6 +146,7 @@ def rangebyClass(df,num,uce,inuce,faGenome):
 	return startcrossboundary,endcrossboundary,completeelement,interiorelement
 
 def main(rangeFeatures,exonicInset,num,uce,inuce,faGenome,binDir,revCom,fileName,mFiles,window,methCovThresh,methPerThresh,nucLine,graphs):
+	print 'Running OverlapLibrary'
 	exonFeature = eachFileProcess(exonicInset)
 	exonicFeatures, overlapTable = exonIntersect(rangeFeatures,exonFeature,num,uce,inuce,faGenome)
 	

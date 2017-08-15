@@ -487,6 +487,7 @@ def graphFang(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	pp.close()
 
 def main(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
+	print 'Running GraphFangLibrary'
 	graphFang(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine)
 
 if __name__ == "__main__":

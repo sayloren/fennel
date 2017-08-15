@@ -53,14 +53,25 @@ def collectEmperical(rangeFeatures,binDir):
 	# Separate data frames by Start v End and Min v Max
 	pdATCollectStartMin = outcat[[outcat.columns[0]]].min(axis=1)
 	pdATCollectEndMin = outcat[[outcat.columns[1]]].min(axis=1)
+	
 	pdATCollectStartMax = outcat[[outcat.columns[0]]].max(axis=1)
 	pdATCollectEndMax = outcat[[outcat.columns[1]]].max(axis=1)
+	
+	pdATCollectStartUpperQuant = outcat[[outcat.columns[0]]].quantile(q=.75,axis=1)
+	pdATCollectEndUpperQuant = outcat[[outcat.columns[1]]].quantile(q=.75,axis=1)
+
+	pdATCollectStartLowerQuant = outcat[[outcat.columns[0]]].quantile(q=.25,axis=1)
+	pdATCollectEndLowerQuant = outcat[[outcat.columns[1]]].quantile(q=.25,axis=1)
+
+
+	Upper = pdATCollectStartUpperQuant * pdATCollectEndUpperQuant
+	Lower = pdATCollectStartLowerQuant * pdATCollectEndLowerQuant
 
 	Min = pdATCollectStartMin * pdATCollectEndMin
 	Max = pdATCollectStartMax * pdATCollectEndMax
 
-	pdBins = pd.concat([Min,Max],axis=1)
-	pdBins.columns=['Min','Max']
+	pdBins = pd.concat([Min,Lower,Upper,Max],axis=1)
+	pdBins.columns=['Min','Lower','Upper','Max']
 	return pdBins
 
 def empericalATspread(element,size):
@@ -71,6 +82,7 @@ def empericalATspread(element,size):
 	return totalSteps
 
 def main(rangeFeatures,fileName,binDir):
+	print 'Running DirectionLibrary'
 	directionFeatures,directionBins = evalN(rangeFeatures,fileName,binDir)
 	return directionFeatures,directionBins
 

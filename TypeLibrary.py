@@ -19,6 +19,7 @@ def perType(boolType,column,fileName,binDir,mFiles,num,uce,inuce,window,methCovT
 	return pdMeth,typeWindow,typeNames
 
 def main(boolType,column,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs):
+	print 'Running TypeLibrary'
 	pdMeth,typeWindow,typeNames = perType(boolType,column,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
 	print 'Completed group sorting for {0} items'.format(len(boolType.index))
 	return pdMeth,typeWindow,typeNames
