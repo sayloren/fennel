@@ -11,13 +11,13 @@ June 20 2017
 import argparse
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
-import numpy as np
-from scipy.special import comb
+import numpy
 import seaborn as sns
 import math
 import GlobalVariables
 
-def runProbability(yrange):
+# Compute the theoretical probability
+def runProbability(yrange,p):
 	# https://math.stackexchange.com/questions/151810/probability-of-3-heads-in-10-coin-flips
 	# need to include probability different than 0.5
 	equal = []
@@ -26,7 +26,7 @@ def runProbability(yrange):
 		if y >= 0:
 			permsum = []
 			for k in range (0, (y + 1)):
-				permuationK = math.factorial(y)/(math.factorial(k)*(math.factorial(y -k)))
+				permuationK = math.factorial(y)/(math.factorial(k)*(math.factorial(y -k)))#*pow(p,k)*pow((1-p),y-k)
 				floatPForKHeads = float(permuationK)/float(totalPerm)
 				floatPForKHeadsBothSides = floatPForKHeads * floatPForKHeads
 				permsum.append(floatPForKHeadsBothSides)
@@ -36,9 +36,10 @@ def runProbability(yrange):
 			equal.append(0)
 	return equal
 
+# Graph the probability
 def graphComb(emp,ranemp,paramlabels):
-	yrange = np.arange(1,GlobalVariables.binDir*2)
-	equal = runProbability(yrange)
+	yrange = numpy.arange(1,GlobalVariables.binDir*2)
+	equal = runProbability(yrange,0.5)
 	
 	sns.set_style('ticks')
 	sns.set_palette("husl",n_colors=8)

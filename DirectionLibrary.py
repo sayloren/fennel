@@ -34,7 +34,7 @@ def evalN(rangeFeatures,fileName):
 	rangeFeatures['equalBoundariesCount'] = rangeFeatures.apply(lambda row: row['compareBoundariesRange'].count('='),axis=1)
 	rangeFeatures['plusBoundariesCount'] = rangeFeatures.apply(lambda row: row['compareBoundariesRange'].count('+'),axis=1)
 	rangeFeatures['minusBoundariesCount'] = rangeFeatures.apply(lambda row: row['compareBoundariesRange'].count('-'),axis=1)
-	print rangeFeatures[['plusBoundariesCount','minusBoundariesCount','equalBoundariesCount']]
+# 	print rangeFeatures[['plusBoundariesCount','minusBoundariesCount','equalBoundariesCount']]
 	
 	compareEnds = pd.DataFrame(rangeFeatures[['chr','start','end','compareBoundaries']])
 	print 'Sorting the element boundaries by bin size {0}'.format(GlobalVariables.binDir)

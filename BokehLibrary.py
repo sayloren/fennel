@@ -17,13 +17,13 @@ from bokeh.layouts import widgetbox
 from bokeh.models.widgets import Select
 from bokeh.models.widgets import Toggle
 import pandas as pd
-import seaborn as sns
+import seaborn
 from GraphFangLibrary import collectDiNuc
 import GlobalVariables
 
 # Make interactive plots
 def bokehOut(dfWindow,ranWindow,fileName):
-	sns.set_palette("husl",n_colors=8)
+	seaborn.set_palette("husl",n_colors=8)
 
 	# Get group, mean and standard deviation for AT
 	ATgroup,ATmean,ATstd = collectDiNuc(dfWindow,names,'A','T')
