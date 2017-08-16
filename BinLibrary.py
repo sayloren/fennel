@@ -14,25 +14,30 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.special import comb
 import seaborn as sns
+import math
 
-def runProbability(yrange):
+def runProbability(yrange,p):
 	# https://math.stackexchange.com/questions/151810/probability-of-3-heads-in-10-coin-flips
 	equal = []
 	for y in yrange:
+		totalPerm = pow(2, y)
 		if y >= 0:
-			t = y + 1.0 # include 0%
-			k = t**2.0 # probability space
-			equal.append(t/k)
+			permsum = []
+			for k in range (0, (y + 1)):
+				permuationK = math.factorial(y)/(math.factorial(k)*(math.factorial(y -k)))
+				floatPForKHeads = float(permuationK)/float(totalPerm)
+				floatPForKHeadsBothSides = floatPForKHeads * floatPForKHeads
+				permsum.append(floatPForKHeadsBothSides)
+			probabilitiesfloatPEqualSides = sum(permsum)
+			equal.append(probabilitiesfloatPEqualSides)
 		else:
 			equal.append(0)
 	return equal
 
 def graphComb(n,emp,ranemp,paramlabels):
-# https://betterexplained.com/articles/understanding-the-birthday-paradox/
 	yrange = np.arange(1,n*2)
-# 	prange = np.empty(n*2)
-# 	prange.fill(0.5)
-	equal = runProbability(yrange)
+	equal = runProbability(yrange,0.5)
+	print equal
 	
 	sns.set_style('ticks')
 	sns.set_palette("husl",n_colors=8)#(len(nucLine)*2)
