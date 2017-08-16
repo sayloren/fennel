@@ -16,24 +16,23 @@ from bokeh.layouts import row, column
 from bokeh.layouts import widgetbox
 from bokeh.models.widgets import Select
 from bokeh.models.widgets import Toggle
-# from numpy import sin, linspace, pi
 import pandas as pd
 import seaborn as sns
 from GraphFangLibrary import collectDiNuc
+import GlobalVariables
 
 # Make interactive plots
-def bokehOut(dfWindow,ranWindow,fileName,num,uce,inuce,window,nucLine):
-	fillX = range(0,(num-window))
-	sns.set_palette("husl",n_colors=8)#(len(nucLine)*2)
+def bokehOut(dfWindow,ranWindow,fileName):
+	sns.set_palette("husl",n_colors=8)
 
 	# Get group, mean and standard deviation for AT
 	ATgroup,ATmean,ATstd = collectDiNuc(dfWindow,names,'A','T')
 	ranATgroup,ranATmean,ranATstd = collectDiNuc(ranWindow,names,'A','T')
 
-	source = ColumnDataSource(data=dict(x=fillX,mean=ATgroup.mean(),std=ATgroup.std(),rmean=ranATgroup.mean(),rstd=ranATgroup.std()))
+	source = ColumnDataSource(data=dict(x=GlobalVariables.fillX,mean=ATgroup.mean(),std=ATgroup.std(),rmean=ranATgroup.mean(),rstd=ranATgroup.std()))
 	output_file('Interactive_{0}.html'.format(fileName))
 	p = figure(plot_width=1500, plot_height=600, min_border=10, min_border_left=50,toolbar_location="above",title="Mean AT Content Across Base Pair Position")
-	p.line('x','mean',line_width=2,source=source)#,color='#3e1638'
+	p.line('x','mean',line_width=2,source=source)
 	p.yaxis.axis_label = "% AT Content"
 	p.xaxis.axis_label = "Nucleotide Postion"
 	p.background_fill_color = "#fafafa"
@@ -48,8 +47,9 @@ def bokehOut(dfWindow,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	widgets = row(select,toggle)
 	show(column(widgets,p,sd))
 
-def main(dfWindow,ranWindow,fileName,num,uce,inuce,window,nucLine):
-	bokehOut(dfWindow,ranWindow,fileName,num,uce,inuce,window,nucLine)
+def main(dfWindow,ranWindow,fileName):
+	print 'Running BokehLibrary'
+	bokehOut(dfWindow,ranWindow,fileName)
 
 if __name__ == "__main__":
 	main()

@@ -9,20 +9,20 @@ import argparse
 import pandas as pd
 from RevCompLibrary import methDirection
 from RevCompLibrary import slideDirection
+import GlobalVariables
 
 # RCsort and return methylation and sliding window computations
-def dirOverlapsLine(posStr,negStr,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs):
-	compWindow, compNames = slideDirection(negStr,posStr,num,uce,inuce,window,nucLine)
-	if any(x in graphs for x in ['methylation','cluster']):
-		groupMeth = methDirection(negStr,posStr,mFiles,num,uce,inuce,methCovThresh,methPerThresh,faGenome)
+def dirOverlapsLine(posStr,negStr):
+	compWindow, compNames = slideDirection(negStr,posStr)
+	if any(x in GlobalVariables.graphs for x in ['methylation','cluster']):
+		groupMeth = methDirection(negStr,posStr)
 	else: 
 		groupMeth = None
 	return groupMeth,compWindow,compNames
 
-def main(posStr,negStr,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs):
+def main(posStr,negStr):
 	print 'Running RevCompOverlapLibrary'
-	groupMeth,compWindow,compNames = dirOverlapsLine(posStr,negStr,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-# 	print 'Completed reverse complements sorting for {0}  items and {1} neg items'.format(len(posStr,negStr.index))
+	groupMeth,compWindow,compNames = dirOverlapsLine(posStr,negStr)
 	return groupMeth,compWindow,compNames
 
 if __name__ == "__main__":

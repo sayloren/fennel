@@ -14,6 +14,7 @@ from ElementLibrary import saveBedTool
 from ElementLibrary import pandaToBedtool
 from ElementLibrary import reverseComplement
 from ElementLibrary import simpleFasta
+import GlobalVariables
 
 # 	Old snippets from previous methylation processing method
 # 	df.rename(columns=lambda x: x.replace('string','{0}_string'.format(filename)),inplace=True) # modify column names to be file specific
@@ -27,15 +28,15 @@ from ElementLibrary import simpleFasta
 # 	List = df['list'].apply(pd.Series).stack().tolist() # make a list from a column of lists
 
 # Threshold methylation data by coverage and percentage
-def methThreshold(methFeatures,methCovThresh,methPerThresh):
+def methThreshold(methFeatures):
 	pdmethFeatures = bedtoolToPanda(methFeatures)
-	pdmethThresh = (pdmethFeatures[(pdmethFeatures.loc[:,3] >= methCovThresh) & (pdmethFeatures.loc[:,4] >= methPerThresh)])
+	pdmethThresh = (pdmethFeatures[(pdmethFeatures.loc[:,3] >= GlobalVariables.methCovThresh) & (pdmethFeatures.loc[:,4] >= GlobalVariables.methPerThresh)])
 	btmethThresh = pandaToBedtool(pdmethThresh)
-	print 'Methylation coverage is being thresholded at {0} and percentage at {1}'.format(methCovThresh, methPerThresh)
+	print 'Methylation coverage is being thresholded at {0} and percentage at {1}'.format(GlobalVariables.methCovThresh, GlobalVariables.methPerThresh)
 	return btmethThresh
 
 # Intersect regions from the methylation data with element regions
-def methIntersect(rangeFeatures,methFeature,num,uce,inuce,faGenome):
+def methIntersect(rangeFeatures,methFeature):
 	methSBoundary = methFeature.intersect(rangeFeatures[['chr','sBoundary','sEdge','id']].values.tolist(),wb=True,wa=True)
 	if len(methSBoundary) != 0:
 		pdmethSBoundary = bedtoolToPanda(methSBoundary)
@@ -43,10 +44,10 @@ def methIntersect(rangeFeatures,methFeature,num,uce,inuce,faGenome):
 		pdmethSBoundary.columns = ['mchr','mstart','mstop','methCov','methPer','chr','sBoundary','sEdge','id','int']
 		pdmethSBoundary['Context'] = pdmethSBoundary['mstop'] + 1
 		pdmethSBoundary['BackContext'] = pdmethSBoundary['mstart'] -1
-		pdmethSBoundary['Nuc'] = simpleFasta(getFeatures(pdmethSBoundary[['mchr','BackContext','Context']].values.tolist()),faGenome)
-		pdmethSBoundary['NucContext'] = simpleFasta(getFeatures(pdmethSBoundary[['mchr','mstop','Context']].values.tolist()),faGenome)
-		pdmethSBoundary['NucCytosine'] = simpleFasta(getFeatures(pdmethSBoundary[['mchr','mstart','mstop']].values.tolist()),faGenome)
-		pdmethSBoundary['NucBackContext'] = simpleFasta(getFeatures(pdmethSBoundary[['mchr','BackContext','mstart']].values.tolist()),faGenome)
+		pdmethSBoundary['Nuc'] = simpleFasta(getFeatures(pdmethSBoundary[['mchr','BackContext','Context']].values.tolist()))
+		pdmethSBoundary['NucContext'] = simpleFasta(getFeatures(pdmethSBoundary[['mchr','mstop','Context']].values.tolist()))
+		pdmethSBoundary['NucCytosine'] = simpleFasta(getFeatures(pdmethSBoundary[['mchr','mstart','mstop']].values.tolist()))
+		pdmethSBoundary['NucBackContext'] = simpleFasta(getFeatures(pdmethSBoundary[['mchr','BackContext','mstart']].values.tolist()))
 		pdmethSBoundary['methLoc'] = pdmethSBoundary['int'].astype(int)+(pdmethSBoundary['mstart'].astype(int)-pdmethSBoundary['sBoundary'].astype(int))
 		outpdmethSBoundary = pdmethSBoundary[['chr','mstart','mstop','sBoundary','sEdge','int','id','methPer','methLoc','methCov','Nuc','NucContext','NucCytosine','NucBackContext']]
 		outpdmethSBoundary.columns = ['chr','methStart','methStop','eleStart','eleStop','int','id','methPer','methLoc','methCov','Nuc','NucContext','NucCytosine','NucBackContext']
@@ -56,14 +57,14 @@ def methIntersect(rangeFeatures,methFeature,num,uce,inuce,faGenome):
 	methMiddle = methFeature.intersect(rangeFeatures[['chr','sCenter','eCenter','id']].values.tolist(),wb=True,wa=True)
 	if len(methMiddle) != 0:
 		pdmethFeature = bedtoolToPanda(methMiddle)
-		pdmethFeature['int'] = (((num - uce)/2) + inuce)
+		pdmethFeature['int'] = (((GlobalVariables.num - GlobalVariables.uce)/2) + GlobalVariables.inuce)
 		pdmethFeature.columns = ['mchr','mstart','mstop','methCov','methPer','chr','sCenter','eCenter','id','int']
 		pdmethFeature['Context'] = pdmethFeature['mstop'] + 1
 		pdmethFeature['BackContext'] = pdmethFeature['mstart'] -1
-		pdmethFeature['Nuc'] = simpleFasta(getFeatures(pdmethFeature[['mchr','BackContext','Context']].values.tolist()),faGenome)
-		pdmethFeature['NucContext'] = simpleFasta(getFeatures(pdmethFeature[['mchr','mstop','Context']].values.tolist()),faGenome)
-		pdmethFeature['NucCytosine'] = simpleFasta(getFeatures(pdmethFeature[['mchr','mstart','mstop']].values.tolist()),faGenome)
-		pdmethFeature['NucBackContext'] = simpleFasta(getFeatures(pdmethFeature[['mchr','BackContext','mstart']].values.tolist()),faGenome)
+		pdmethFeature['Nuc'] = simpleFasta(getFeatures(pdmethFeature[['mchr','BackContext','Context']].values.tolist()))
+		pdmethFeature['NucContext'] = simpleFasta(getFeatures(pdmethFeature[['mchr','mstop','Context']].values.tolist()))
+		pdmethFeature['NucCytosine'] = simpleFasta(getFeatures(pdmethFeature[['mchr','mstart','mstop']].values.tolist()))
+		pdmethFeature['NucBackContext'] = simpleFasta(getFeatures(pdmethFeature[['mchr','BackContext','mstart']].values.tolist()))
 		pdmethFeature['methLoc'] = pdmethFeature['int'].astype(int)+(pdmethFeature['mstart'].astype(int)-pdmethFeature['sCenter'].astype(int))
 		outpdmethFeature = pdmethFeature[['chr','mstart','mstop','sCenter','eCenter','int','id','methPer','methLoc','methCov','Nuc','NucContext','NucCytosine','NucBackContext']]
 		outpdmethFeature.columns = ['chr','methStart','methStop','eleStart','eleStop','int','id','methPer','methLoc','methCov','Nuc','NucContext','NucCytosine','NucBackContext']
@@ -73,14 +74,14 @@ def methIntersect(rangeFeatures,methFeature,num,uce,inuce,faGenome):
 	methEBoundary = methFeature.intersect(rangeFeatures[['chr','eEdge','eBoundary','id']].values.tolist(),wb=True,wa=True)
 	if len(methEBoundary) != 0:
 		pdmethEBoundary = bedtoolToPanda(methEBoundary)
-		pdmethEBoundary['int'] = num-1
+		pdmethEBoundary['int'] = GlobalVariables.num-1
 		pdmethEBoundary.columns = ['mchr','mstart','mstop','methCov','methPer','chr','eEdge','eBoundary','id','int']
 		pdmethEBoundary['Context'] = pdmethEBoundary['mstop'] + 1
 		pdmethEBoundary['BackContext'] = pdmethEBoundary['mstart'] -1
-		pdmethEBoundary['Nuc'] = simpleFasta(getFeatures(pdmethEBoundary[['mchr','BackContext','Context']].values.tolist()),faGenome)
-		pdmethEBoundary['NucContext'] = simpleFasta(getFeatures(pdmethEBoundary[['mchr','mstop','Context']].values.tolist()),faGenome)
-		pdmethEBoundary['NucCytosine'] = simpleFasta(getFeatures(pdmethEBoundary[['mchr','mstart','mstop']].values.tolist()),faGenome)
-		pdmethEBoundary['NucBackContext'] = simpleFasta(getFeatures(pdmethEBoundary[['mchr','BackContext','mstart']].values.tolist()),faGenome)
+		pdmethEBoundary['Nuc'] = simpleFasta(getFeatures(pdmethEBoundary[['mchr','BackContext','Context']].values.tolist()))
+		pdmethEBoundary['NucContext'] = simpleFasta(getFeatures(pdmethEBoundary[['mchr','mstop','Context']].values.tolist()))
+		pdmethEBoundary['NucCytosine'] = simpleFasta(getFeatures(pdmethEBoundary[['mchr','mstart','mstop']].values.tolist()))
+		pdmethEBoundary['NucBackContext'] = simpleFasta(getFeatures(pdmethEBoundary[['mchr','BackContext','mstart']].values.tolist()))
 		pdmethEBoundary['methLoc'] = pdmethEBoundary['int'].astype(int)-(pdmethEBoundary['eBoundary'].astype(int)-pdmethEBoundary['mstop'].astype(int))
 		outpdmethEBoundary = pdmethEBoundary[['id','methPer','methLoc','methCov']]
 		outpdmethEBoundary = pdmethEBoundary[['chr','mstart','mstop','eEdge','eBoundary','int','id','methPer','methLoc','methCov','Nuc','NucContext','NucCytosine','NucBackContext']]
@@ -94,12 +95,12 @@ def methIntersect(rangeFeatures,methFeature,num,uce,inuce,faGenome):
 	return sortMeth
 
 # Run the analysis to extract percentage, frequency, coverage, location, context, and direction
-def compactMeth(mFiles,rangeFeatures,num,uce,inuce,methCovThresh,methPerThresh,faGenome):
+def compactMeth(rangeFeatures):
 	outMeth = []
-	for methName in mFiles:
+	for methName in GlobalVariables.mFiles:
 		methFeatures = eachFileProcess(methName)
-		pdmethThresh = methThreshold(methFeatures,methCovThresh,methPerThresh)
-		methPosition = methIntersect(rangeFeatures,pdmethThresh,num,uce,inuce,faGenome)
+		pdmethThresh = methThreshold(methFeatures)
+		methPosition = methIntersect(rangeFeatures,pdmethThresh)
 		methPosition['tissue'] = methName.replace('.bed','')
 		stringDF = rangeFeatures[['id','combineString']]
 		methMerge = pd.merge(methPosition,stringDF,how='left',on='id')
@@ -132,8 +133,9 @@ def compactMeth(mFiles,rangeFeatures,num,uce,inuce,methCovThresh,methPerThresh,f
 	pdMeth = pd.concat(outMeth)
 	return pdMeth
 
-def main(mFiles,rangeFeatures,num,uce,inuce,methCovThresh,methPerThresh,faGenome):
-	pdMeth = compactMeth(mFiles,rangeFeatures,num,uce,inuce,methCovThresh,methPerThresh,faGenome)
+def main(rangeFeatures):
+	print 'Running MethlationLibrary'
+	pdMeth = compactMeth(rangeFeatures)
 	return pdMeth
 
 if __name__ == "__main__":

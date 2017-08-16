@@ -14,17 +14,17 @@ import pandas as pd
 import seaborn as sns
 import matplotlib as mpl
 from matplotlib.backends.backend_pdf import PdfPages
-from matplotlib.colors import ListedColormap
 import matplotlib.gridspec as gridspec
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
-from matplotlib.colors import rgb2hex, colorConverter
+from matplotlib.colors import rgb2hex,colorConverter,ListedColormap
 import scipy
 from scipy import cluster
-from scipy.cluster.hierarchy import dendrogram, set_link_color_palette
+from scipy.cluster.hierarchy import dendrogram,set_link_color_palette
 from scipy.spatial import distance
 from scipy.cluster import hierarchy
 from GraphFangLibrary import collectDiNuc
+import GlobalVariables
 
 # Make cluster classes based on the den values
 def getClusterClass(den):
@@ -57,17 +57,13 @@ def makeClusterCol(ATelement,Elementclusters):
 	return cluster
 
 # Make some graphs for fangs
-def graphDendrogram(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLine,methylationflank):
-
-	# Parameters that all graphs will use
-	fillX = range(0,(num-window))
-	halfwindow = ((window/2)+1)
+def graphDendrogram(dfWindow,ranWindow,names,fileName):
 
 	# Get group, mean and standard deviation for AT
 	ATgroup,ATmean,ATstd = collectDiNuc(dfWindow,names,'A','T')
 	ranATgroup,ranATmean,ranATstd = collectDiNuc(ranWindow,names,'A','T')
-	ATelement = ATgroup.T[(((num-uce)/2)-halfwindow-methylationflank):(((num-uce)/2)+uce-halfwindow+methylationflank)]
-	ranATelement = ranATgroup.T[(((num-uce)/2)-halfwindow-methylationflank):(((num-uce)/2)+uce-halfwindow+methylationflank)]
+	ATelement = ATgroup.T[(GlobalVariables.plotLineLocationThree-GlobalVariables.methylationflank):(GlobalVariables.plotLineLocationFour+GlobalVariables.methylationflank)]
+	ranATelement = ranATgroup.T[(GlobalVariables.plotLineLocationThree-GlobalVariables.methylationflank):(GlobalVariables.plotLineLocationFour+GlobalVariables.methylationflank)]
 	print 'Extracted just element and methylation flank, size {0}'.format(len(ATelement))
 
 	# Title info
@@ -94,8 +90,9 @@ def graphDendrogram(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLi
 	pp.savefig()
 	pp.close()
 
-def main(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLine,methylationflank):
-	graphDendrogram(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLine,methylationflank)
+def main(dfWindow,ranWindow,names,fileName):
+	print 'Running GraphDendrogramLibrary'
+	graphDendrogram(dfWindow,ranWindow,names,fileName)
 
 if __name__ == "__main__":
 	main()

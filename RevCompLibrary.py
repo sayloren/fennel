@@ -9,15 +9,16 @@ import pandas as pd
 from FangsLibrary import compactWindow
 from ElementLibrary import eachFileProcess
 from MethylationLibrary import compactMeth
+import GlobalVariables
 
 # Methylation RCsorting
-def methDirection(negStr,posStr,mFiles,num,uce,inuce,methCovThresh,methPerThresh,faGenome):
+def methDirection(negStr,posStr):
 
-	posMeth = compactMeth(mFiles,posStr,num,uce,inuce,methCovThresh,methPerThresh,faGenome)
-	negMeth = compactMeth(mFiles,negStr,num,uce,inuce,methCovThresh,methPerThresh,faGenome)
+	posMeth = compactMeth(posStr)
+	negMeth = compactMeth(negStr)
 	
 	# Zip reversed range to make a dictionary for replacing the location of the neg methylation
-	originalRange = range(0,num)
+	originalRange = range(0,GlobalVariables.num)
 	reverseRange = originalRange[::-1]
 	rangeDict = dict(zip(originalRange,reverseRange))
 	
@@ -43,30 +44,31 @@ def methDirection(negStr,posStr,mFiles,num,uce,inuce,methCovThresh,methPerThresh
 	return outMerge
 
 # Sliding window RCsorting
-def slideDirection(negStr,posStr,num,uce,inuce,window,nucLine):
-	negDF, negNames = compactWindow(negStr['reverseComplement'],negStr['id'],num,uce,inuce,window,nucLine)
-	posDF, posNames = compactWindow(posStr['combineString'],posStr['id'],num,uce,inuce,window,nucLine)
+def slideDirection(negStr,posStr):
+	negDF, negNames = compactWindow(negStr['reverseComplement'],negStr['id'])
+	posDF, posNames = compactWindow(posStr['combineString'],posStr['id'])
 	compWindow = []
 	for x, y in zip(negDF, posDF):
 		tempCat = pd.concat([x,y],axis=1)
 		tempGroup = tempCat.groupby(tempCat.columns,axis=1).sum()
 		compWindow.append(tempGroup)
-	return compWindow, negNames # or could be posNames, they will be the same
+	return compWindow, negNames
 
 # Separate on plus and minus orientation, RCsort and return methylation and sliding window computations
-def dirLine(directionFeatures,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs):
+def dirLine(directionFeatures):
 	negStr = (directionFeatures[(directionFeatures['compareBoundaries'] == '-')])
 	posStr = (directionFeatures[(directionFeatures['compareBoundaries'] == '+')])
-	compWindow, compNames = slideDirection(negStr,posStr,num,uce,inuce,window,nucLine)
-	if any(x in graphs for x in ['methylation','cluster']):
-		groupMeth = methDirection(negStr,posStr,mFiles,num,uce,inuce,methCovThresh,methPerThresh,faGenome)
+	compWindow, compNames = slideDirection(negStr,posStr)
+	if any(x in GlobalVariables.graphs for x in ['methylation','cluster']):
+		groupMeth = methDirection(negStr,posStr)
 	else: 
 		groupMeth = None
 	return groupMeth,compWindow,compNames
 
-def main(directionFeatures,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs):
-	groupMeth,compWindow,compNames = dirLine(directionFeatures,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-	print 'Completed reverse complement sorting for {0} items, with {1} bin sorting'.format(len(directionFeatures.index),binDir)
+def main(directionFeatures):
+	print 'Running RevCompLibrary'
+	groupMeth,compWindow,compNames = dirLine(directionFeatures)
+	print 'Completed reverse complement sorting for {0} items, with {1} bin sorting'.format(len(directionFeatures.index),GlobalVariables.binDir)
 	return groupMeth,compWindow,compNames
 
 if __name__ == "__main__":

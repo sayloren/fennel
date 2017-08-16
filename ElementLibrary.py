@@ -9,6 +9,7 @@ import argparse
 from collections import defaultdict
 import pandas as pd
 import pybedtools as pbt
+import GlobalVariables
 
 # read in files
 def eachFileProcess(fileName):
@@ -21,17 +22,17 @@ def getFeatures(strFileName):
 	return btFeatures
 
 # get the correct range for fang evaluation
-def getRange(btFeatures,fileName,num,uce,inuce):
-	flankSize = (num - uce)/2
-	inregion = uce-(inuce*2)
+def getRange(btFeatures,fileName):#btFeatures,fileName,num,uce,inuce
+	flankSize = (GlobalVariables.num - GlobalVariables.uce)/2
+	inregion = GlobalVariables.uce-(GlobalVariables.inuce*2)
 	midFeatures = pd.read_table(btFeatures.fn, header=None)
 	midFeatures['middle'] = midFeatures.loc[:,1:2].mean(axis=1).astype(int)
 	midFeatures['start'] = midFeatures.loc[:,1]
 	midFeatures['end'] = midFeatures.loc[:,2] 
 	midFeatures['sCenter'] = midFeatures['middle'] - (inregion/2)
 	midFeatures['eCenter'] = midFeatures['middle'] + (inregion/2)
-	midFeatures['sEdge'] = midFeatures.loc[:,1] + inuce
-	midFeatures['eEdge'] = midFeatures.loc[:,2] - inuce
+	midFeatures['sEdge'] = midFeatures.loc[:,1] + GlobalVariables.inuce
+	midFeatures['eEdge'] = midFeatures.loc[:,2] - GlobalVariables.inuce
 	midFeatures['sBoundary'] = midFeatures.loc[:,1] - flankSize
 	midFeatures['eBoundary'] = midFeatures.loc[:,2] + flankSize
 	midFeatures['type'] = midFeatures.loc[:,4]
@@ -43,13 +44,13 @@ def getRange(btFeatures,fileName,num,uce,inuce):
 	return rangeFeatures
 
 # get the strings for sliding window regions
-def btRange(rangeFeatures,faGenome):
-	rangeFeatures['sBoundarySeq'] = simpleFasta(getFeatures(rangeFeatures[['chr','sBoundary','start']].values.tolist()),faGenome)
-	rangeFeatures['sEdgeSeq'] = simpleFasta(getFeatures(rangeFeatures[['chr','start','sEdge']].values.tolist()),faGenome)
-	rangeFeatures['MiddleSeq'] = simpleFasta(getFeatures(rangeFeatures[['chr','sCenter','eCenter']].values.tolist()),faGenome)
-	rangeFeatures['eEdgeSeq'] = simpleFasta(getFeatures(rangeFeatures[['chr','eEdge','end',]].values.tolist()),faGenome)
-	rangeFeatures['eBoundarySeq'] = simpleFasta(getFeatures(rangeFeatures[['chr','end','eBoundary']].values.tolist()),faGenome)
-	rangeFeatures['feature'] = simpleFasta(getFeatures(rangeFeatures[['chr','start','end']].values.tolist()),faGenome)
+def btRange(rangeFeatures):#rangeFeatures,faGenome
+	rangeFeatures['sBoundarySeq'] = simpleFasta(getFeatures(rangeFeatures[['chr','sBoundary','start']].values.tolist()))
+	rangeFeatures['sEdgeSeq'] = simpleFasta(getFeatures(rangeFeatures[['chr','start','sEdge']].values.tolist()))
+	rangeFeatures['MiddleSeq'] = simpleFasta(getFeatures(rangeFeatures[['chr','sCenter','eCenter']].values.tolist()))
+	rangeFeatures['eEdgeSeq'] = simpleFasta(getFeatures(rangeFeatures[['chr','eEdge','end',]].values.tolist()))
+	rangeFeatures['eBoundarySeq'] = simpleFasta(getFeatures(rangeFeatures[['chr','end','eBoundary']].values.tolist()))
+	rangeFeatures['feature'] = simpleFasta(getFeatures(rangeFeatures[['chr','start','end']].values.tolist()))
 	rangeFeatures['combineString'] = rangeFeatures['sBoundarySeq'].astype(str) + rangeFeatures['sEdgeSeq'].astype(str) + rangeFeatures['MiddleSeq'].astype(str) + rangeFeatures['eEdgeSeq'].astype(str) + rangeFeatures['eBoundarySeq'].astype(str)
 	rangeFeatures['combineString'] = rangeFeatures['combineString'].str.upper()
 	rangeFeatures['feature'] = rangeFeatures['feature'].str.upper()
@@ -58,11 +59,11 @@ def btRange(rangeFeatures,faGenome):
 
 # get the reverse complement
 def reverseComplement(sequence):
-	seqDict = {'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C','N':'N'}
+	seqDict = {'A':'T','T':'A','C':'G','G':'C','N':'N'}
 	return "".join([seqDict[base] for base in reversed(sequence)])
 
 # save file from bedtool
-def saveBedTool(btObject, strFilename):
+def saveBedTool(btObject,strFilename):
 	btObject.saveas(strFilename)
 
 # convert bedtool to panda
@@ -73,35 +74,36 @@ def bedtoolToPanda(btobject):
 	return pdObject
 
 # convert panda to bedtool
-def pandaToBedtool(panda): # columns 5+
+def pandaToBedtool(panda):
 	arArFeatures = panda.values.tolist()
 	btoutFeatures = getFeatures(arArFeatures)
 	return btoutFeatures
 
 # get fasta strings for each desired region
-def getFasta(btFeatures,faGenome,fileName):
+def getFasta(btFeatures,fileName):
 	saveAll = 'Seq_result_for_all_{0}.txt'.format(fileName)
-	seqAll = btFeatures.sequence(fi=faGenome,fo=saveAll)
+	seqAll = btFeatures.sequence(fi=GlobalVariables.faGenome,fo=saveAll)
 	saveExonic = 'Seq_results_for_exonic_{0}.txt'.format(fileName)
-	seqExonic = btFeatures.sequence(fi=faGenome,fo=saveExonic).filter(lambda x: x[name] == 'exonic')
+	seqExonic = btFeatures.sequence(fi=GlobalVariables.faGenome,fo=saveExonic).filter(lambda x: x[name] == 'exonic')
 	saveIntronic = 'Seq_results_for_intronic_{0}.txt'.format(fileName)
-	seqIntronic = btFeatures.sequence(fi=faGenome,fo=saveIntronic).filter(lambda x: x[name] == 'intronic')
+	seqIntronic = btFeatures.sequence(fi=GlobalVariables.faGenome,fo=saveIntronic).filter(lambda x: x[name] == 'intronic')
 	saveIntergenic = 'Seq_results_for_intergenic_{0}.txt'.format(fileName)
-	seqIntergenic = btFeatures.sequence(fi=faGenome,fo=saveIntergenic).filter(lambda x: x[name] == 'intergenic')
+	seqIntergenic = btFeatures.sequence(fi=vfaGenome,fo=saveIntergenic).filter(lambda x: x[name] == 'intergenic')
 	return saveAll, saveExonic, saveIntronic, saveIntergenic
 
 # used in btRange to extract just the fasta strings
-def simpleFasta(inFeature,faGenome):
-	seqFeature = inFeature.sequence(fi=faGenome)
+def simpleFasta(inFeature):
+	seqFeature = inFeature.sequence(fi=GlobalVariables.faGenome)
 	outFeature = pd.read_table(seqFeature.seqfn)
 	outSequence = outFeature[::2]
 	outSequence = outSequence.reset_index(drop=True)
 	return outSequence
 
-def main(num,uce,inuce,window,binDir,fileName,sizeGenome,faGenome):
+def main(fileName):
+	print 'Running ElementLibrary'
 	btFeatures = eachFileProcess(fileName)
-	subsetFeatures = getRange(btFeatures,fileName,num,uce,inuce)
-	rangeFeatures = btRange(subsetFeatures,faGenome)
+	subsetFeatures = getRange(btFeatures,fileName)
+	rangeFeatures = btRange(subsetFeatures)
 	return rangeFeatures
 
 if __name__ == "__main__":

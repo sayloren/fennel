@@ -52,6 +52,7 @@ def graphTable(TableData,Title,ranTableData,ranTitle,fileName):
 	pp.close()
 
 def main(TableData,Title,ranTableData,ranTitle,fileName):
+	print 'Running GraphTableLibrary'
 	graphTable(TableData,Title,ranTableData,ranTitle,fileName)
 
 if __name__ == "__main__":

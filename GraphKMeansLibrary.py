@@ -24,19 +24,18 @@ from GraphFangLibrary import collectDiNuc
 from scipy import cluster
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
+import GlobalVariables
 
-def graphKmean(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLine,methylationflank):
+def graphKmean(dfWindow,ranWindow,names,fileName):
 
 	# Parameters that all graphs will use
-	fillX = range(0,(num-window))
-	halfwindow = ((window/2)+1)
 	plt.figure(figsize=(7,7))
 
 	# Get group, mean and standard deviation for AT
 	ATgroup,ATmean,ATstd = collectDiNuc(dfWindow,names,'A','T')
 	ranATgroup,ranATmean,ranATstd = collectDiNuc(ranWindow,names,'A','T')
-	ATelement = ATgroup.T[(((num-uce)/2)-halfwindow-methylationflank):(((num-uce)/2)+uce-halfwindow+methylationflank)]
-	ranATelement = ranATgroup.T[(((num-uce)/2)-halfwindow-methylationflank):(((num-uce)/2)+uce-halfwindow+methylationflank)]
+	ATelement = ATgroup.T[(GlobalVariables.plotLineLocationThree-GlobalVariables.methylationflank):(GlobalVariables.plotLineLocationFour+GlobalVariables.methylationflank)]
+	ranATelement = ranATgroup.T[(GlobalVariables.plotLineLocationThree-GlobalVariables.methylationflank):(GlobalVariables.plotLineLocationFour+GlobalVariables.methylationflank)]
 	print 'Extracted just element and methylation flank, size {0}'.format(len(ATelement))
 
 	# Title info
@@ -49,8 +48,8 @@ def graphKmean(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLine,me
 	sns.set_palette("husl",n_colors=8)
 	
 	# get the average first/last inset
-	upinset = ATgroup.T[(((num-uce)/2)-halfwindow):(((num-uce)/2)-halfwindow+inuce)].mean()
-	downinset = ATgroup.T[(((num-uce)/2)+uce-halfwindow-inuce):(((num-uce)/2)+uce-halfwindow)].mean()
+	upinset = ATgroup.T[GlobalVariables.plotLineLocationThree:GlobalVariables.plotLineLocationOne].mean()
+	downinset = ATgroup.T[GlobalVariables.plotLineLocationTwo:GlobalVariables.plotLineLocationFour].mean()
 
 	ATlist = [list(a) for a in zip(upinset,downinset)]
 	ATarray = np.array(ATlist)
@@ -65,7 +64,6 @@ def graphKmean(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLine,me
 	# see where the centres of clusters are
 	#kmeans.cluster_centers_
 	
-	
 	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
 	gs.update(hspace=.5)
 	
@@ -78,8 +76,9 @@ def graphKmean(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLine,me
 	ax1 = plt.subplot(gs[1,:])
 	ax1.scatter(ATarray[:,0],ATarray[:,1],c=assignment)
 
-def main(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLine,methylationflank):
-	graphKmean(dfWindow,ranWindow,names,fileName,num,uce,inuce,window,nucLine,methylationflank)
+def main(dfWindow,ranWindow,names,fileName):
+	print 'Running GraphKMeansLibrary'
+	graphKmean(dfWindow,ranWindow,names,fileName)
 
 if __name__ == "__main__":
 	main()

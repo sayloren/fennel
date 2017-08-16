@@ -7,7 +7,9 @@ July 5 2017
 import argparse
 import numpy as np
 import pandas as pd
+import GlobalVariables
 
+# Do the comparison between boundaries to get + - or =
 def calculateAT(element,size):
 	start = element[:size]
 	end = element[-size:]
@@ -16,7 +18,7 @@ def calculateAT(element,size):
 	perSize.append(eval('100*float(end.count("A") + end.count("a") + end.count("T") + end.count("t"))/len(end)'))
 	return perSize
 
-# out put directionality, as inferred by comparing first and last n base pairs from input parameters
+# Directionality, as inferred by comparing first and last n base pairs from input parameters
 def compareN(element,size):
 	perSize = calculateAT(element,size)
 	# give + - = depending on which side has larger AT content
@@ -25,27 +27,28 @@ def compareN(element,size):
 	if perSize[1] == perSize[0]: outList = '='
 	return outList
 
-# with the results from compareN per each element, evaluate directionality into new column
-def evalN(rangeFeatures,fileName,binDir):
-	rangeFeatures['compareBoundaries'] = rangeFeatures.apply(lambda row: (compareN(row['feature'],binDir)),axis=1)
-	rangeFeatures['compareBoundariesRange'] = rangeFeatures.apply(lambda row: (empericalN(row['feature'],binDir)),axis=1)
+# With the results from compareN per each element, evaluate directionality into new column
+def evalN(rangeFeatures,fileName):
+	rangeFeatures['compareBoundaries'] = rangeFeatures.apply(lambda row: (compareN(row['feature'],GlobalVariables.binDir)),axis=1)
+	rangeFeatures['compareBoundariesRange'] = rangeFeatures.apply(lambda row: (empericalN(row['feature'],GlobalVariables.binDir)),axis=1)
 	rangeFeatures['equalBoundariesCount'] = rangeFeatures.apply(lambda row: row['compareBoundariesRange'].count('='),axis=1)
 	rangeFeatures['plusBoundariesCount'] = rangeFeatures.apply(lambda row: row['compareBoundariesRange'].count('+'),axis=1)
 	rangeFeatures['minusBoundariesCount'] = rangeFeatures.apply(lambda row: row['compareBoundariesRange'].count('-'),axis=1)
 	print rangeFeatures[['plusBoundariesCount','minusBoundariesCount','equalBoundariesCount']]
 	
 	compareEnds = pd.DataFrame(rangeFeatures[['chr','start','end','compareBoundaries']])
-	print 'Sorting the element boundaries by bin size {0}'.format(binDir)
-	rangeBins = collectEmperical(rangeFeatures,binDir)
+	print 'Sorting the element boundaries by bin size {0}'.format(GlobalVariables.binDir)
+	rangeBins = collectEmperical(rangeFeatures)
 	return rangeFeatures,rangeBins
 
-def collectEmperical(rangeFeatures,binDir):
+# Get the actual spread of = in the data over increasing bin size
+def collectEmperical(rangeFeatures):
 	# Perform min,max collection
-	rangeAT = rangeFeatures.apply(lambda row: (empericalATspread(row['feature'],binDir)),axis=1)
+	rangeAT = rangeFeatures.apply(lambda row: (empericalATspread(row['feature'],GlobalVariables.binDir)),axis=1)
 	pdrangeAT = pd.DataFrame(rangeAT.values.tolist())
 	
 	# Get direction collection
-	equalAT = rangeFeatures.apply(lambda row: (empericalN(row['feature'],binDir)),axis=1)
+	equalAT = rangeFeatures.apply(lambda row: (empericalN(row['feature'],GlobalVariables.binDir)),axis=1)
 	pdequalAT = pd.DataFrame(equalAT.values.tolist())
 	countAT = pdequalAT.apply(pd.value_counts)
 	equalCounts = countAT.loc['=']/len(pdequalAT.index)
@@ -83,13 +86,15 @@ def collectEmperical(rangeFeatures,binDir):
 	pdBins.columns=['Min','Max','Equal']
 	return pdBins
 
+# Run calculateAT for increasing bin sizes
 def empericalATspread(element,size):
 	totalSteps=[]
 	for i in np.arange(1,size*2):
 		pairStep = calculateAT(element,i)
 		totalSteps.append(pairStep)
 	return totalSteps
-	
+
+# Run compareN over increasing bin sizes
 def empericalN(element,size):
 	totalSteps=[]
 	for i in np.arange(1,size*2):
@@ -101,9 +106,9 @@ def empericalN(element,size):
 		totalSteps.append(outList)
 	return totalSteps
 
-def main(rangeFeatures,fileName,binDir):
+def main(rangeFeatures,fileName):
 	print 'Running DirectionLibrary'
-	directionFeatures,directionBins = evalN(rangeFeatures,fileName,binDir)
+	directionFeatures,directionBins = evalN(rangeFeatures,fileName)
 	return directionFeatures,directionBins
 
 if __name__ == "__main__":

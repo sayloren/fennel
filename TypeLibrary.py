@@ -8,19 +8,20 @@ import argparse
 import pandas as pd
 from MethylationLibrary import compactMeth
 from FangsLibrary import compactWindow
+import GlobalVariables
 
 # do all the analysis for each type
-def perType(boolType,column,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs):
-	typeWindow, typeNames = compactWindow(boolType[column],boolType['id'],num,uce,inuce,window,nucLine)
-	if any(x in graphs for x in ['methylation','cluster']):
-		pdMeth = compactMeth(mFiles,boolType,num,uce,inuce,methCovThresh,methPerThresh,faGenome)
+def perType(boolType,fileName):
+	typeWindow, typeNames = compactWindow(boolType['combineString'],boolType['id'])
+	if any(x in GlobalVariables.graphs for x in ['methylation','cluster']):
+		pdMeth = compactMeth(boolType)
 	else: 
 		pdMeth = None
 	return pdMeth,typeWindow,typeNames
 
-def main(boolType,column,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs):
+def main(boolType,fileName):
 	print 'Running TypeLibrary'
-	pdMeth,typeWindow,typeNames = perType(boolType,column,fileName,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
+	pdMeth,typeWindow,typeNames = perType(boolType,fileName)
 	print 'Completed group sorting for {0} items'.format(len(boolType.index))
 	return pdMeth,typeWindow,typeNames
 

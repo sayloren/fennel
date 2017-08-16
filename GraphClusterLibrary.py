@@ -24,14 +24,15 @@ from scipy.spatial import distance
 from scipy.cluster import hierarchy
 from GraphFangLibrary import collectDiNuc
 import GraphTableLibrary
+import GlobalVariables
 
 # Reduce each id/tissue x location to get a corresponding tissue/id list of associations
-def listOverlap(dataframe,yItem,xItem,num,uce,halfwindow,window,methylationflank):
+def listOverlap(dataframe,yItem,xItem):
 	# check re-methFreq process
 
 	# Separate by strand
-	PlusMeth = dataframe.loc[(dataframe['Cytosine'] == 'C') & (dataframe['methLoc'] >= (((num-uce)/2)-halfwindow-methylationflank)) & (dataframe['methLoc'] <= (((num-uce)/2)+uce-halfwindow+methylationflank))]
-	MinusMeth = dataframe.loc[(dataframe['Cytosine'] == 'G') & (dataframe['methLoc'] >= (((num-uce)/2)-halfwindow-methylationflank)) & (dataframe['methLoc'] <= (((num-uce)/2)+uce-halfwindow+methylationflank))]
+	PlusMeth = dataframe.loc[(dataframe['Cytosine'] == 'C') & (dataframe['methLoc'] >= (GlobalVariables.plotLineLocationThree-GlobalVariables.methylationflank)) & (dataframe['methLoc'] <= (GlobalVariables.plotLineLocationFour+GlobalVariables.methylationflank))]
+	MinusMeth = dataframe.loc[(dataframe['Cytosine'] == 'G') & (dataframe['methLoc'] >= (GlobalVariables.plotLineLocationThree-GlobalVariables.methylationflank)) & (dataframe['methLoc'] <= (GlobalVariables.plotLineLocationFour+GlobalVariables.methylationflank))]
 	
 	# Subset just columns to use
 	PlussubMeth = PlusMeth[['methLoc',yItem,xItem]]
@@ -53,11 +54,11 @@ def listOverlap(dataframe,yItem,xItem,num,uce,halfwindow,window,methylationflank
 	return PlusxMeth,MinusxMeth
 
 # Get Tissue x Id
-def elementID(dataframe,yItem,zItem,num,uce,halfwindow,window,methylationflank):
+def elementID(dataframe,yItem,zItem):
 
 	# Separate by strand
-	PlusMeth = dataframe.loc[(dataframe['Cytosine'] == 'C') & (dataframe['methLoc'] >= (((num-uce)/2)-halfwindow-methylationflank)) & (dataframe['methLoc'] <= (((num-uce)/2)+uce-halfwindow+methylationflank))]
-	MinusMeth = dataframe.loc[(dataframe['Cytosine'] == 'G') & (dataframe['methLoc'] >= (((num-uce)/2)-halfwindow-methylationflank)) & (dataframe['methLoc'] <= (((num-uce)/2)+uce-halfwindow+methylationflank))]
+	PlusMeth = dataframe.loc[(dataframe['Cytosine'] == 'C') & (dataframe['methLoc'] >= (GlobalVariables.plotLineLocationThree-GlobalVariables.methylationflank)) & (dataframe['methLoc'] <= (GlobalVariables.plotLineLocationFour+GlobalVariables.methylationflank))]
+	MinusMeth = dataframe.loc[(dataframe['Cytosine'] == 'G') & (dataframe['methLoc'] >= (GlobalVariables.plotLineLocationThree-GlobalVariables.methylationflank)) & (dataframe['methLoc'] <= (GlobalVariables.plotLineLocationFour+GlobalVariables.methylationflank))]
 	
 	# Subset just columns to use
 	PlussubMeth = PlusMeth[[yItem,zItem]]
@@ -92,7 +93,7 @@ def elementID(dataframe,yItem,zItem,num,uce,halfwindow,window,methylationflank):
 	return PlusfloatMeth,MinusfloatMeth
 
 # Transform the Frequency, Percentage and Coverage data into graphable data frames, returning just the info for the element
-def elemenetIndex(dataframe,yItem,num,uce,halfwindow,window,methylationflank):
+def elemenetIndex(dataframe,yItem):
 
 	# x item is methLoc, y item is either tissue or id, z item is coverage, percentage, or frequency
 	new_index = range(0,num)
@@ -131,8 +132,8 @@ def elemenetIndex(dataframe,yItem,num,uce,halfwindow,window,methylationflank):
 	MinusindexMeth.index.name = None
 	
 	# Get just the element 
-	Pluselement = PlusindexMeth[(((num-uce)/2)-halfwindow-methylationflank):(((num-uce)/2)+uce-halfwindow+methylationflank)]
-	Minuselement = MinusindexMeth[(((num-uce)/2)-halfwindow-methylationflank):(((num-uce)/2)+uce-halfwindow+methylationflank)]
+	Pluselement = PlusindexMeth[(GlobalVariables.plotLineLocationThree-GlobalVariables.methylationflank):(GlobalVariables.plotLineLocationFour+GlobalVariables.methylationflank)]
+	Minuselement = MinusindexMeth[(GlobalVariables.plotLineLocationThree-GlobalVariables.methylationflank):(GlobalVariables.plotLineLocationFour+GlobalVariables.methylationflank)]
 
 	# Transpose the data frame for easy input into the heatamp
 	PlustransMeth = Pluselement.T
@@ -157,18 +158,15 @@ def dictColors(ATelement,huslPalette):
 	return elementColors,positionColors
 
 # Make some graphs for fangs
-def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,window,nucLine,methylationflank):
+def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName):
 
-	# Parameters that all graphs will use
-	fillX = range(0,(num-window))
-	halfwindow = ((window/2)+1)
 	plt.figure(figsize=(7,7))
 
 	# Get group, mean and standard deviation for AT
 	ATgroup,ATmean,ATstd = collectDiNuc(dfWindow,names,'A','T')
 	ranATgroup,ranATmean,ranATstd = collectDiNuc(ranWindow,names,'A','T')
-	ATelement = ATgroup.T[(((num-uce)/2)-halfwindow-methylationflank):(((num-uce)/2)+uce-halfwindow+methylationflank)]
-	ranATelement = ranATgroup.T[(((num-uce)/2)-halfwindow-methylationflank):(((num-uce)/2)+uce-halfwindow+methylationflank)]
+	ATelement = ATgroup.T[(GlobalVariables.plotLineLocationThree-GlobalVariables.methylationflank):(GlobalVariables.plotLineLocationFour+GlobalVariables.methylationflank)]
+	ranATelement = ranATgroup.T[(GlobalVariables.plotLineLocationThree-GlobalVariables.methylationflank):(GlobalVariables.plotLineLocationFour+GlobalVariables.methylationflank)]
 	print 'Extracted just element and methylation flank, size {0}'.format(len(ATelement))
 
 	# Title info
@@ -190,10 +188,10 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	plt.setp(heatmap0.ax_heatmap.set_ylabel('{0} UCEs'.format(len(ATelement.T.index)),size=8))
 	plt.setp(heatmap0.ax_heatmap.set_xlabel('Position',size=10))
 	plt.setp(heatmap0.ax_heatmap.tick_params(labelsize=10))
-	plt.setp(heatmap0.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-	plt.setp(heatmap0.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap0.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap0.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap0.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationOneFull,linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap0.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationTwoFull,linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap0.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationThreeFull,linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap0.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationFourFull,linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap0.ax_heatmap.set_title('Mean AT Content per Element',size=12))
 # 	ATOrdered = heatmap0.dendrogram_row.reordered_ind
 	
@@ -209,10 +207,10 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	plt.setp(heatmap1.ax_heatmap.set_ylabel('{0} UCEs'.format(len(ranATelement.T.index)),size=8))
 	plt.setp(heatmap1.ax_heatmap.set_xlabel('Position',size=10))
 	plt.setp(heatmap1.ax_heatmap.tick_params(labelsize=10))
-	plt.setp(heatmap1.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-	plt.setp(heatmap1.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap1.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap1.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap1.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationOneFull,linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap1.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationTwoFull,linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap1.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationThreeFull,linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap1.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationFourFull,linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap1.ax_heatmap.set_title('Mean AT Content per Random Region',size=12))
 # 	ranATOrdered = heatmap1.dendrogram_row.reordered_ind
 
@@ -222,17 +220,13 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 
 	# Various combinations to plot on heatmaps, just for element plus methylation flanks
 	# Frequency x Tissue x ID X Location
-	FreqPlusID,FreqMinusID = elemenetIndex(pdMeth,'id',num,uce,halfwindow,window,methylationflank)
-	FreqPlusTis,FreqMinusTis = elemenetIndex(pdMeth,'tissue',num,uce,halfwindow,window,methylationflank)
-	XPlus,XMinus = elementID(pdMeth,'id','tissue',num,uce,halfwindow,window,methylationflank)
+	FreqPlusID,FreqMinusID = elemenetIndex(pdMeth,'id')
+	FreqPlusTis,FreqMinusTis = elemenetIndex(pdMeth,'tissue')
+	XPlus,XMinus = elementID(pdMeth,'id','tissue')
 
-	ranFreqPlusID,ranFreqMinusID = elemenetIndex(rnMeth,'id',num,uce,halfwindow,window,methylationflank)
-	ranFreqPlusTis,ranFreqMinusTis = elemenetIndex(rnMeth,'tissue',num,uce,halfwindow,window,methylationflank)
-	ranXPlus,ranXMinus = elementID(rnMeth,'id','tissue',num,uce,halfwindow,window,methylationflank)
-
-# 	# Get the aggregated list of ids/tissues corresponding to location and tissues/ids
-# 	PlusMethID,MinusMethID = listOverlap(pdMeth,'id','tissue',num,uce,halfwindow,window,methylationflank)
-# 	PlusMethTis,MinusMethTis = listOverlap(pdMeth,'tissue','id',num,uce,halfwindow,window,methylationflank)
+	ranFreqPlusID,ranFreqMinusID = elemenetIndex(rnMeth,'id')
+	ranFreqPlusTis,ranFreqMinusTis = elemenetIndex(rnMeth,'tissue')
+	ranXPlus,ranXMinus = elementID(rnMeth,'id','tissue')
 
 	# Remove UCEs with out methylation within the element - only for ID group
 	FreqPlusID = FreqPlusID[(FreqPlusID.T != 0).any()]
@@ -249,10 +243,10 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	plt.setp(heatmap2.ax_heatmap.set_ylabel('Sample',size=10))
 	plt.setp(heatmap2.ax_heatmap.set_xlabel('Position',size=10))
 	plt.setp(heatmap2.ax_heatmap.tick_params(labelsize=10))
-	plt.setp(heatmap2.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-	plt.setp(heatmap2.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap2.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap2.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap2.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationOneFull,linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap2.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationTwoFull,linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap2.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationThreeFull,linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap2.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationFourFull,linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap2.ax_heatmap.set_title('Methylation Frequency on Plus Strand for Elements',size=12))
 	
 	sns.despine()
@@ -266,10 +260,10 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	plt.setp(heatmap3.ax_heatmap.set_ylabel('Sample',size=10))
 	plt.setp(heatmap3.ax_heatmap.set_xlabel('Position',size=10))
 	plt.setp(heatmap3.ax_heatmap.tick_params(labelsize=10))
-	plt.setp(heatmap3.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-	plt.setp(heatmap3.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap3.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap3.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap3.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationOneFull,linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap3.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationTwoFull,linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap3.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationThreeFull,linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap3.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationFourFull,linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap3.ax_heatmap.set_title('Methylation Frequency on Minus Strand for Elements',size=12))
 
 	sns.despine()
@@ -284,10 +278,10 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	plt.setp(heatmap4.ax_heatmap.set_ylabel('Sample',size=10))
 	plt.setp(heatmap4.ax_heatmap.set_xlabel('Position',size=10))
 	plt.setp(heatmap4.ax_heatmap.tick_params(labelsize=10))
-	plt.setp(heatmap4.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-	plt.setp(heatmap4.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap4.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap4.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap4.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationOneFull,linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap4.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationTwoFull,linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap4.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationThreeFull,linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap4.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationFourFull,linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap4.ax_heatmap.set_title('Methylation Frequency on Plus Strand for Random Regions',size=12))
 	
 	sns.despine()
@@ -301,10 +295,10 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	plt.setp(heatmap5.ax_heatmap.set_ylabel('Sample',size=10))
 	plt.setp(heatmap5.ax_heatmap.set_xlabel('Position',size=10))
 	plt.setp(heatmap5.ax_heatmap.tick_params(labelsize=10))
-	plt.setp(heatmap5.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-	plt.setp(heatmap5.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap5.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap5.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap5.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationOneFull,linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap5.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationTwoFull,linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap5.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationThreeFull,linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap5.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationFourFull,linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap5.ax_heatmap.set_title('Methylation Frequency on Minus Strand for Random Regions',size=12))
 
 	sns.despine()
@@ -319,10 +313,10 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	plt.setp(heatmap6.ax_heatmap.set_ylabel('{0} Elements'.format(len(FreqPlusID.index)),size=10))
 	plt.setp(heatmap6.ax_heatmap.set_xlabel('Position',size=10))
 	plt.setp(heatmap6.ax_heatmap.tick_params(labelsize=10))
-	plt.setp(heatmap6.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-	plt.setp(heatmap6.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap6.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap6.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap6.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationOneFull,linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap6.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationTwoFull,linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap6.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationThreeFull,linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap6.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationFourFull,linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap6.ax_heatmap.set_title('Methylation Frequency on Plus Strand for Elements',size=12))
 
 	sns.despine()
@@ -336,10 +330,10 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	plt.setp(heatmap7.ax_heatmap.set_ylabel('{0} Elements'.format(len(FreqMinusID.index)),size=10))
 	plt.setp(heatmap7.ax_heatmap.set_xlabel('Position',size=10))
 	plt.setp(heatmap7.ax_heatmap.tick_params(labelsize=10))
-	plt.setp(heatmap7.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-	plt.setp(heatmap7.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap7.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap7.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap7.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationOneFull,linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap7.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationTwoFull,linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap7.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationThreeFull,linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap7.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationFourFull,linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap7.ax_heatmap.set_title('Methylation Frequency on Minus Strand for Elements',size=12))
 
 	sns.despine()
@@ -354,10 +348,10 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	plt.setp(heatmap8.ax_heatmap.set_ylabel('{0} Elements'.format(len(ranFreqPlusID.index)),size=10))
 	plt.setp(heatmap8.ax_heatmap.set_xlabel('Position',size=10))
 	plt.setp(heatmap8.ax_heatmap.tick_params(labelsize=10))
-	plt.setp(heatmap8.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-	plt.setp(heatmap8.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap8.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap8.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap8.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationOneFull,linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap8.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationTwoFull,linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap8.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationThreeFull,linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap8.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationFourFull,linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap8.ax_heatmap.set_title('Methylation Frequency on Plus Strand for Random Regions',size=12))
 
 	sns.despine()
@@ -371,10 +365,10 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	plt.setp(heatmap9.ax_heatmap.set_ylabel('{0} Elements'.format(len(ranFreqMinusID.index)),size=10))
 	plt.setp(heatmap9.ax_heatmap.set_xlabel('Position',size=10))
 	plt.setp(heatmap9.ax_heatmap.tick_params(labelsize=10))
-	plt.setp(heatmap9.ax_heatmap.axvline(x=(((num-uce)/2)+uce),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
-	plt.setp(heatmap9.ax_heatmap.axvline(x=(((num-uce)/2)+inuce),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap9.ax_heatmap.axvline(x=(((num-uce)/2)+(uce-inuce)),linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
-	plt.setp(heatmap9.ax_heatmap.axvline(x=((num-uce)/2),linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap9.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationOneFull,linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
+	plt.setp(heatmap9.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationTwoFull,linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap9.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationThreeFull,linewidth=.05,linestyle='dashed',color='#5fc85b',alpha=0.5))
+	plt.setp(heatmap9.ax_heatmap.axvline(x=GlobalVariables.plotLineLocationFourFull,linewidth=.05,linestyle='dashed',color='#96c85b',alpha=0.5))
 	plt.setp(heatmap9.ax_heatmap.set_title('Methylation Frequency on Minus StrandStrand for Random Regions',size=12))
 
 	sns.despine()
@@ -450,8 +444,9 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,w
 	pp.savefig()
 	pp.close()
 
-def main(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,window,nucLine,methylationflank):
-	graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName,num,uce,inuce,window,nucLine,methylationflank)
+def main(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName):
+	print 'Running GraphClusterLibrary'
+	graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName)
 
 if __name__ == "__main__":
 	main()

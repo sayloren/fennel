@@ -24,20 +24,21 @@ from scipy import signal
 from scipy.stats import mstats
 import seaborn as sns
 from GraphFangLibrary import collectDiNuc
+import GlobalVariables
 
 # Get just the elemenet
-def justElement(region,num,uce,halfwindow,window):
-	element = region[(((num-uce)/2)-halfwindow):(((num-uce)/2)+uce-halfwindow)]
+def justElement(region):
+	element = region[GlobalVariables.plotLineLocationThree:GlobalVariables.plotLineLocationFour]
 	return element
 
 # Get just the downstream flank
-def downFlank(region,num,uce,halfwindow,window):
-	dFlank = region[(((num-uce)/2)+uce-halfwindow):(num-window-window)]
+def downFlank(region):
+	dFlank = region[GlobalVariables.plotLineLocationFour:(GlobalVariables.num-GlobalVariables.window-GlobalVariables.window)]
 	return dFlank
 
 # Get just the upstream flank
-def upFlank(region,num,uce,halfwindow,window):
-	uFlank = region[window:(((num-uce)/2)-halfwindow)]
+def upFlank(region):
+	uFlank = region[GlobalVariables.window:GlobalVariables.plotLineLocationThree]
 	return uFlank
 
 # Perform fourier transform
@@ -63,19 +64,18 @@ def performFourier(region):
 	return frqsd, Ysd
 
 # Collect each UCEs second derivative, find their inflection points
-def behaviorInflectionPointsUCE(ATgroup,num,window):
-	fillX = range(0,(num-window))
+def behaviorInflectionPointsUCE(ATgroup):
 	inflectionPts = []
 	for index, row in ATgroup.iterrows():
 		collectUCE = []
 		collectUCE.append(index)
-		f = splrep(fillX,row,k=5,s=11)
-		smoothMean = splev(fillX,f)
-		secondDer = splev(fillX,f,der=2)
-		secondDer[0:window] = 0 # small edge effect
-		secondDer[-window:] = 0 # small edge effect
+		f = splrep(GlobalVariables.fillX,row,k=5,s=11)
+		smoothMean = splev(GlobalVariables.fillX,f)
+		secondDer = splev(GlobalVariables.fillX,f,der=2)
+		secondDer[0:GlobalVariables.window] = 0 # small edge effect
+		secondDer[-GlobalVariables.window:] = 0 # small edge effect
 		peaks = signal.find_peaks_cwt(secondDer,np.arange(1,45))
-		peaksOut = [s for s in peaks if s > (window*3) and s < (num-(window*3))] # Get rid of edge effects
+		peaksOut = [s for s in peaks if s > (GlobalVariables.window*3) and s < (GlobalVariables.num-(GlobalVariables.window*3))] # Get rid of edge effects
 		collectUCE.append(peaksOut)
 		inflectionPts.append(collectUCE)
 	peaksUCE = pd.DataFrame(inflectionPts)
@@ -83,32 +83,29 @@ def behaviorInflectionPointsUCE(ATgroup,num,window):
 	return peaksUCE
 
 # Get smoothed mean, first and second derivatives
-def getLines(fillX,ATmean,window,halfwindow):
-	f = splrep(fillX,ATmean,k=5,s=11)
-	smoothMean = splev(fillX,f)
-	firstDer = splev(fillX,f,der=1)
-	firstDer[0:halfwindow] = 0 # small edge effect
-	firstDer[-halfwindow:] = 0 # small edge effect
-	secondDer = splev(fillX,f,der=2)
-	secondDer[0:window] = 0 # small edge effect
-	secondDer[-window:] = 0 # small edge effect
+def getLines(ATmean):
+	f = splrep(GlobalVariables.fillX,ATmean,k=5,s=11)
+	smoothMean = splev(GlobalVariables.fillX,f)
+	firstDer = splev(GlobalVariables.fillX,f,der=1)
+	firstDer[0:GlobalVariables.halfwindow] = 0 # small edge effect
+	firstDer[-GlobalVariables.halfwindow:] = 0 # small edge effect
+	secondDer = splev(GlobalVariables.fillX,f,der=2)
+	secondDer[0:GlobalVariables.window] = 0 # small edge effect
+	secondDer[-GlobalVariables.window:] = 0 # small edge effect
 	print 'Got mean and standard deviation for {0} elements'.format(len(smoothMean.index))
 	return smoothMean,firstDer,secondDer
 
-def inflectionPoints(ATgroup,num,window):
-	infUCEpeaks = behaviorInflectionPointsUCE(ATgroup,num,window)
+# Get inflection points for seconder derivative
+def inflectionPoints(ATgroup):
+	infUCEpeaks = behaviorInflectionPointsUCE(ATgroup,GlobalVariables.num,GlobalVariables.window)
 	infUCEpeaks.columns = ['id','inflectionpoints']
 	inflectionList = infUCEpeaks['inflectionpoints'].apply(pd.Series).stack().tolist()
 	print 'Collected all inflections points to list for {0} elements'.format(len(ATgroup.index))
 	return inflectionList, infUCEpeaks
 
 # Make signal graphs
-def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
+def graphSignal(dfWindow,names,ranWindow,fileName):
 	
-	# Parameters used thougout
-	fillX = range(0,(num-window))
-	halfwindow = ((window/2)+1)
-
 	# Get group, mean and standard deviation for AT
 	ATgroup,ATmean,ATstd = collectDiNuc(dfWindow,names,'A','T')
 	ranATgroup,ranATmean,ranATstd = collectDiNuc(ranWindow,names,'A','T')
@@ -126,31 +123,31 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	pp = PdfPages('Signal_{0}.pdf'.format(fileName))
 
 	# Get smoothed mean, first and second derivatives
-	smoothMean,firstDer,secondDer = getLines(fillX,ATmean,window,halfwindow)
-	ransmoothMean,ranfirstDer,ransecondDer = getLines(fillX,ranATmean,window,halfwindow)
+	smoothMean,firstDer,secondDer = getLines(ATmean)
+	ransmoothMean,ranfirstDer,ransecondDer = getLines(ranATmean)
 
 	gs = gridspec.GridSpec(3,3,height_ratios=[1,1,1])
 	gs.update(hspace=.65)
 	# Plot smoothed mean AT
 	ax0 = plt.subplot(gs[0,:])
-	ax0.plot(fillX,smoothMean,linewidth=1,alpha=0.9,label='Element')#, color='#3e1638'
-	ax0.plot(fillX,ransmoothMean,linewidth=1,alpha=0.9,label='Random')#, color='#b1a1af'
-	ax0.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-	ax0.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-	ax0.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-	ax0.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax0.plot(GlobalVariables.fillX,smoothMean,linewidth=1,alpha=0.9,label='Element')
+	ax0.plot(GlobalVariables.fillX,ransmoothMean,linewidth=1,alpha=0.9,label='Random')
+	ax0.axvline(x=GlobalVariables.plotLineLocationOne,linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax0.axvline(x=GlobalVariables.plotLineLocationTwo,linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax0.axvline(x=GlobalVariables.plotLineLocationThree,linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax0.axvline(x=GlobalVariables.plotLineLocationFour,linewidth=.05,linestyle='dashed',color='#bd4973')
 	ax0.set_yticks(ax0.get_yticks()[::2])
 	ax0.set_ylabel('% AT Content',size=8)
 	ax0.set_title('Fitted Mean AT Content',size=8)
 	
 	# First derivative
 	ax1 = plt.subplot(gs[1,:],sharex=ax0)
-	ax1.plot(fillX,firstDer,linewidth=1,alpha=0.8,label='Element')#, color='#3e1638'
-	ax1.plot(fillX,ranfirstDer,linewidth=1,alpha=0.8,label='Random')#, color='#b1a1af'
-	ax1.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-	ax1.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-	ax1.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-	ax1.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax1.plot(GlobalVariables.fillX,firstDer,linewidth=1,alpha=0.8,label='Element')
+	ax1.plot(GlobalVariables.fillX,ranfirstDer,linewidth=1,alpha=0.8,label='Random')
+	ax1.axvline(x=GlobalVariables.plotLineLocationOne,linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax1.axvline(x=GlobalVariables.plotLineLocationTwo,linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax1.axvline(x=GlobalVariables.plotLineLocationThree,linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax1.axvline(x=GlobalVariables.plotLineLocationFour,linewidth=.05,linestyle='dashed',color='#bd4973')
 	ax1.axhline(y=0,linewidth=.1,alpha=0.3)#,color='#bd4973'
 	ax1.set_yticks(ax1.get_yticks()[::2])
 	ax1.set_ylabel('Amplitude',size=8)
@@ -160,13 +157,13 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	ax2 = plt.subplot(gs[2,:],sharex=ax0)
 	peakMean = signal.find_peaks_cwt(secondDer,np.arange(1,45)).astype(int)
 	print 'Found peaks for elements second derivative'
-	ax2.plot(fillX,secondDer,linewidth=1,alpha=0.7,label='Element')
-	ax2.plot(fillX,ransecondDer,linewidth=1,alpha=0.7,label='Random')
+	ax2.plot(GlobalVariables.fillX,secondDer,linewidth=1,alpha=0.7,label='Element')
+	ax2.plot(GlobalVariables.fillX,ransecondDer,linewidth=1,alpha=0.7,label='Random')
 	ax2.scatter(peakMean,secondDer[peakMean],marker='.')#,color='#ae3e9e'
-	ax2.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-	ax2.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-	ax2.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-	ax2.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax2.axvline(x=GlobalVariables.plotLineLocationOne,linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax2.axvline(x=GlobalVariables.plotLineLocationTwo,linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax2.axvline(x=GlobalVariables.plotLineLocationThree,linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax2.axvline(x=GlobalVariables.plotLineLocationFour,linewidth=.05,linestyle='dashed',color='#bd4973')
 	ax2.axhline(y=0,linewidth=.1,alpha=0.3)#,color='#bd4973'
 	ax2.set_ylabel('Amplitude',size=8)
 	ax2.set_xlabel('Position',size=6)
@@ -179,15 +176,15 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	# Frequency of inflection points
 	gs = gridspec.GridSpec(1,1,height_ratios=[1])
 	ax3 = plt.subplot(gs[0])
-	inflectionList,infUCEpeaks = inflectionPoints(ATgroup,num,window)
-	raninflectionList,raninfUCEpeaks = inflectionPoints(ranATgroup,num,window)
-	IFbins = num/10
-	ax3.hist(inflectionList,IFbins,alpha=0.3,label='Element')#, color='#ae3e9e'
-	ax3.hist(raninflectionList,IFbins,alpha=0.3,label='Random')#, color='#b1a1af'
-	ax3.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-	ax3.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-	ax3.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-	ax3.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
+	inflectionList,infUCEpeaks = inflectionPoints(ATgroup,GlobalVariables.num,GlobalVariables.window)
+	raninflectionList,raninfUCEpeaks = inflectionPoints(ranATgroup,GlobalVariables.num,GlobalVariables.window)
+	IFbins = GlobalVariables.num/10
+	ax3.hist(inflectionList,IFbins,alpha=0.3,label='Element')
+	ax3.hist(raninflectionList,IFbins,alpha=0.3,label='Random')
+	ax3.axvline(x=GlobalVariables.plotLineLocationOne,linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax3.axvline(x=GlobalVariables.plotLineLocationTwo,linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax3.axvline(x=GlobalVariables.plotLineLocationThree,linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax3.axvline(x=GlobalVariables.plotLineLocationFour,linewidth=.05,linestyle='dashed',color='#bd4973')
 	ax3.set_yticks(ax3.get_yticks()[::2])
 	ax3.set_ylabel('Frequency',size=8)
 	ax3.legend(loc=0,fontsize=5,labelspacing=0.1)
@@ -203,14 +200,14 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	endRange = 25
 	widths = np.arange(1, endRange)
 	cwtmatr = signal.cwt(firstDer, signal.ricker, widths)
-	ax5.imshow(cwtmatr,cmap='RdPu',extent=[0, (num-window), 1, endRange],aspect='auto',vmax=abs(cwtmatr).max(), vmin=-abs(cwtmatr).max())
+	ax5.imshow(cwtmatr,cmap='RdPu',extent=[0, (GlobalVariables.num-GlobalVariables.window), 1, endRange],aspect='auto',vmax=abs(cwtmatr).max(), vmin=-abs(cwtmatr).max())
 	ax5.set_xlabel('Position',size=6)
 	ax5.set_yticks(ax5.get_yticks()[::2])
 	ax5.set_title('Continuous Wavelet Transformation Convolved Over Range {0}-{1} for the First Derivative, Element'.format(widths[0],endRange),size=8)
 	
 	ax6 = plt.subplot(gs[1],sharex=ax0)
 	cwtmatran = signal.cwt(ranfirstDer, signal.ricker, widths)
-	ax6.imshow(cwtmatran,cmap='RdPu',extent=[0, (num-window), 1, endRange],aspect='auto',vmax=abs(cwtmatran).max(), vmin=-abs(cwtmatran).max())
+	ax6.imshow(cwtmatran,cmap='RdPu',extent=[0, (GlobalVariables.num-GlobalVariables.window), 1, endRange],aspect='auto',vmax=abs(cwtmatran).max(), vmin=-abs(cwtmatran).max())
 	ax6.set_xlabel('Position',size=6)
 	ax6.set_yticks(ax5.get_yticks()[::2])
 	ax6.set_title('Continuous Wavelet Transformation Convolved Over Range {0}-{1} for the First Derivative, Random Regions'.format(widths[0],endRange),size=8)
@@ -227,10 +224,10 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	sbins = 30
 	f1, t1, Zxx1 = signal.stft(firstDer,fs=1.0, window='hann',nperseg=sbins,noverlap=None)#,nperseg=11,noverlap=5
 	ax7.pcolormesh(t1,f1,np.abs(Zxx1),cmap='RdPu')
-	ax7.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#5fc85b')
-	ax7.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#5fc85b')
-	ax7.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#96c85b')
-	ax7.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#96c85b')
+	ax7.axvline(x=GlobalVariables.plotLineLocationOne,linewidth=.05,linestyle='dashed',color='#5fc85b')
+	ax7.axvline(x=GlobalVariables.plotLineLocationTwo,linewidth=.05,linestyle='dashed',color='#5fc85b')
+	ax7.axvline(x=GlobalVariables.plotLineLocationThree,linewidth=.05,linestyle='dashed',color='#96c85b')
+	ax7.axvline(x=GlobalVariables.plotLineLocationFour,linewidth=.05,linestyle='dashed',color='#96c85b')
 	ax7.set_ylabel('Frequency',size=8)
 	ax7.set_xlabel('Position',size=6)
 	ax7.set_yticks(ax7.get_yticks()[::2])
@@ -238,24 +235,24 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	
 	# First Derivative
 	ax8 = plt.subplot(gs[1,:],sharex=ax0)
-	ax8.plot(fillX,firstDer,linewidth=1)#, color='#3e1638'
-	ax8.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-	ax8.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-	ax8.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-	ax8.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-	ax8.axvspan(window,(((num-uce)/2)-halfwindow),label='',alpha=0.1,facecolor = '#863eae')
-	ax8.axvspan((((num-uce)/2)-halfwindow),(((num-uce)/2)+uce-halfwindow),label='',alpha=0.1,facecolor = '#ae3e9e')
-	ax8.axvspan((((num-uce)/2)+uce-halfwindow),(num-window-window),label='',alpha=0.1,facecolor = '#ae3e66')
+	ax8.plot(GlobalVariables.fillX,firstDer,linewidth=1)
+	ax8.axvline(x=GlobalVariables.plotLineLocationOne,linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax8.axvline(x=GlobalVariables.plotLineLocationTwo,linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax8.axvline(x=GlobalVariables.plotLineLocationThree,linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax8.axvline(x=GlobalVariables.plotLineLocationFour,linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax8.axvspan(window,GlobalVariables.plotLineLocationThree,label='',alpha=0.1,facecolor = '#863eae')
+	ax8.axvspan(GlobalVariables.plotLineLocationThree,GlobalVariables.plotLineLocationFour,label='',alpha=0.1,facecolor = '#ae3e9e')
+	ax8.axvspan(GlobalVariables.plotLineLocationFour,(num-window-window),label='',alpha=0.1,facecolor = '#ae3e66')
 	ax8.set_yticks(ax8.get_yticks()[::2])
 	ax8.set_xlabel('Position',size=6)
 	ax8.set_ylabel('Amplitude',size=8)
 	ax8.set_title('First Derivative of Fitted Mean for Elements',size=8)
 	
-	ysdElement = justElement(firstDer,num,uce,halfwindow,window)
+	ysdElement = justElement(firstDer)
 	frq2sd, Y2sd = performFourier(ysdElement)
-	ysdUp = upFlank(firstDer,num,uce,halfwindow,window)
+	ysdUp = upFlank(firstDer)
 	frq3sd, Y3sd = performFourier(ysdUp)
-	ysdDown = downFlank(firstDer,num,uce,halfwindow,window)
+	ysdDown = downFlank(firstDer)
 	frq4sd, Y4sd = performFourier(ysdDown)
 	print 'Performed fourier transform for elements'
 	
@@ -286,10 +283,10 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	sbins = 30
 	ranf1, rant1, ranZxx1 = signal.stft(ranfirstDer,fs=1.0, window='hann',nperseg=sbins,noverlap=None)#,nperseg=11,noverlap=5
 	ax12.pcolormesh(rant1,ranf1,np.abs(ranZxx1),cmap='RdPu')
-	ax12.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#5fc85b')
-	ax12.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#5fc85b')
-	ax12.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#96c85b')
-	ax12.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#96c85b')
+	ax12.axvline(x=GlobalVariables.plotLineLocationOne,linewidth=.05,linestyle='dashed',color='#5fc85b')
+	ax12.axvline(x=GlobalVariables.plotLineLocationTwo,linewidth=.05,linestyle='dashed',color='#5fc85b')
+	ax12.axvline(x=GlobalVariables.plotLineLocationThree,linewidth=.05,linestyle='dashed',color='#96c85b')
+	ax12.axvline(x=GlobalVariables.plotLineLocationFour,linewidth=.05,linestyle='dashed',color='#96c85b')
 	ax12.set_ylabel('Frequency',size=8)
 	ax12.set_xlabel('Position',size=6)
 	ax12.set_yticks(ax12.get_yticks()[::2])
@@ -297,24 +294,24 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	
 	# First Derivative
 	ax13 = plt.subplot(gs[1,:],sharex=ax0)
-	ax13.plot(fillX,ranfirstDer,linewidth=1)#, color='#b1a1af'
-	ax13.axvline(x=(((num-uce)/2)+(inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-	ax13.axvline(x=(((num-uce)/2)+(uce-inuce-halfwindow)),linewidth=.05,linestyle='dashed',color='#e7298a')
-	ax13.axvline(x=(((num-uce)/2)-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-	ax13.axvline(x=(((num-uce)/2)+uce-halfwindow),linewidth=.05,linestyle='dashed',color='#bd4973')
-	ax13.axvspan(window,(((num-uce)/2)-halfwindow),label='',alpha=0.1,facecolor = '#863eae')
-	ax13.axvspan((((num-uce)/2)-halfwindow),(((num-uce)/2)+uce-halfwindow),label='',alpha=0.1,facecolor = '#ae3e9e')
-	ax13.axvspan((((num-uce)/2)+uce-halfwindow),(num-window-window),label='',alpha=0.1,facecolor = '#ae3e66')
+	ax13.plot(GlobalVariables.fillX,ranfirstDer,linewidth=1)
+	ax13.axvline(x=GlobalVariables.plotLineLocationOne,linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax13.axvline(x=GlobalVariables.plotLineLocationTwo,linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax13.axvline(x=GlobalVariables.plotLineLocationThree,linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax13.axvline(x=GlobalVariables.plotLineLocationFour,linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax13.axvspan(window,GlobalVariables.plotLineLocationThree,label='',alpha=0.1,facecolor = '#863eae')
+	ax13.axvspan(GlobalVariables.plotLineLocationThree,GlobalVariables.plotLineLocationFour,label='',alpha=0.1,facecolor = '#ae3e9e')
+	ax13.axvspan(GlobalVariables.plotLineLocationFour,(num-window-window),label='',alpha=0.1,facecolor = '#ae3e66')
 	ax13.set_yticks(ax13.get_yticks()[::2])
 	ax13.set_xlabel('Position',size=6)
 	ax13.set_ylabel('Amplitude',size=8)
 	ax13.set_title('First Derivative of Fitted Mean for Random Regions',size=8)
 	
-	ranysdElement = justElement(ranfirstDer,num,uce,halfwindow,window)
+	ranysdElement = justElement(ranfirstDer)
 	ranfrq2sd,ranY2sd = performFourier(ranysdElement)
-	ranysdUp = upFlank(ranfirstDer,num,uce,halfwindow,window)
+	ranysdUp = upFlank(ranfirstDer)
 	ranfrq3sd,ranY3sd = performFourier(ranysdUp)
-	ranysdDown = downFlank(ranfirstDer,num,uce,halfwindow,window)
+	ranysdDown = downFlank(ranfirstDer)
 	ranfrq4sd,ranY4sd = performFourier(ranysdDown)
 	print 'Performed fourier transform for random regions'
 
@@ -327,7 +324,7 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	ax15 = plt.subplot(gs[2,1],sharey=ax9)
 	plt.setp(ax15.get_yticklabels(), visible=False)
 	ax15.plot(ranfrq2sd,abs(ranY2sd),linewidth=1, color='#ae3e9e')
-	ax15.set_title('Power Series for Highlighted Regions, Random Regions',size=8)# Power Spectrum Analysis for FFT
+	ax15.set_title('Power Series for Highlighted Regions, Random Regions',size=8)
 	ax15.set_xlabel('Freq(Hz)',size=6)
 	ax16 = plt.subplot(gs[2,2],sharey=ax9)
 	plt.setp(ax16.get_yticklabels(), visible=False)
@@ -339,8 +336,9 @@ def graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
 	pp.close()
 	print 'Plotted short fourier transform and fast fourier transform for random regions'
 
-def main(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine):
-	ATgroup = graphSignal(dfWindow,names,ranWindow,fileName,num,uce,inuce,window,nucLine)
+def main(dfWindow,names,ranWindow,fileName):
+	print 'Running GraphSignalLibrary'
+	ATgroup = graphSignal(dfWindow,names,ranWindow,fileName)
 
 if __name__ == "__main__":
 	main()

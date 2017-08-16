@@ -1,20 +1,25 @@
-""""""
+"""
+Script to perform sliding window to return content for nucleotides
+
+Wren Saylor
+"""
 
 import argparse
 import pandas as pd
+import GlobalVariables
 
 # run the sliding window for each nucleotide string
-def compactWindow(features,label,num,uce,inuce,window,searchList):
+def compactWindow(features,label):
 	outCollect = []
-	for element,id in zip(features,label):#rangeFeatures['combineString'],rangeFeatures['id']
+	for element,id in zip(features,label):
 		outElement = {id: []}
-		outList = {key:[] for key in searchList}
-		n = num
+		outList = {key:[] for key in GlobalVariables.nucList}
+		n = GlobalVariables.num
 		s = 1 # size to jump for sliding window
-		start, end = 0, window
+		start, end = 0, GlobalVariables.window
 		while end < n:
 			current = element[start:end]
-			for key in searchList:
+			for key in GlobalVariables.nucList:
 				percentage = float(100*current.count(key)/len(current))
 				outList[key].append(percentage)
 			start, end = start + s, end + s
@@ -23,7 +28,7 @@ def compactWindow(features,label,num,uce,inuce,window,searchList):
 	outFlatten = flattenWindow(outCollect)
 	outDataFrame, names = dfWindow(outFlatten)
 	print 'Retrieved sliding window data for nucleotides strings {0}'.format(names)
-	return outDataFrame, names
+	return outDataFrame,names
 
 # convert to a data frame with a list for each element x nucleotide string
 def flattenWindow(outCollect):
@@ -45,11 +50,11 @@ def dfWindow(outDataFrame):
 		nuc.columns = ['temp']
 		split = pd.DataFrame(nuc['temp'].values.tolist(),index=nuc.index)
 		collectNucDF.append(split)
-	return collectNucDF, names
+	return collectNucDF,names
 
-def main(features,label,num,uce,inuce,window,nucLine):
+def main(features,label):
 	print 'Running FangsLibrary'
-	outDataFrame, names = compactWindow(features,label,num,uce,inuce,window,nucLine)
+	outDataFrame, names = compactWindow(features,label)
 	return outDataFrame, names
 
 if __name__ == "__main__":
