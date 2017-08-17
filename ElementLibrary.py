@@ -57,6 +57,14 @@ def btRange(rangeFeatures):#rangeFeatures,faGenome
 	rangeFeatures['reverseComplement'] = rangeFeatures.apply(lambda row: reverseComplement(row['combineString']),axis=1)
 	return rangeFeatures
 
+# Get the percentage AT in the element
+def perElementAT(region,fileName):
+	collectAT = []
+	for r in region:
+		collectAT.append(eval('100*float(r.count("A") + r.count("a") + r.count("T") + r.count("t"))/len(r)'))
+	pdAT = pd.DataFrame(collectAT)
+	print 'Mean AT content for all {0} elements in {1} is {2} Percent'.format(len(region.index),fileName,pdAT.mean())
+
 # get the reverse complement
 def reverseComplement(sequence):
 	seqDict = {'A':'T','T':'A','C':'G','G':'C','N':'N'}
@@ -104,6 +112,7 @@ def main(fileName):
 	btFeatures = eachFileProcess(fileName)
 	subsetFeatures = getRange(btFeatures,fileName)
 	rangeFeatures = btRange(subsetFeatures)
+	perElementAT(rangeFeatures['feature'],fileName)
 	return rangeFeatures
 
 if __name__ == "__main__":

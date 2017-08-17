@@ -54,7 +54,7 @@ def graphComb(emp,ranemp,paramlabels):
 	plt.ylabel('Probability',size=12)
 	plt.title('Equal Boundary for {0} Bins'.format(GlobalVariables.binDir),size=16)
 	plt.legend(loc=0,fontsize=6,labelspacing=0.05)
-# 	plt.text(n-9,.5,'{:0.1e}'.format(equal[n]),size=12,clip_on=False)
+	plt.text(GlobalVariables.binDir-9,.5,'{:0.1e}'.format(equal[GlobalVariables.binDir]),size=12,clip_on=False)
 	plt.tight_layout()
 	sns.despine()
 	plt.savefig('Probability_{0}.pdf'.format(paramlabels))

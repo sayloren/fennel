@@ -198,11 +198,11 @@ def main():
 					ranalignMeth,ranalignWindow,ranalignNames = TypeLibrary.main(random,fileName)
 					plotGraphs(alignMeth,ranalignMeth,alignWindow,alignNames,ranalignWindow,'align_{0}_{1}'.format(element.name,paramlabels))
 # 					if GlobalVariables.revCom: # maybe use group separate?
-# 						aligndirFeatures = DirectionLibrary.main(element,fileName,binDir)
-# 						alignranFeatures = DirectionLibrary.main(random,fileName,binDir)
-# 						alignrcMeth,alignrcWindow,alignrcNames = RevCompLibrary.main(aligndirFeatures,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-# 						ranalignrcMeth,ranalignrcWindow,ranalignrcNames = RevCompLibrary.main(alignranFeatures,binDir,mFiles,num,uce,inuce,window,methCovThresh,methPerThresh,nucLine,faGenome,graphs)
-# 						plotGraphs(alignrcMeth,ranalignrcMeth,alignrcWindow,alignrcNames,ranalignrcWindow,'align_{0}_{1}'.format(element.name,paramlabels),num,uce,inuce,window,graphs,nucLine,methFlank)
+# 						aligndirFeatures = DirectionLibrary.main(element,fileName)
+# 						alignranFeatures = DirectionLibrary.main(random,fileName)
+# 						alignrcMeth,alignrcWindow,alignrcNames = RevCompLibrary.main(aligndirFeatures)
+# 						ranalignrcMeth,ranalignrcWindow,ranalignrcNames = RevCompLibrary.main(alignranFeatures)
+# 						plotGraphs(alignrcMeth,ranalignrcMeth,alignrcWindow,alignrcNames,ranalignrcWindow,'align_{0}_{1}'.format(element.name,paramlabels))
 
 if __name__ == "__main__":
 	main()
