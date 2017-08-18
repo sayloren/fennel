@@ -23,11 +23,11 @@ from scipy import cluster
 from scipy.cluster.hierarchy import dendrogram,set_link_color_palette
 from scipy.spatial import distance
 from scipy.cluster import hierarchy
-from GraphFangLibrary import collectDiNuc
+from GraphFangLibrary import collect_sum_two_nucleotides
 import GlobalVariables
 
 # Make cluster classes based on the den values
-def getClusterClass(den):
+def find_cluster_classification(den):
 	#https://stackoverflow.com/questions/27924813/extracting-clusters-from-seaborn-clustermap
 	#http://www.nxn.se/valent/extract-cluster-elements-by-color-in-python
 	label='ivl'
@@ -44,7 +44,7 @@ def getClusterClass(den):
 	return cluster_classes
 
 # Make a column for the cluster class values
-def makeClusterCol(ATelement,Elementclusters):
+def make_cluster_column(ATelement,Elementclusters):
 	cluster = []
 	for i in ATelement.T.index:
 		included=False
@@ -57,11 +57,11 @@ def makeClusterCol(ATelement,Elementclusters):
 	return cluster
 
 # Make some graphs for fangs
-def graphDendrogram(dfWindow,ranWindow,names,fileName):
+def graph_dendrogram_branches(dfWindow,ranWindow,names,fileName):
 
 	# Get group, mean and standard deviation for AT
-	ATgroup,ATmean,ATstd = collectDiNuc(dfWindow,names,'A','T')
-	ranATgroup,ranATmean,ranATstd = collectDiNuc(ranWindow,names,'A','T')
+	ATgroup,ATmean,ATstd = collect_sum_two_nucleotides(dfWindow,names,'A','T')
+	ranATgroup,ranATmean,ranATstd = collect_sum_two_nucleotides(ranWindow,names,'A','T')
 	ATelement = ATgroup.T[(GlobalVariables.plotLineLocationThree-GlobalVariables.methylationflank):(GlobalVariables.plotLineLocationFour+GlobalVariables.methylationflank)]
 	ranATelement = ranATgroup.T[(GlobalVariables.plotLineLocationThree-GlobalVariables.methylationflank):(GlobalVariables.plotLineLocationFour+GlobalVariables.methylationflank)]
 	print 'Extracted just element and methylation flank, size {0}'.format(len(ATelement))
@@ -91,8 +91,8 @@ def graphDendrogram(dfWindow,ranWindow,names,fileName):
 	pp.close()
 
 def main(dfWindow,ranWindow,names,fileName):
-	print 'Running GraphDendrogramLibrary'
-	graphDendrogram(dfWindow,ranWindow,names,fileName)
+	print 'Running graph_dendrogram_branchesLibrary'
+	graph_dendrogram_branches(dfWindow,ranWindow,names,fileName)
 
 if __name__ == "__main__":
 	main()

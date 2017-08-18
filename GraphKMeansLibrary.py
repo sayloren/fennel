@@ -20,20 +20,20 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from matplotlib.backends.backend_pdf import PdfPages
-from GraphFangLibrary import collectDiNuc
+from GraphFangLibrary import collect_sum_two_nucleotides
 from scipy import cluster
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 import GlobalVariables
 
-def graphKmean(dfWindow,ranWindow,names,fileName):
+def graph_k_means(dfWindow,ranWindow,names,fileName):
 
 	# Parameters that all graphs will use
 	plt.figure(figsize=(7,7))
 
 	# Get group, mean and standard deviation for AT
-	ATgroup,ATmean,ATstd = collectDiNuc(dfWindow,names,'A','T')
-	ranATgroup,ranATmean,ranATstd = collectDiNuc(ranWindow,names,'A','T')
+	ATgroup,ATmean,ATstd = collect_sum_two_nucleotides(dfWindow,names,'A','T')
+	ranATgroup,ranATmean,ranATstd = collect_sum_two_nucleotides(ranWindow,names,'A','T')
 	ATelement = ATgroup.T[(GlobalVariables.plotLineLocationThree-GlobalVariables.methylationflank):(GlobalVariables.plotLineLocationFour+GlobalVariables.methylationflank)]
 	ranATelement = ranATgroup.T[(GlobalVariables.plotLineLocationThree-GlobalVariables.methylationflank):(GlobalVariables.plotLineLocationFour+GlobalVariables.methylationflank)]
 	print 'Extracted just element and methylation flank, size {0}'.format(len(ATelement))
@@ -77,8 +77,8 @@ def graphKmean(dfWindow,ranWindow,names,fileName):
 	ax1.scatter(ATarray[:,0],ATarray[:,1],c=assignment)
 
 def main(dfWindow,ranWindow,names,fileName):
-	print 'Running GraphKMeansLibrary'
-	graphKmean(dfWindow,ranWindow,names,fileName)
+	print 'Running graph_k_meanssLibrary'
+	graph_k_means(dfWindow,ranWindow,names,fileName)
 
 if __name__ == "__main__":
 	main()

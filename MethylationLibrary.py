@@ -7,13 +7,12 @@ July 5 2017
 """
 import argparse
 import pandas as pd
-from ElementLibrary import eachFileProcess
-from ElementLibrary import getFeatures
-from ElementLibrary import bedtoolToPanda
-from ElementLibrary import saveBedTool
-from ElementLibrary import pandaToBedtool
-from ElementLibrary import reverseComplement
-from ElementLibrary import simpleFasta
+from ElementLibrary import get_bedtools_features
+from ElementLibrary import convert_bedtool_to_panda
+from ElementLibrary import save_bedtool_as_bedfile
+from ElementLibrary import convert_panda_to_bed_format
+from ElementLibrary import reverse_complement_dictionary
+from ElementLibrary import get_just_fasta_sequence_for_feature
 import GlobalVariables
 
 # 	Old snippets from previous methylation processing method
@@ -28,26 +27,26 @@ import GlobalVariables
 # 	List = df['list'].apply(pd.Series).stack().tolist() # make a list from a column of lists
 
 # Threshold methylation data by coverage and percentage
-def methThreshold(methFeatures):
-	pdmethFeatures = bedtoolToPanda(methFeatures)
+def threshold_methylation_data(methFeatures):
+	pdmethFeatures = convert_bedtool_to_panda(methFeatures)
 	pdmethThresh = (pdmethFeatures[(pdmethFeatures.loc[:,3] >= GlobalVariables.methCovThresh) & (pdmethFeatures.loc[:,4] >= GlobalVariables.methPerThresh)])
-	btmethThresh = pandaToBedtool(pdmethThresh)
+	btmethThresh = convert_panda_to_bed_format(pdmethThresh)
 	print 'Methylation coverage is being thresholded at {0} and percentage at {1}'.format(GlobalVariables.methCovThresh, GlobalVariables.methPerThresh)
 	return btmethThresh
 
 # Intersect regions from the methylation data with element regions
-def methIntersect(rangeFeatures,methFeature):
+def intersect_methylation_data_by_element(rangeFeatures,methFeature):
 	methSBoundary = methFeature.intersect(rangeFeatures[['chr','sBoundary','sEdge','id']].values.tolist(),wb=True,wa=True)
 	if len(methSBoundary) != 0:
-		pdmethSBoundary = bedtoolToPanda(methSBoundary)
+		pdmethSBoundary = convert_bedtool_to_panda(methSBoundary)
 		pdmethSBoundary['int'] = 0
 		pdmethSBoundary.columns = ['mchr','mstart','mstop','methCov','methPer','chr','sBoundary','sEdge','id','int']
 		pdmethSBoundary['Context'] = pdmethSBoundary['mstop'] + 1
 		pdmethSBoundary['BackContext'] = pdmethSBoundary['mstart'] -1
-		pdmethSBoundary['Nuc'] = simpleFasta(getFeatures(pdmethSBoundary[['mchr','BackContext','Context']].values.tolist()))
-		pdmethSBoundary['NucContext'] = simpleFasta(getFeatures(pdmethSBoundary[['mchr','mstop','Context']].values.tolist()))
-		pdmethSBoundary['NucCytosine'] = simpleFasta(getFeatures(pdmethSBoundary[['mchr','mstart','mstop']].values.tolist()))
-		pdmethSBoundary['NucBackContext'] = simpleFasta(getFeatures(pdmethSBoundary[['mchr','BackContext','mstart']].values.tolist()))
+		pdmethSBoundary['Nuc'] = get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethSBoundary[['mchr','BackContext','Context']].values.tolist()))
+		pdmethSBoundary['NucContext'] = get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethSBoundary[['mchr','mstop','Context']].values.tolist()))
+		pdmethSBoundary['NucCytosine'] = get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethSBoundary[['mchr','mstart','mstop']].values.tolist()))
+		pdmethSBoundary['NucBackContext'] = get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethSBoundary[['mchr','BackContext','mstart']].values.tolist()))
 		pdmethSBoundary['methLoc'] = pdmethSBoundary['int'].astype(int)+(pdmethSBoundary['mstart'].astype(int)-pdmethSBoundary['sBoundary'].astype(int))
 		outpdmethSBoundary = pdmethSBoundary[['chr','mstart','mstop','sBoundary','sEdge','int','id','methPer','methLoc','methCov','Nuc','NucContext','NucCytosine','NucBackContext']]
 		outpdmethSBoundary.columns = ['chr','methStart','methStop','eleStart','eleStop','int','id','methPer','methLoc','methCov','Nuc','NucContext','NucCytosine','NucBackContext']
@@ -56,15 +55,15 @@ def methIntersect(rangeFeatures,methFeature):
 
 	methMiddle = methFeature.intersect(rangeFeatures[['chr','sCenter','eCenter','id']].values.tolist(),wb=True,wa=True)
 	if len(methMiddle) != 0:
-		pdmethFeature = bedtoolToPanda(methMiddle)
+		pdmethFeature = convert_bedtool_to_panda(methMiddle)
 		pdmethFeature['int'] = (((GlobalVariables.num - GlobalVariables.uce)/2) + GlobalVariables.inuce)
 		pdmethFeature.columns = ['mchr','mstart','mstop','methCov','methPer','chr','sCenter','eCenter','id','int']
 		pdmethFeature['Context'] = pdmethFeature['mstop'] + 1
 		pdmethFeature['BackContext'] = pdmethFeature['mstart'] -1
-		pdmethFeature['Nuc'] = simpleFasta(getFeatures(pdmethFeature[['mchr','BackContext','Context']].values.tolist()))
-		pdmethFeature['NucContext'] = simpleFasta(getFeatures(pdmethFeature[['mchr','mstop','Context']].values.tolist()))
-		pdmethFeature['NucCytosine'] = simpleFasta(getFeatures(pdmethFeature[['mchr','mstart','mstop']].values.tolist()))
-		pdmethFeature['NucBackContext'] = simpleFasta(getFeatures(pdmethFeature[['mchr','BackContext','mstart']].values.tolist()))
+		pdmethFeature['Nuc'] = get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethFeature[['mchr','BackContext','Context']].values.tolist()))
+		pdmethFeature['NucContext'] = get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethFeature[['mchr','mstop','Context']].values.tolist()))
+		pdmethFeature['NucCytosine'] = get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethFeature[['mchr','mstart','mstop']].values.tolist()))
+		pdmethFeature['NucBackContext'] = get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethFeature[['mchr','BackContext','mstart']].values.tolist()))
 		pdmethFeature['methLoc'] = pdmethFeature['int'].astype(int)+(pdmethFeature['mstart'].astype(int)-pdmethFeature['sCenter'].astype(int))
 		outpdmethFeature = pdmethFeature[['chr','mstart','mstop','sCenter','eCenter','int','id','methPer','methLoc','methCov','Nuc','NucContext','NucCytosine','NucBackContext']]
 		outpdmethFeature.columns = ['chr','methStart','methStop','eleStart','eleStop','int','id','methPer','methLoc','methCov','Nuc','NucContext','NucCytosine','NucBackContext']
@@ -73,15 +72,15 @@ def methIntersect(rangeFeatures,methFeature):
 
 	methEBoundary = methFeature.intersect(rangeFeatures[['chr','eEdge','eBoundary','id']].values.tolist(),wb=True,wa=True)
 	if len(methEBoundary) != 0:
-		pdmethEBoundary = bedtoolToPanda(methEBoundary)
+		pdmethEBoundary = convert_bedtool_to_panda(methEBoundary)
 		pdmethEBoundary['int'] = GlobalVariables.num-1
 		pdmethEBoundary.columns = ['mchr','mstart','mstop','methCov','methPer','chr','eEdge','eBoundary','id','int']
 		pdmethEBoundary['Context'] = pdmethEBoundary['mstop'] + 1
 		pdmethEBoundary['BackContext'] = pdmethEBoundary['mstart'] -1
-		pdmethEBoundary['Nuc'] = simpleFasta(getFeatures(pdmethEBoundary[['mchr','BackContext','Context']].values.tolist()))
-		pdmethEBoundary['NucContext'] = simpleFasta(getFeatures(pdmethEBoundary[['mchr','mstop','Context']].values.tolist()))
-		pdmethEBoundary['NucCytosine'] = simpleFasta(getFeatures(pdmethEBoundary[['mchr','mstart','mstop']].values.tolist()))
-		pdmethEBoundary['NucBackContext'] = simpleFasta(getFeatures(pdmethEBoundary[['mchr','BackContext','mstart']].values.tolist()))
+		pdmethEBoundary['Nuc'] = get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethEBoundary[['mchr','BackContext','Context']].values.tolist()))
+		pdmethEBoundary['NucContext'] = get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethEBoundary[['mchr','mstop','Context']].values.tolist()))
+		pdmethEBoundary['NucCytosine'] = get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethEBoundary[['mchr','mstart','mstop']].values.tolist()))
+		pdmethEBoundary['NucBackContext'] = get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethEBoundary[['mchr','BackContext','mstart']].values.tolist()))
 		pdmethEBoundary['methLoc'] = pdmethEBoundary['int'].astype(int)-(pdmethEBoundary['eBoundary'].astype(int)-pdmethEBoundary['mstop'].astype(int))
 		outpdmethEBoundary = pdmethEBoundary[['id','methPer','methLoc','methCov']]
 		outpdmethEBoundary = pdmethEBoundary[['chr','mstart','mstop','eEdge','eBoundary','int','id','methPer','methLoc','methCov','Nuc','NucContext','NucCytosine','NucBackContext']]
@@ -95,12 +94,12 @@ def methIntersect(rangeFeatures,methFeature):
 	return sortMeth
 
 # Run the analysis to extract percentage, frequency, coverage, location, context, and direction
-def compactMeth(rangeFeatures):
+def collect_methylation_data_by_element(rangeFeatures):
 	outMeth = []
 	for methName in GlobalVariables.mFiles:
-		methFeatures = eachFileProcess(methName)
-		pdmethThresh = methThreshold(methFeatures)
-		methPosition = methIntersect(rangeFeatures,pdmethThresh)
+		methFeatures = get_bedtools_features(methName)
+		pdmethThresh = threshold_methylation_data(methFeatures)
+		methPosition = intersect_methylation_data_by_element(rangeFeatures,pdmethThresh)
 		methPosition['tissue'] = methName.replace('.bed','')
 		stringDF = rangeFeatures[['id','combineString']]
 		methMerge = pd.merge(methPosition,stringDF,how='left',on='id')
@@ -135,7 +134,7 @@ def compactMeth(rangeFeatures):
 
 def main(rangeFeatures):
 	print 'Running MethlationLibrary'
-	pdMeth = compactMeth(rangeFeatures)
+	pdMeth = collect_methylation_data_by_element(rangeFeatures)
 	return pdMeth
 
 if __name__ == "__main__":

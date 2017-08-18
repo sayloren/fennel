@@ -22,12 +22,12 @@ import scipy
 from scipy import cluster
 from scipy.spatial import distance
 from scipy.cluster import hierarchy
-from GraphFangLibrary import collectDiNuc
+from GraphFangLibrary import collect_sum_two_nucleotides
 import GraphTableLibrary
 import GlobalVariables
 
 # Reduce each id/tissue x location to get a corresponding tissue/id list of associations
-def listOverlap(dataframe,yItem,xItem):
+def collect_index_by_association(dataframe,yItem,xItem):
 	# check re-methFreq process
 
 	# Separate by strand
@@ -54,7 +54,7 @@ def listOverlap(dataframe,yItem,xItem):
 	return PlusxMeth,MinusxMeth
 
 # Get Tissue x Id
-def elementID(dataframe,yItem,zItem):
+def collect_tissue_by_id_dataframe(dataframe,yItem,zItem):
 
 	# Separate by strand
 	PlusMeth = dataframe.loc[(dataframe['Cytosine'] == 'C') & (dataframe['methLoc'] >= (GlobalVariables.plotLineLocationThree-GlobalVariables.methylationflank)) & (dataframe['methLoc'] <= (GlobalVariables.plotLineLocationFour+GlobalVariables.methylationflank))]
@@ -93,7 +93,7 @@ def elementID(dataframe,yItem,zItem):
 	return PlusfloatMeth,MinusfloatMeth
 
 # Transform the Frequency, Percentage and Coverage data into graphable data frames, returning just the info for the element
-def elemenetIndex(dataframe,yItem):
+def collect_methylation_by_index(dataframe,yItem):
 
 	# x item is methLoc, y item is either tissue or id, z item is coverage, percentage, or frequency
 	new_index = range(0,num)
@@ -147,7 +147,7 @@ def elemenetIndex(dataframe,yItem):
 	return PlustransMeth,MinustransMeth
 
 # Make dictionary for row and column colors based on standard deviation
-def dictColors(ATelement,huslPalette):
+def make_dictionary_for_colors(ATelement,huslPalette):
 	ATQcutPosition = pd.qcut(ATelement.std(axis=1),q=8,labels=False)
 	ATQcutElement = pd.qcut(ATelement.std(),q=8,labels=False)
 	lutElement = dict(zip(ATQcutElement.unique(), huslPalette))
@@ -158,13 +158,13 @@ def dictColors(ATelement,huslPalette):
 	return elementColors,positionColors
 
 # Make some graphs for fangs
-def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName):
+def graph_cluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName):
 
 	plt.figure(figsize=(7,7))
 
 	# Get group, mean and standard deviation for AT
-	ATgroup,ATmean,ATstd = collectDiNuc(dfWindow,names,'A','T')
-	ranATgroup,ranATmean,ranATstd = collectDiNuc(ranWindow,names,'A','T')
+	ATgroup,ATmean,ATstd = collect_sum_two_nucleotides(dfWindow,names,'A','T')
+	ranATgroup,ranATmean,ranATstd = collect_sum_two_nucleotides(ranWindow,names,'A','T')
 	ATelement = ATgroup.T[(GlobalVariables.plotLineLocationThree-GlobalVariables.methylationflank):(GlobalVariables.plotLineLocationFour+GlobalVariables.methylationflank)]
 	ranATelement = ranATgroup.T[(GlobalVariables.plotLineLocationThree-GlobalVariables.methylationflank):(GlobalVariables.plotLineLocationFour+GlobalVariables.methylationflank)]
 	print 'Extracted just element and methylation flank, size {0}'.format(len(ATelement))
@@ -180,7 +180,7 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName):
 
 # 	Use the row_colors to color those with similar SD?
 	huslPalette = sns.husl_palette(8, s=.45)
-	elementColors,positionColors = dictColors(ATelement,huslPalette)
+	elementColors,positionColors = make_dictionary_for_colors(ATelement,huslPalette)
 	heatmap0 = sns.clustermap(ATelement.T,cmap='RdPu',vmin=0,vmax=100,xticklabels=50,col_cluster=False,row_colors=elementColors,col_colors=positionColors)
 	plt.setp(heatmap0.ax_heatmap.tick_params(labelsize=8))
 	plt.setp(heatmap0.ax_heatmap.set_yticks([]))
@@ -199,7 +199,7 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName):
 	pp.savefig()
 	
 # 	Use the row_colors to color those with similar SD?
-	ranelementColors,ranpositionColors = dictColors(ranATelement,huslPalette)
+	ranelementColors,ranpositionColors = make_dictionary_for_colors(ranATelement,huslPalette)
 	heatmap1 = sns.clustermap(ranATelement.T,cmap='RdPu',vmin=0,vmax=100,xticklabels=50,col_cluster=False,row_colors=ranelementColors,col_colors=ranpositionColors)
 	plt.setp(heatmap1.ax_heatmap.tick_params(labelsize=8))
 	plt.setp(heatmap1.ax_heatmap.set_yticks([]))
@@ -220,13 +220,13 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName):
 
 	# Various combinations to plot on heatmaps, just for element plus methylation flanks
 	# Frequency x Tissue x ID X Location
-	FreqPlusID,FreqMinusID = elemenetIndex(pdMeth,'id')
-	FreqPlusTis,FreqMinusTis = elemenetIndex(pdMeth,'tissue')
-	XPlus,XMinus = elementID(pdMeth,'id','tissue')
+	FreqPlusID,FreqMinusID = collect_methylation_by_index(pdMeth,'id')
+	FreqPlusTis,FreqMinusTis = collect_methylation_by_index(pdMeth,'tissue')
+	XPlus,XMinus = collect_tissue_by_id_dataframe(pdMeth,'id','tissue')
 
-	ranFreqPlusID,ranFreqMinusID = elemenetIndex(rnMeth,'id')
-	ranFreqPlusTis,ranFreqMinusTis = elemenetIndex(rnMeth,'tissue')
-	ranXPlus,ranXMinus = elementID(rnMeth,'id','tissue')
+	ranFreqPlusID,ranFreqMinusID = collect_methylation_by_index(rnMeth,'id')
+	ranFreqPlusTis,ranFreqMinusTis = collect_methylation_by_index(rnMeth,'tissue')
+	ranXPlus,ranXMinus = collect_tissue_by_id_dataframe(rnMeth,'id','tissue')
 
 	# Remove UCEs with out methylation within the element - only for ID group
 	FreqPlusID = FreqPlusID[(FreqPlusID.T != 0).any()]
@@ -445,8 +445,8 @@ def graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName):
 	pp.close()
 
 def main(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName):
-	print 'Running GraphClusterLibrary'
-	graphCluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName)
+	print 'Running graph_clusterLibrary'
+	graph_cluster(dfWindow,ranWindow,pdMeth,rnMeth,names,fileName)
 
 if __name__ == "__main__":
 	main()

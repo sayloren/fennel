@@ -10,7 +10,7 @@ import pandas as pd
 import GlobalVariables
 
 # Do the comparison between boundaries to get + - or =
-def calculateAT(element,size):
+def calculate_nucleotides_at(element,size):
 	start = element[:size]
 	end = element[-size:]
 	perSize = []
@@ -19,18 +19,18 @@ def calculateAT(element,size):
 	return perSize
 
 # Directionality, as inferred by comparing first and last n base pairs from input parameters
-def compareN(element,size):
-	perSize = calculateAT(element,size)
+def compare_boundaries_size_n(element,size):
+	perSize = calculate_nucleotides_at(element,size)
 	# give + - = depending on which side has larger AT content
 	if perSize[0] > perSize[1]: outList = '+'
 	if perSize[1] > perSize[0]: outList = '-'
 	if perSize[1] == perSize[0]: outList = '='
 	return outList
 
-# With the results from compareN per each element, evaluate directionality into new column
-def evalN(rangeFeatures,fileName):
-	rangeFeatures['compareBoundaries'] = rangeFeatures.apply(lambda row: (compareN(row['feature'],GlobalVariables.binDir)),axis=1)
-	rangeFeatures['compareBoundariesRange'] = rangeFeatures.apply(lambda row: (empericalN(row['feature'],GlobalVariables.binDir)),axis=1)
+# With the results from compare_boundaries_size_n per each element, evaluate directionality into new column
+def evaluate_boundaries_size_n(rangeFeatures,fileName):
+	rangeFeatures['compareBoundaries'] = rangeFeatures.apply(lambda row: (compare_boundaries_size_n(row['feature'],GlobalVariables.binDir)),axis=1)
+	rangeFeatures['compareBoundariesRange'] = rangeFeatures.apply(lambda row: (emperical_boundaries_for_increasing_bins_symbol(row['feature'],GlobalVariables.binDir)),axis=1)
 	rangeFeatures['equalBoundariesCount'] = rangeFeatures.apply(lambda row: row['compareBoundariesRange'].count('='),axis=1)
 	rangeFeatures['plusBoundariesCount'] = rangeFeatures.apply(lambda row: row['compareBoundariesRange'].count('+'),axis=1)
 	rangeFeatures['minusBoundariesCount'] = rangeFeatures.apply(lambda row: row['compareBoundariesRange'].count('-'),axis=1)
@@ -38,17 +38,17 @@ def evalN(rangeFeatures,fileName):
 	
 	compareEnds = pd.DataFrame(rangeFeatures[['chr','start','end','compareBoundaries']])
 	print 'Sorting the element boundaries by bin size {0}'.format(GlobalVariables.binDir)
-	rangeBins = collectEmperical(rangeFeatures)
+	rangeBins = collect_emperical_boundary_comparisons(rangeFeatures)
 	return rangeFeatures,rangeBins
 
 # Get the actual spread of = in the data over increasing bin size
-def collectEmperical(rangeFeatures):
+def collect_emperical_boundary_comparisons(rangeFeatures):
 	# Perform min,max collection
-	rangeAT = rangeFeatures.apply(lambda row: (empericalATspread(row['feature'],GlobalVariables.binDir)),axis=1)
+	rangeAT = rangeFeatures.apply(lambda row: (emperical_boundaries_for_increasing_bins_percentage(row['feature'],GlobalVariables.binDir)),axis=1)
 	pdrangeAT = pd.DataFrame(rangeAT.values.tolist())
 	
 	# Get direction collection
-	equalAT = rangeFeatures.apply(lambda row: (empericalN(row['feature'],GlobalVariables.binDir)),axis=1)
+	equalAT = rangeFeatures.apply(lambda row: (emperical_boundaries_for_increasing_bins_symbol(row['feature'],GlobalVariables.binDir)),axis=1)
 	pdequalAT = pd.DataFrame(equalAT.values.tolist())
 	countAT = pdequalAT.apply(pd.value_counts)
 	equalCounts = countAT.loc['=']/len(pdequalAT.index)
@@ -69,16 +69,6 @@ def collectEmperical(rangeFeatures):
 	pdATCollectStartMax = outcat[[outcat.columns[0]]].max(axis=1)
 	pdATCollectEndMax = outcat[[outcat.columns[1]]].max(axis=1)
 	
-	# Quantiles
-# 	pdATCollectStartUpperQuant = outcat[[outcat.columns[0]]].quantile(q=.75,axis=1)
-# 	pdATCollectEndUpperQuant = outcat[[outcat.columns[1]]].quantile(q=.75,axis=1)
-# 
-# 	pdATCollectStartLowerQuant = outcat[[outcat.columns[0]]].quantile(q=.25,axis=1)
-# 	pdATCollectEndLowerQuant = outcat[[outcat.columns[1]]].quantile(q=.25,axis=1)
-# 
-# 	Upper = pdATCollectStartUpperQuant * pdATCollectEndUpperQuant
-# 	Lower = pdATCollectStartLowerQuant * pdATCollectEndLowerQuant
-
 	Min = pdATCollectStartMin * pdATCollectEndMin
 	Max = pdATCollectStartMax * pdATCollectEndMax
 
@@ -86,19 +76,19 @@ def collectEmperical(rangeFeatures):
 	pdBins.columns=['Min','Max','Equal']
 	return pdBins
 
-# Run calculateAT for increasing bin sizes
-def empericalATspread(element,size):
+# Run calculate_nucleotides_at for increasing bin sizes
+def emperical_boundaries_for_increasing_bins_percentage(element,size):
 	totalSteps=[]
 	for i in np.arange(1,size*2):
-		pairStep = calculateAT(element,i)
+		pairStep = calculate_nucleotides_at(element,i)
 		totalSteps.append(pairStep)
 	return totalSteps
 
-# Run compareN over increasing bin sizes
-def empericalN(element,size):
+# Run compare_boundaries_size_n over increasing bin sizes
+def emperical_boundaries_for_increasing_bins_symbol(element,size):
 	totalSteps=[]
 	for i in np.arange(1,size*2):
-		perSize = calculateAT(element,i)
+		perSize = calculate_nucleotides_at(element,i)
 		# give + - = depending on which side has larger AT content
 		if perSize[0] > perSize[1]: outList = '+'
 		if perSize[1] > perSize[0]: outList = '-'
@@ -108,7 +98,7 @@ def empericalN(element,size):
 
 def main(rangeFeatures,fileName):
 	print 'Running DirectionLibrary'
-	directionFeatures,directionBins = evalN(rangeFeatures,fileName)
+	directionFeatures,directionBins = evaluate_boundaries_size_n(rangeFeatures,fileName)
 	return directionFeatures,directionBins
 
 if __name__ == "__main__":

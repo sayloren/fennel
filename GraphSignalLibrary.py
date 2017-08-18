@@ -23,26 +23,26 @@ from scipy.interpolate import splrep, splev
 from scipy import signal
 from scipy.stats import mstats
 import seaborn as sns
-from GraphFangLibrary import collectDiNuc
+from GraphFangLibrary import collect_sum_two_nucleotides
 import GlobalVariables
 
 # Get just the elemenet
-def justElement(region):
+def get_element_coordinates(region):
 	element = region[GlobalVariables.plotLineLocationThree:GlobalVariables.plotLineLocationFour]
 	return element
 
 # Get just the downstream flank
-def downFlank(region):
+def get_down_stream_flank_coordinates(region):
 	dFlank = region[GlobalVariables.plotLineLocationFour:(GlobalVariables.num-GlobalVariables.window-GlobalVariables.window)]
 	return dFlank
 
 # Get just the upstream flank
-def upFlank(region):
+def get_up_stream_flank_coordinates(region):
 	uFlank = region[GlobalVariables.window:GlobalVariables.plotLineLocationThree]
 	return uFlank
 
 # Perform fourier transform
-def performFourier(region):
+def perform_fourier_transfroms(region):
 	Fs = 1.0 # sampling rate
 	Ts = 1.0/Fs # sampling interval
 	
@@ -64,7 +64,7 @@ def performFourier(region):
 	return frqsd, Ysd
 
 # Collect each UCEs second derivative, find their inflection points
-def behaviorInflectionPointsUCE(ATgroup):
+def behaviorlocate_second_derivative_inflection_pointsUCE(ATgroup):
 	inflectionPts = []
 	for index, row in ATgroup.iterrows():
 		collectUCE = []
@@ -83,7 +83,7 @@ def behaviorInflectionPointsUCE(ATgroup):
 	return peaksUCE
 
 # Get smoothed mean, first and second derivatives
-def getLines(ATmean):
+def collect_smoothed_lines(ATmean):
 	f = splrep(GlobalVariables.fillX,ATmean,k=5,s=11)
 	smoothMean = splev(GlobalVariables.fillX,f)
 	firstDer = splev(GlobalVariables.fillX,f,der=1)
@@ -96,19 +96,19 @@ def getLines(ATmean):
 	return smoothMean,firstDer,secondDer
 
 # Get inflection points for seconder derivative
-def inflectionPoints(ATgroup):
-	infUCEpeaks = behaviorInflectionPointsUCE(ATgroup,GlobalVariables.num,GlobalVariables.window)
-	infUCEpeaks.columns = ['id','inflectionpoints']
-	inflectionList = infUCEpeaks['inflectionpoints'].apply(pd.Series).stack().tolist()
+def locate_second_derivative_inflection_points(ATgroup):
+	infUCEpeaks = behaviorlocate_second_derivative_inflection_pointsUCE(ATgroup,GlobalVariables.num,GlobalVariables.window)
+	infUCEpeaks.columns = ['id','locate_second_derivative_inflection_points']
+	inflectionList = infUCEpeaks['locate_second_derivative_inflection_points'].apply(pd.Series).stack().tolist()
 	print 'Collected all inflections points to list for {0} elements'.format(len(ATgroup.index))
 	return inflectionList, infUCEpeaks
 
 # Make signal graphs
-def graphSignal(dfWindow,names,ranWindow,fileName):
+def graph_signal_lines(dfWindow,names,ranWindow,fileName):
 	
 	# Get group, mean and standard deviation for AT
-	ATgroup,ATmean,ATstd = collectDiNuc(dfWindow,names,'A','T')
-	ranATgroup,ranATmean,ranATstd = collectDiNuc(ranWindow,names,'A','T')
+	ATgroup,ATmean,ATstd = collect_sum_two_nucleotides(dfWindow,names,'A','T')
+	ranATgroup,ranATmean,ranATstd = collect_sum_two_nucleotides(ranWindow,names,'A','T')
 
 	# File name
 	info = str(fileName) + ', '+ str(len(ATgroup.index)) + ' - ' "UCES"
@@ -123,8 +123,8 @@ def graphSignal(dfWindow,names,ranWindow,fileName):
 	pp = PdfPages('Signal_{0}.pdf'.format(fileName))
 
 	# Get smoothed mean, first and second derivatives
-	smoothMean,firstDer,secondDer = getLines(ATmean)
-	ransmoothMean,ranfirstDer,ransecondDer = getLines(ranATmean)
+	smoothMean,firstDer,secondDer = collect_smoothed_lines(ATmean)
+	ransmoothMean,ranfirstDer,ransecondDer = collect_smoothed_lines(ranATmean)
 
 	gs = gridspec.GridSpec(3,3,height_ratios=[1,1,1])
 	gs.update(hspace=.65)
@@ -176,8 +176,8 @@ def graphSignal(dfWindow,names,ranWindow,fileName):
 	# Frequency of inflection points
 	gs = gridspec.GridSpec(1,1,height_ratios=[1])
 	ax3 = plt.subplot(gs[0])
-	inflectionList,infUCEpeaks = inflectionPoints(ATgroup,GlobalVariables.num,GlobalVariables.window)
-	raninflectionList,raninfUCEpeaks = inflectionPoints(ranATgroup,GlobalVariables.num,GlobalVariables.window)
+	inflectionList,infUCEpeaks = locate_second_derivative_inflection_points(ATgroup,GlobalVariables.num,GlobalVariables.window)
+	raninflectionList,raninfUCEpeaks = locate_second_derivative_inflection_points(ranATgroup,GlobalVariables.num,GlobalVariables.window)
 	IFbins = GlobalVariables.num/10
 	ax3.hist(inflectionList,IFbins,alpha=0.3,label='Element')
 	ax3.hist(raninflectionList,IFbins,alpha=0.3,label='Random')
@@ -248,12 +248,12 @@ def graphSignal(dfWindow,names,ranWindow,fileName):
 	ax8.set_ylabel('Amplitude',size=8)
 	ax8.set_title('First Derivative of Fitted Mean for Elements',size=8)
 	
-	ysdElement = justElement(firstDer)
-	frq2sd, Y2sd = performFourier(ysdElement)
-	ysdUp = upFlank(firstDer)
-	frq3sd, Y3sd = performFourier(ysdUp)
-	ysdDown = downFlank(firstDer)
-	frq4sd, Y4sd = performFourier(ysdDown)
+	ysdElement = get_element_coordinates(firstDer)
+	frq2sd, Y2sd = perform_fourier_transfroms(ysdElement)
+	ysdUp = get_up_stream_flank_coordinates(firstDer)
+	frq3sd, Y3sd = perform_fourier_transfroms(ysdUp)
+	ysdDown = get_down_stream_flank_coordinates(firstDer)
+	frq4sd, Y4sd = perform_fourier_transfroms(ysdDown)
 	print 'Performed fourier transform for elements'
 	
 	#FFT for sections of the smoothed second derivative
@@ -307,12 +307,12 @@ def graphSignal(dfWindow,names,ranWindow,fileName):
 	ax13.set_ylabel('Amplitude',size=8)
 	ax13.set_title('First Derivative of Fitted Mean for Random Regions',size=8)
 	
-	ranysdElement = justElement(ranfirstDer)
-	ranfrq2sd,ranY2sd = performFourier(ranysdElement)
-	ranysdUp = upFlank(ranfirstDer)
-	ranfrq3sd,ranY3sd = performFourier(ranysdUp)
-	ranysdDown = downFlank(ranfirstDer)
-	ranfrq4sd,ranY4sd = performFourier(ranysdDown)
+	ranysdElement = get_element_coordinates(ranfirstDer)
+	ranfrq2sd,ranY2sd = perform_fourier_transfroms(ranysdElement)
+	ranysdUp = get_up_stream_flank_coordinates(ranfirstDer)
+	ranfrq3sd,ranY3sd = perform_fourier_transfroms(ranysdUp)
+	ranysdDown = get_down_stream_flank_coordinates(ranfirstDer)
+	ranfrq4sd,ranY4sd = perform_fourier_transfroms(ranysdDown)
 	print 'Performed fourier transform for random regions'
 
 	#FFT for sections of the smoothed second derivative
@@ -337,8 +337,8 @@ def graphSignal(dfWindow,names,ranWindow,fileName):
 	print 'Plotted short fourier transform and fast fourier transform for random regions'
 
 def main(dfWindow,names,ranWindow,fileName):
-	print 'Running GraphSignalLibrary'
-	ATgroup = graphSignal(dfWindow,names,ranWindow,fileName)
+	print 'Running graph_signal_linesLibrary'
+	ATgroup = graph_signal_lines(dfWindow,names,ranWindow,fileName)
 
 if __name__ == "__main__":
 	main()

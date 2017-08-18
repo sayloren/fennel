@@ -21,7 +21,7 @@ import seaborn as sns
 import GlobalVariables
 
 # Get group, mean and standard deviation for AT
-def collectDiNuc(dfWindow,names,nuc1,nuc2):
+def collect_sum_two_nucleotides(dfWindow,names,nuc1,nuc2):
 	ATNames = [names.index(i) for i in names if nuc1 in i or nuc2 in i]
 	ATDataFrames = [dfWindow[i] for i in ATNames]
 	ATconcat = pd.concat(ATDataFrames,axis=1)
@@ -31,11 +31,11 @@ def collectDiNuc(dfWindow,names,nuc1,nuc2):
 	return ATgroup, ATmean, ATstd
 
 # Make some graphs for fangs
-def graphFang(dfWindow,names,ranWindow,fileName):
+def graph_element_line_means(dfWindow,names,ranWindow,fileName):
 
 	# Get group, mean and standard deviation for AT
-	ATgroup,ATmean,ATstd = collectDiNuc(dfWindow,names,'A','T')
-	ranATgroup,ranATmean,ranATstd = collectDiNuc(ranWindow,names,'A','T')
+	ATgroup,ATmean,ATstd = collect_sum_two_nucleotides(dfWindow,names,'A','T')
+	ranATgroup,ranATmean,ranATstd = collect_sum_two_nucleotides(ranWindow,names,'A','T')
 	
 	# Title info
 	info = str(fileName) + ', '+ str(len(ATgroup.index)) + ' - ' "UCES"
@@ -401,8 +401,8 @@ def graphFang(dfWindow,names,ranWindow,fileName):
 		print 'Plotted multinucleotide means'
 
 	if set(['C','G','CG']) <= set(names):#set(['CG','C','G']).issubset(names):
-		CGgroup,CGmean,CGstd = collectDiNuc(dfWindow,names,'C','G')
-		ranCGgroup,ranCGmean,ranCGstd = collectDiNuc(ranWindow,names,'C','G')
+		CGgroup,CGmean,CGstd = collect_sum_two_nucleotides(dfWindow,names,'C','G')
+		ranCGgroup,ranCGmean,ranCGstd = collect_sum_two_nucleotides(ranWindow,names,'C','G')
 
 		gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
 		gs.update(hspace=.8) # setting the space between the graphs
@@ -451,7 +451,7 @@ def graphFang(dfWindow,names,ranWindow,fileName):
 
 def main(dfWindow,names,ranWindow,fileName):
 	print 'Running GraphFangLibrary'
-	graphFang(dfWindow,names,ranWindow,fileName)
+	graph_element_line_means(dfWindow,names,ranWindow,fileName)
 
 if __name__ == "__main__":
 	main()

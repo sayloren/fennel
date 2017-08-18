@@ -18,16 +18,16 @@ from bokeh.models.widgets import Select
 from bokeh.models.widgets import Toggle
 import pandas as pd
 import seaborn
-from GraphFangLibrary import collectDiNuc
+from GraphFangLibrary import collect_sum_two_nucleotides
 import GlobalVariables
 
 # Make interactive plots
-def bokehOut(dfWindow,ranWindow,fileName):
+def graph_interactive_bokeh(dfWindow,ranWindow,fileName):
 	seaborn.set_palette("husl",n_colors=8)
 
 	# Get group, mean and standard deviation for AT
-	ATgroup,ATmean,ATstd = collectDiNuc(dfWindow,names,'A','T')
-	ranATgroup,ranATmean,ranATstd = collectDiNuc(ranWindow,names,'A','T')
+	ATgroup,ATmean,ATstd = collect_sum_two_nucleotides(dfWindow,names,'A','T')
+	ranATgroup,ranATmean,ranATstd = collect_sum_two_nucleotides(ranWindow,names,'A','T')
 
 	source = ColumnDataSource(data=dict(x=GlobalVariables.fillX,mean=ATgroup.mean(),std=ATgroup.std(),rmean=ranATgroup.mean(),rstd=ranATgroup.std()))
 	output_file('Interactive_{0}.html'.format(fileName))
@@ -49,7 +49,7 @@ def bokehOut(dfWindow,ranWindow,fileName):
 
 def main(dfWindow,ranWindow,fileName):
 	print 'Running BokehLibrary'
-	bokehOut(dfWindow,ranWindow,fileName)
+	graph_interactive_bokeh(dfWindow,ranWindow,fileName)
 
 if __name__ == "__main__":
 	main()
