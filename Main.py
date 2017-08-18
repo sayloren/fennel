@@ -185,18 +185,19 @@ def main():
 
 			# Re-align by exon/intron crossover
 			if GlobalVariables.overlapInset:
+				ranstartcrossboundary,ranendcrossboundary,rancompleteelement,raninteriorelement,ranoverlapTable = OverlapLibrary.main(randomFeatures,fileName)
+				rancrossMeth,rancrossWindow,rancrossNames  = RevCompOverlapLibrary.main(ranstartcrossboundary,ranendcrossboundary)
 				startcrossboundary,endcrossboundary,completeelement,interiorelement,overlapTable = OverlapLibrary.main(rangeFeatures,fileName)
 				crossMeth,crossWindow,crossNames  = RevCompOverlapLibrary.main(startcrossboundary,endcrossboundary)
 				completeelement.name = 'WithinExon'
 				interiorelement.name = 'ContainsExon'
-				ranstartcrossboundary,ranendcrossboundary,rancompleteelement,raninteriorelement,ranoverlapTable = OverlapLibrary.main(randomFeatures,fileName)
-				rancrossMeth,rancrossWindow,rancrossNames  = RevCompOverlapLibrary.main(ranstartcrossboundary,ranendcrossboundary)
 				plot_chi_square_table(overlapTable.T,'Exonic Elements',ranoverlapTable.T,'Exonic Random Regions','Exonic_overlap_Count_{0}'.format(paramlabels))
 				plot_graph_by_arg(crossMeth,rancrossMeth,crossWindow,crossNames,rancrossWindow,'align_Crossboundary_{0}'.format(paramlabels))
 				for element,random in zip([completeelement,interiorelement],[rancompleteelement,raninteriorelement]):
 					alignMeth,alignWindow,alignNames = TypeLibrary.main(element,fileName)
 					ranalignMeth,ranalignWindow,ranalignNames = TypeLibrary.main(random,fileName)
 					plot_graph_by_arg(alignMeth,ranalignMeth,alignWindow,alignNames,ranalignWindow,'align_{0}_{1}'.format(element.name,paramlabels))
+
 # 					if GlobalVariables.revCom: # maybe use group separate?
 # 						aligndirFeatures = DirectionLibrary.main(element,fileName)
 # 						alignranFeatures = DirectionLibrary.main(random,fileName)
