@@ -1,75 +1,175 @@
 """
-Script to perform RC sorting
+Script to print all the random regions to the same plot, along with element,
+run separetly from pipeline, but uses pipeline functions
 
 Wren Saylor
-July 5 2017
+August 18 2017
 """
 import argparse
+import ElementLibrary
+import DirectionLibrary
+import FangsLibrary
+import MethylationLibrary
+import RevCompLibrary
+import TypeLibrary
+import OverlapLibrary
+import BinLibrary
+import GraphFangLibrary
+import GraphMethLibrary
+import GraphSignalLibrary
+import BokehLibrary
+import GraphTableLibrary
+import GraphClusterLibrary
+import GraphDendrogramLibrary
+import GraphKMeansLibrary
 import pandas as pd
-from FangsLibrary import run_sliding_window_for_each_nucleotide_string
-from ElementLibrary import get_bedtools_features
-from MethylationLibrary import collect_methylation_data_by_element
+import RevCompOverlapLibrary
+import BinLibrary
 import GlobalVariables
+from GraphFangLibrary import collect_sum_two_nucleotides
+from FangsLibrary import run_sliding_window_for_each_nucleotide_string
+from RevCompLibrary import sort_sliding_window_by_directionality
+import matplotlib as mpl
+from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.colors import ListedColormap
+import matplotlib.gridspec as gridspec
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from scipy.interpolate import splrep, splev
+import scipy.stats as ss
+from scipy.stats import mstats
+import seaborn as sns
 
-# Methylation RCsorting
-def sort_methylation_by_directionality(negStr,posStr):
+# Arguments
+def get_args():
+	# File lists
+	parser = argparse.ArgumentParser(description="Description")
+	parser.add_argument("efile", type=argparse.FileType('rU'), help='A file containing a list of paths to the element files with unique names separated by newlines')
+	parser.add_argument("mfile", type=argparse.FileType('rU'), help="A file containing a list of paths to the methylation files with unique names separated by newlines, with data for methylation position (chr, start,stop) and methylation % as fourth column'")
+	parser.add_argument("rfile",type=argparse.FileType('rU'), help="A file containing a list of paths to the random regions equable with your elements to plot in contrast")
 
-	posMeth = collect_methylation_data_by_element(posStr)
-	negMeth = collect_methylation_data_by_element(negStr)
+	# Genome Files
+	parser.add_argument("-g", "--genome", type=str, default="hg19.genome")
+# 	parser.add_argument("-n", "--nucleosome", type=str, help="A bedgraph file with data for nucleosome positions, form 'chr, start, stop, occupancy'")
+# 	parser.add_argument("-s", "--snp", type=str, help="A file with data for snps, form 'chr, start, stop(start+size alt-mutated), ref, ref_size, alt, alt_size, af_adj'")
+	parser.add_argument("-fa", "--fasta", type=str, default="hg19.fa")
+	parser.add_argument("-o", "--overlapingelements", type=str, default="hg19_0based_exons.bed",help='A file containing all elements to check for overlaps in format "chr start stop", using for exons, but can be anything')#direction
+
+	# Integer Parameters
+	parser.add_argument("-t", "--total", type=int, default="600", help='total size of region to look at (region + flanks), should be an even number, suggested to be at least triple your element')
+	parser.add_argument("-e", "--element", type=int, default="200", help='size of your element (region without flanks), should be an even number')
+	parser.add_argument("-i", "--inset", type=int, default="50", help='size into your element from the boundaries, should be an even number')
+	parser.add_argument("-w", "--window", type=int, default="11", help='size of sliding window, should be an odd number, previous studies have used 11')
+	parser.add_argument("-b", "--bin", type=int, default="30", help='size of bins used to compare element ends and determine directionality')
+	parser.add_argument("-mc", "--thresholdcoverage", type=int, default="10", help='size to threshold uncapped coverage of methylation data to send to % methylation, field often uses 10')
+	parser.add_argument("-mp", "--thresholdpercentage", type=int, default="0", help='size to threshold % methylation data')
+	parser.add_argument("-mf", "--methylationflank", type=int, default="20", help='The number of base pairs to look at outside of the element for the methylation clusterplots')
+
+	# Specify which groups and graphs to run
+	parser.add_argument('-type', "--elementype", default=['all'], nargs='*', choices=['all','intronic','exonic','intergenic'],help='which group types of element to run')
+	parser.add_argument('-dir', "--elementdirection", default=[], nargs='*', choices=['+','-','='], help='which group direction of element to run')
+	parser.add_argument('-rc', "--reversecomplement",action='store_true', help='if reverse complement sorting required')
+	parser.add_argument('-p',"--plots",default=[],nargs='*',choices=['fang','methylation','signal','interactive','cluster','dendrogram','kmean'],help='the available graphs to plot')
+	parser.add_argument('-nuc',"--nucleotideline",default=['A','T'],nargs='+',help='type the nucleotide string combinations to search for in the element')
+	parser.add_argument('-str',"--stringname",type=str,help='string to add to the outfile name')
+	parser.add_argument('-align', "--elementalign",action='store_true', help='if want to align by exonic/intronic crossover')
+
+	# Add additional descriptive file name information
+	return parser.parse_args()
+
+# Line graphs
+def plot_line_graphs(elementDF,elementRC,collectDF,collectRC,allNames,fileName,collectFile):
+	# Get group, mean and standard deviation for AT
 	
-	# Zip reversed range to make a dictionary for replacing the location of the neg methylation
-	originalRange = range(0,GlobalVariables.num)
-	reverseRange = originalRange[::-1]
-	rangeDict = dict(zip(originalRange,reverseRange))
+	# Plot settings
+	sns.set_style('ticks')
+	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
+	gs.update(hspace=.8) # setting the space between the graphs
+	pp = PdfPages('Fangs_{0}.pdf'.format(fileName))
+	plt.figure(figsize=(7,7))
+
+	sns.set_palette("husl",n_colors=8)#(len(nucLine)*2)
+	ATgroupElement,ATmeanElement,ATstdElement = collect_sum_two_nucleotides(elementDF,allNames,'A','T')
+	ATgroupElementRC,ATmeanElementRC,ATstdElementRC = collect_sum_two_nucleotides(elementRC,allNames,'A','T')
+
+	# Plot the mean AT content with a std of 1
+	ax0 = plt.subplot(gs[0])
+	ax0.plot(GlobalVariables.fillX,ATmeanElement,linewidth=2,label='UCEs')
+	for dfNuc,file in zip(collectDF,collectFile):
+		ATgroup,ATmean,ATstd = collect_sum_two_nucleotides(dfNuc,allNames,'A','T')
+		ax0.plot(GlobalVariables.fillX,ATmean,linewidth=1,alpha=0.3)#,label='{0}'.format(file)
+	ax0.axvline(x=GlobalVariables.plotLineLocationOne,linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax0.axvline(x=GlobalVariables.plotLineLocationTwo,linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax0.axvline(x=GlobalVariables.plotLineLocationThree,linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax0.axvline(x=GlobalVariables.plotLineLocationFour,linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax0.set_ylabel('% AT Content',size=8)
+	ax0.set_xlabel('Position',size=6)
+	ax0.legend(loc=0,fontsize=5,labelspacing=0.1)
+	ax0.set_title('Mean AT Content',size=8)
+	ax0.set_yticks(ax0.get_yticks()[::2])
+	plt.xlim(0,GlobalVariables.num)
+
+	# Plot the std = 1
+	ax1 = plt.subplot(gs[1],sharex=ax0)
+	ax1.plot(GlobalVariables.fillX,ATmeanElementRC,linewidth=2,label='UCEs')
+	for dfNuc,file in zip(collectRC,collectFile):
+		ATgroup,ATmean,ATstd = collect_sum_two_nucleotides(dfNuc,allNames,'A','T')
+		ax1.plot(GlobalVariables.fillX,ATmean,linewidth=1,alpha=0.3)#,label='{0}'.format(file)
+	ax1.axvline(x=GlobalVariables.plotLineLocationOne,linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax1.axvline(x=GlobalVariables.plotLineLocationTwo,linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax1.axvline(x=GlobalVariables.plotLineLocationThree,linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax1.axvline(x=GlobalVariables.plotLineLocationFour,linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax1.set_yticks(ax1.get_yticks()[::2])
+	ax1.set_xlabel('Position',size=6)
+	ax1.set_ylabel('% AT Content',size=8)
+	ax1.set_title('Mean AT Content, Reverse Completement Sorted',size=8)
+	plt.setp(ax1.get_xticklabels(), visible=True)
+	ax1.legend(loc=0,fontsize=5,labelspacing=0.05)
+	sns.despine()
+	pp.savefig()
+	pp.close()
+
+def main():
+	# Collect arguments
+	args = get_args()
+	# Set global variables
+	GlobalVariables.main(args)
+	collectDF = []
+	collectFile = []
+	collectRC = []
 	
-	# Zip reverse complement sequence for replacing the nucleotides for neg methylation
-	seqDict = {'A':'T','T':'A','C':'G','G':'C','N':'N'}
+	elementFile = []
+	for fileName in GlobalVariables.eFiles:
+		elementFile.append(fileName)
+		rangeFeatures = ElementLibrary.main(fileName)
+		directionFeatures,directionBins = DirectionLibrary.main(rangeFeatures,fileName)
+		elementDF, elementNames = run_sliding_window_for_each_nucleotide_string(rangeFeatures['combineString'],rangeFeatures['id'])
+		negStr = (directionFeatures[(directionFeatures['compareBoundaries'] == '-')])
+		posStr = (directionFeatures[(directionFeatures['compareBoundaries'] == '+')])
+		elementRC, elementRCNames = sort_sliding_window_by_directionality(negStr,posStr)
 
-	# Convert neg Meth df
-	negMeth['methLocNew'] = negMeth.methLoc.map(rangeDict)
-	negMeth['CytosineNew'] = negMeth.Cytosine.map(seqDict)
-	negMeth['ContextNew'] = negMeth.Context.map(seqDict)
-	negMethNew = negMeth[['id','methLocNew','methPer','methCov','methFreq','CytosineNew','ContextNew','tissue']]
-	negMethNew.columns = ['id','methLoc','methPer','methCov','methFreq','Cytosine','Context','tissue']
-	
-	# Concat pos and revised neg meth dfs
-	frames = [posMeth,negMethNew]
-	catMerge = pd.concat(frames)
-	
-	# Update Frequencey count column
-	catMerge['methFreqNew'] = catMerge.groupby(['methLoc','tissue','Cytosine'])['methLoc'].transform('count')
-	outMerge = catMerge[['id','methLoc','methPer','methCov','methFreqNew','Cytosine','Context','tissue']]
-	outMerge.columns = ['id','methLoc','methPer','methCov','methFreq','Cytosine','Context','tissue']
+	# for each element file provided
+	for fileName in GlobalVariables.rFiles:
+		rangeFeatures = ElementLibrary.main(fileName)
+		directionFeatures,directionBins = DirectionLibrary.main(rangeFeatures,fileName)
+		# separate by direction
+		typeWindow, typeNames = run_sliding_window_for_each_nucleotide_string(rangeFeatures['combineString'],rangeFeatures['id'])
+		collectDF.append(typeWindow)
+		collectFile.append(fileName)
+		negStr = (directionFeatures[(directionFeatures['compareBoundaries'] == '-')])
+		posStr = (directionFeatures[(directionFeatures['compareBoundaries'] == '+')])
+		compWindow, compNames = sort_sliding_window_by_directionality(negStr,posStr)
+		collectRC.append(compWindow)
+	paramlabels = '{0}_{1}_{2}_{3}_{4}_{5}_{6}'.format(GlobalVariables.uce,GlobalVariables.inuce,GlobalVariables.num,GlobalVariables.binDir,GlobalVariables.window,elementFile,GlobalVariables.stringName)
+	plot_line_graphs(elementDF,elementRC,collectDF,collectRC,typeNames,'all_random_{0}'.format(paramlabels),collectFile)
 
-	return outMerge
-
-# Sliding window RCsorting
-def sort_sliding_window_by_directionality(negStr,posStr):
-	negDF, negNames = run_sliding_window_for_each_nucleotide_string(negStr['reverseComplement'],negStr['id'])
-	posDF, posNames = run_sliding_window_for_each_nucleotide_string(posStr['combineString'],posStr['id'])
-	compWindow = []
-	for x, y in zip(negDF, posDF):
-		tempCat = pd.concat([x,y],axis=1)
-		tempGroup = tempCat.groupby(tempCat.columns,axis=1).sum()
-		compWindow.append(tempGroup)
-	return compWindow, negNames
-
-# Separate on plus and minus orientation, RCsort and return methylation and sliding window computations
-def sort_elements_by_directionality(directionFeatures):
-	negStr = (directionFeatures[(directionFeatures['compareBoundaries'] == '-')])
-	posStr = (directionFeatures[(directionFeatures['compareBoundaries'] == '+')])
-	compWindow, compNames = sort_sliding_window_by_directionality(negStr,posStr)
-	if any(x in GlobalVariables.graphs for x in ['methylation','cluster']):
-		groupMeth = sort_methylation_by_directionality(negStr,posStr)
-	else: 
-		groupMeth = None
-	return groupMeth,compWindow,compNames
-
-def main(directionFeatures):
-	print 'Running RevCompLibrary'
-	groupMeth,compWindow,compNames = sort_elements_by_directionality(directionFeatures)
-	print 'Completed reverse complement sorting for {0} items, with {1} bin sorting'.format(len(directionFeatures.index),GlobalVariables.binDir)
-	return groupMeth,compWindow,compNames
+# 			# By Type
+# 			for type in GlobalVariables.typeList:
+# 				typeBool,typeMeth,typeWindow,typeNames = separate_dataframe_by_group(type,directionFeatures,'type',fileName)
+# 				if GlobalVariables.revCom:
+# 					typercMeth,typercWindow,typercNames = RevCompLibrary.main(typeBool)
 
 if __name__ == "__main__":
 	main()
