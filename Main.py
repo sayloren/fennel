@@ -11,7 +11,6 @@ cluster by difference between boundaries
 snps, nucleosomes, replication origins/forks, tss
 
 AT balance random
-exons - split intron/intergenic, include exon direcitonality, move cross boundary to tss, rc sorting
 which are consitently = 
 
 unittest
@@ -197,13 +196,6 @@ def main():
 					alignMeth,alignWindow,alignNames = TypeLibrary.main(element,fileName)
 					ranalignMeth,ranalignWindow,ranalignNames = TypeLibrary.main(random,fileName)
 					plot_graph_by_arg(alignMeth,ranalignMeth,alignWindow,alignNames,ranalignWindow,'align_{0}_{1}'.format(element.name,paramlabels))
-
-# 					if GlobalVariables.revCom: # maybe use group separate?
-# 						aligndirFeatures = DirectionLibrary.main(element,fileName)
-# 						alignranFeatures = DirectionLibrary.main(random,fileName)
-# 						alignrcMeth,alignrcWindow,alignrcNames = RevCompLibrary.main(aligndirFeatures)
-# 						ranalignrcMeth,ranalignrcWindow,ranalignrcNames = RevCompLibrary.main(alignranFeatures)
-# 						plot_graph_by_arg(alignrcMeth,ranalignrcMeth,alignrcWindow,alignrcNames,ranalignrcWindow,'align_{0}_{1}'.format(element.name,paramlabels))
 
 if __name__ == "__main__":
 	main()
