@@ -4,6 +4,20 @@ Script to perform methylation analyses
 Wren Saylor
 July 5 2017
 
+Copyright 2017 Harvard University, Wu Lab
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
 """
 import argparse
 import pandas as pd
@@ -14,6 +28,7 @@ from ElementLibrary import convert_panda_to_bed_format
 from ElementLibrary import reverse_complement_dictionary
 from ElementLibrary import get_just_fasta_sequence_for_feature
 import GlobalVariables
+import numpy as np
 
 # 	Old snippets from previous methylation processing method
 # 	df.rename(columns=lambda x: x.replace('string','{0}_string'.format(filename)),inplace=True) # modify column names to be file specific
@@ -89,8 +104,11 @@ def intersect_methylation_data_by_element(rangeFeatures,methFeature):
 		outpdmethEBoundary = None
 
 	methList = [outpdmethSBoundary,outpdmethFeature,outpdmethEBoundary]
-	concatMeth = pd.concat(methList)
-	sortMeth = concatMeth.sort_values(['methLoc'],ascending=True)
+	if all(x is None for x in methList):
+		sortMeth = None
+	else:
+		concatMeth = pd.concat(methList)
+		sortMeth = concatMeth.sort_values(['methLoc'],ascending=True)
 	return sortMeth
 
 # Run the analysis to extract percentage, frequency, coverage, location, context, and direction
@@ -100,40 +118,39 @@ def collect_methylation_data_by_element(rangeFeatures):
 		methFeatures = get_bedtools_features(methName)
 		pdmethThresh = threshold_methylation_data(methFeatures)
 		methPosition = intersect_methylation_data_by_element(rangeFeatures,pdmethThresh)
-		methPosition['tissue'] = methName.replace('.bed','')
-		stringDF = rangeFeatures[['id','combineString']]
-		methMerge = pd.merge(methPosition,stringDF,how='left',on='id')
-		methMerge['methLocBEnd'] = methMerge['methLoc'] - 1
-		methMerge['methLocCEnd'] = methMerge['methLoc'] + 1
-		methMerge['methLocEnd'] = methMerge['methLoc'] + 2
-		methMerge['Cytosine'] = methMerge.apply(lambda row: row['combineString'][row['methLoc']:row['methLocCEnd']],axis=1)
-		methMerge['Context'] = methMerge.apply(lambda row: row['combineString'][row['methLocCEnd']:row['methLocEnd']],axis=1)
-		methMerge['BackContext'] = methMerge.apply(lambda row: row['combineString'][row['methLocBEnd']:row['methLoc']],axis=1)
-		methMerge['ContextCheck'] = methMerge.apply(lambda row: row['combineString'][row['methLocBEnd']:row['methLocEnd']],axis=1)
-		methMerge['methFreq'] = methMerge.groupby(['methLoc','Cytosine'])['methLoc'].transform('count')
-		methMerge['Nuc'] = methMerge['Nuc'].str.upper()
-		methMerge['sameSeq'] = methMerge['Nuc'] == methMerge['ContextCheck']
-		
-		# If the nucleotide in the cytosine column is 'G', make the context the other direction (reverse complement later, in graphing, in order to differentiate between strands)
-		methMerge.loc[methMerge['Cytosine'] == 'G', 'Context'] = methMerge['BackContext']
-		
-		# sameSeq might be 'False' if 1) the c is at the end border for the downstream boundary, 2) the sequence bridges the sequence split for the upstream boundary
-		falseMeth = (methMerge[methMerge['sameSeq'] == False])
-		
-		# Conditionally update contexts where False for matches between sequence and methylation nucleotides- c get context, and g gets backcontext
-		methMerge.loc[methMerge['sameSeq'] == False,'Cytosine'] = methMerge['NucCytosine']
-		methMerge.loc[(methMerge['sameSeq'] == False) & (methMerge['NucCytosine'] == 'C'),'Context'] = methMerge['NucContext']
-		methMerge.loc[(methMerge['sameSeq'] == False) & (methMerge['NucCytosine'] == 'G'),'Context'] = methMerge['NucBackContext']
-		
-		print 'There are {0} instances at {1} where methylation context did not match between methylation bedfile and sequence in {2}'.format(len(falseMeth.index),falseMeth['methLoc'].tolist(),methName)
-		subMeth = methMerge[['id','methLoc','methPer','methCov','methFreq','Cytosine','Context','tissue']]
+		if methPosition is not None:
+			methPosition['tissue'] = methName.replace('.bed','')
+			stringDF = rangeFeatures[['id','combineString']]
+			methMerge = pd.merge(methPosition,stringDF,how='left',on='id')
+			methMerge['methLocBEnd'] = methMerge['methLoc'] - 1
+			methMerge['methLocCEnd'] = methMerge['methLoc'] + 1
+			methMerge['methLocEnd'] = methMerge['methLoc'] + 2
+			methMerge['Cytosine'] = methMerge.apply(lambda row: row['combineString'][row['methLoc']:row['methLocCEnd']],axis=1)
+			methMerge['Context'] = methMerge.apply(lambda row: row['combineString'][row['methLocCEnd']:row['methLocEnd']],axis=1)
+			methMerge['BackContext'] = methMerge.apply(lambda row: row['combineString'][row['methLocBEnd']:row['methLoc']],axis=1)
+			methMerge['ContextCheck'] = methMerge.apply(lambda row: row['combineString'][row['methLocBEnd']:row['methLocEnd']],axis=1)
+			methMerge['methFreq'] = methMerge.groupby(['methLoc','Cytosine'])['methLoc'].transform('count')
+			methMerge['Nuc'] = methMerge['Nuc'].str.upper()
+			methMerge['sameSeq'] = methMerge['Nuc'] == methMerge['ContextCheck']
+			# If the nucleotide in the cytosine column is 'G', make the context the other direction (reverse complement later, in graphing, in order to differentiate between strands)
+			methMerge.loc[methMerge['Cytosine'] == 'G', 'Context'] = methMerge['BackContext']
+			# sameSeq might be 'False' if 1) the c is at the end border for the downstream boundary, 2) the sequence bridges the sequence split for the upstream boundary
+			falseMeth = (methMerge[methMerge['sameSeq'] == False])
+			# Conditionally update contexts where False for matches between sequence and methylation nucleotides- c get context, and g gets backcontext
+			methMerge.loc[methMerge['sameSeq'] == False,'Cytosine'] = methMerge['NucCytosine']
+			methMerge.loc[(methMerge['sameSeq'] == False) & (methMerge['NucCytosine'] == 'C'),'Context'] = methMerge['NucContext']
+			methMerge.loc[(methMerge['sameSeq'] == False) & (methMerge['NucCytosine'] == 'G'),'Context'] = methMerge['NucBackContext']
+			print 'There are {0} instances at {1} where methylation context did not match between methylation bedfile and sequence in {2}'.format(len(falseMeth.index),falseMeth['methLoc'].tolist(),methName)
+			subMeth = methMerge[['id','methLoc','methPer','methCov','methFreq','Cytosine','Context','tissue']]
+		else:
+			subMeth = pd.DataFrame(np.nan,index=[0],columns=['id','methLoc','methPer','methCov','methFreq','Cytosine','Context'])
+			subMeth['tissue'] = methName.replace('.bed','')
 		outMeth.append(subMeth)
 	print 'Discrepancy of context are acceptable at the end of the sequence, or at the split between the middle and boundary, the context extracted from the original methylation file will be used instead'
 	pdMeth = pd.concat(outMeth)
 	return pdMeth
 
 def main(rangeFeatures):
-	print 'Running MethlationLibrary'
 	pdMeth = collect_methylation_data_by_element(rangeFeatures)
 	return pdMeth
 

@@ -3,6 +3,21 @@ Script to graph Signal analyses
 
 Wren Saylor
 July 5 2017
+
+Copyright 2017 Harvard University, Wu Lab
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
 """
 
 import argparse
@@ -92,12 +107,11 @@ def collect_smoothed_lines(ATmean):
 	secondDer = splev(GlobalVariables.fillX,f,der=2)
 	secondDer[0:GlobalVariables.window] = 0 # small edge effect
 	secondDer[-GlobalVariables.window:] = 0 # small edge effect
-	print 'Got mean and standard deviation for {0} elements'.format(len(smoothMean.index))
 	return smoothMean,firstDer,secondDer
 
 # Get inflection points for seconder derivative
 def locate_second_derivative_inflection_points(ATgroup):
-	infUCEpeaks = behaviorlocate_second_derivative_inflection_pointsUCE(ATgroup,GlobalVariables.num,GlobalVariables.window)
+	infUCEpeaks = behaviorlocate_second_derivative_inflection_pointsUCE(ATgroup)
 	infUCEpeaks.columns = ['id','locate_second_derivative_inflection_points']
 	inflectionList = infUCEpeaks['locate_second_derivative_inflection_points'].apply(pd.Series).stack().tolist()
 	print 'Collected all inflections points to list for {0} elements'.format(len(ATgroup.index))
@@ -176,8 +190,8 @@ def graph_signal_lines(dfWindow,names,ranWindow,fileName):
 	# Frequency of inflection points
 	gs = gridspec.GridSpec(1,1,height_ratios=[1])
 	ax3 = plt.subplot(gs[0])
-	inflectionList,infUCEpeaks = locate_second_derivative_inflection_points(ATgroup,GlobalVariables.num,GlobalVariables.window)
-	raninflectionList,raninfUCEpeaks = locate_second_derivative_inflection_points(ranATgroup,GlobalVariables.num,GlobalVariables.window)
+	inflectionList,infUCEpeaks = locate_second_derivative_inflection_points(ATgroup)
+	raninflectionList,raninfUCEpeaks = locate_second_derivative_inflection_points(ranATgroup)
 	IFbins = GlobalVariables.num/10
 	ax3.hist(inflectionList,IFbins,alpha=0.3,label='Element')
 	ax3.hist(raninflectionList,IFbins,alpha=0.3,label='Random')
@@ -240,9 +254,9 @@ def graph_signal_lines(dfWindow,names,ranWindow,fileName):
 	ax8.axvline(x=GlobalVariables.plotLineLocationTwo,linewidth=.05,linestyle='dashed',color='#e7298a')
 	ax8.axvline(x=GlobalVariables.plotLineLocationThree,linewidth=.05,linestyle='dashed',color='#bd4973')
 	ax8.axvline(x=GlobalVariables.plotLineLocationFour,linewidth=.05,linestyle='dashed',color='#bd4973')
-	ax8.axvspan(window,GlobalVariables.plotLineLocationThree,label='',alpha=0.1,facecolor = '#863eae')
+	ax8.axvspan(GlobalVariables.window,GlobalVariables.plotLineLocationThree,label='',alpha=0.1,facecolor = '#863eae')
 	ax8.axvspan(GlobalVariables.plotLineLocationThree,GlobalVariables.plotLineLocationFour,label='',alpha=0.1,facecolor = '#ae3e9e')
-	ax8.axvspan(GlobalVariables.plotLineLocationFour,(num-window-window),label='',alpha=0.1,facecolor = '#ae3e66')
+	ax8.axvspan(GlobalVariables.plotLineLocationFour,(GlobalVariables.num-GlobalVariables.window-GlobalVariables.window),label='',alpha=0.1,facecolor = '#ae3e66')
 	ax8.set_yticks(ax8.get_yticks()[::2])
 	ax8.set_xlabel('Position',size=6)
 	ax8.set_ylabel('Amplitude',size=8)
@@ -299,9 +313,9 @@ def graph_signal_lines(dfWindow,names,ranWindow,fileName):
 	ax13.axvline(x=GlobalVariables.plotLineLocationTwo,linewidth=.05,linestyle='dashed',color='#e7298a')
 	ax13.axvline(x=GlobalVariables.plotLineLocationThree,linewidth=.05,linestyle='dashed',color='#bd4973')
 	ax13.axvline(x=GlobalVariables.plotLineLocationFour,linewidth=.05,linestyle='dashed',color='#bd4973')
-	ax13.axvspan(window,GlobalVariables.plotLineLocationThree,label='',alpha=0.1,facecolor = '#863eae')
+	ax13.axvspan(GlobalVariables.window,GlobalVariables.plotLineLocationThree,label='',alpha=0.1,facecolor = '#863eae')
 	ax13.axvspan(GlobalVariables.plotLineLocationThree,GlobalVariables.plotLineLocationFour,label='',alpha=0.1,facecolor = '#ae3e9e')
-	ax13.axvspan(GlobalVariables.plotLineLocationFour,(num-window-window),label='',alpha=0.1,facecolor = '#ae3e66')
+	ax13.axvspan(GlobalVariables.plotLineLocationFour,(GlobalVariables.num-GlobalVariables.window-GlobalVariables.window),label='',alpha=0.1,facecolor = '#ae3e66')
 	ax13.set_yticks(ax13.get_yticks()[::2])
 	ax13.set_xlabel('Position',size=6)
 	ax13.set_ylabel('Amplitude',size=8)
