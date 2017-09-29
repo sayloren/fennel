@@ -59,7 +59,7 @@ def get_args():
 
 	# Integer Parameters
 	parser.add_argument("-t","--total",type=int,default="600",help='total size of region to look at (region + flanks), should be an even number, suggested to be at least triple your element')
-	parser.add_argument("-e","--element",type=int,default="200",help='size of your element (region without flanks), should be an even number') # option to use shortest element length
+	parser.add_argument("-e","--element",type=int,help='size of your element (region without flanks), should be an even number, if not provided will use the smallest size of your input data')# ,default="200"
 	parser.add_argument("-i","--inset",type=int,default="50",help='size into your element from the boundaries, should be an even number')
 	parser.add_argument("-w","--window",type=int,default="11",help='size of sliding window, should be an odd number, previous studies have used 11')
 	parser.add_argument("-b","--bin",type=int,default="100",help='size of bins used to compare element ends and determine directionality')
@@ -76,14 +76,14 @@ def get_args():
 def set_global_variables(args):
 	# Integer parameters
 	global num
-	global uce
+	global elementsize
 	global inuce
 	global window
 	global binDir
 	global halfwindow
 	global fillX
 	num = args.total
-	uce = args.element
+	elementsize = args.element
 	inuce = args.inset
 	window = args.window
 	binDir = args.bin
@@ -116,7 +116,6 @@ def set_global_variables(args):
 	# Lists with the types and directions to use
 	global nucList
 	nucList = ['A','T']
-	#['A','T','CG']
 	
 	# A string to add to the out file name in case you want to set up runs and let be
 	global stringName
@@ -126,7 +125,8 @@ def set_global_variables(args):
 	global randomassignments
 	reverseComplement = args.reversecomplement
 	randomassignments = args.numberrandomassignments
-	
+
+def set_ploting_parameters():
 	# Locations for plotting with sliding window
 	global plotLineLocationOne # upstream element boundary
 	global plotLineLocationTwo # downstream element boundary
@@ -155,19 +155,28 @@ def get_bedtools_features(strFileName):
 # get the correct range for fang evaluation
 def collect_coordinates_for_element_positions(btFeatures):
 	midFeatures = pd.read_table(btFeatures.fn, header=None)
-	flankSize = (num - uce)/2
-	inregion = uce-(inuce*2)
 	midFeatures['middle'] = midFeatures.loc[:,1:2].mean(axis=1).astype(int)
 	midFeatures['chr'] = midFeatures.loc[:,0].astype(str)
 	midFeatures['start'] = midFeatures.loc[:,1].astype(int)
 	midFeatures['end'] = midFeatures.loc[:,2] .astype(int)
+	midFeatures['size'] = midFeatures.loc[:,2].astype(int)-midFeatures.loc[:,1].astype(int)
+	global uce
+	if elementsize:
+		uce = elementsize
+	else:
+		getmin = midFeatures['size'].min()
+		if (getmin % 2) == 0:
+			uce = getmin
+		else:
+			uce = getmin + 1
+	flankSize = (num - uce)/2
+	inregion = uce-(inuce*2)
 	midFeatures['sCenter'] = midFeatures['middle'].astype(int) - (inregion/2)
 	midFeatures['eCenter'] = midFeatures['middle'].astype(int) + (inregion/2)
 	midFeatures['sEdge'] = midFeatures.loc[:,1].astype(int) + inuce
 	midFeatures['eEdge'] = midFeatures.loc[:,2].astype(int) - inuce
 	midFeatures['sBoundary'] = midFeatures.loc[:,1].astype(int) - flankSize
 	midFeatures['eBoundary'] = midFeatures.loc[:,2].astype(int) + flankSize
-	midFeatures['size'] = midFeatures.loc[:,2].astype(int)-midFeatures.loc[:,1].astype(int)
 	if idcolumn:
 		midFeatures['id'] = midFeatures.loc[:,idcolumn]
 	else:
@@ -197,12 +206,12 @@ def check_coords_beyond_genome(rangeFeatures):
 # get the strings for sliding window regions
 def get_fasta_for_element_coordinates(rangeFeatures):
 # 	rangeFeatures = check_coords_beyond_genome(rangeFeatures)
-	rangeFeatures['sBoundarySeq'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','sBoundary','start']].values.tolist()))
-	rangeFeatures['sEdgeSeq'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','start','sEdge']].values.tolist()))
-	rangeFeatures['MiddleSeq'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','sCenter','eCenter']].values.tolist()))
-	rangeFeatures['eEdgeSeq'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','eEdge','end',]].values.tolist()))
-	rangeFeatures['eBoundarySeq'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','end','eBoundary']].values.tolist()))
-	rangeFeatures['feature'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','start','end']].values.tolist()))
+	rangeFeatures['sBoundarySeq'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','sBoundary','start']].values.astype(str).tolist()))
+	rangeFeatures['sEdgeSeq'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','start','sEdge']].values.astype(str).tolist()))
+	rangeFeatures['MiddleSeq'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','sCenter','eCenter']].values.astype(str).tolist()))
+	rangeFeatures['eEdgeSeq'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','eEdge','end',]].values.astype(str).tolist()))
+	rangeFeatures['eBoundarySeq'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','end','eBoundary']].values.astype(str).tolist()))
+	rangeFeatures['feature'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','start','end']].values.astype(str).tolist()))
 	rangeFeatures['combineString'] = rangeFeatures['sBoundarySeq'].astype(str) + rangeFeatures['sEdgeSeq'].astype(str) + rangeFeatures['MiddleSeq'].astype(str) + rangeFeatures['eEdgeSeq'].astype(str) + rangeFeatures['eBoundarySeq'].astype(str)
 	rangeFeatures['combineString'] = rangeFeatures['combineString'].str.upper()
 	rangeFeatures['feature'] = rangeFeatures['feature'].str.upper()
@@ -403,6 +412,7 @@ def collect_sum_two_nucleotides(dfWindow,names,nuc1,nuc2):
 
 # Make graphs for fangs, with rc sorting
 def graph_element_line_means_with_rc_sorted(dfWindow,names,revWindow,fileName,collectRandom,collectRandomRC):
+	set_ploting_parameters()
 	ATgroup,ATmean,ATstd = collect_sum_two_nucleotides(dfWindow,names,'A','T')
 	revATgroup,revATmean,revATstd = collect_sum_two_nucleotides(revWindow,names,'A','T')
 	info = str(fileName) + ', '+ str(len(ATgroup.index)) + ' - ' "UCES"
@@ -487,6 +497,7 @@ def graph_element_line_means_with_rc_sorted(dfWindow,names,revWindow,fileName,co
 
 # Make graphs for fangs
 def graph_element_line_means(dfWindow,names,fileName,Random):
+	set_ploting_parameters()
 	ATgroup,ATmean,ATstd = collect_sum_two_nucleotides(dfWindow,names,'A','T')
 	info = str(fileName) + ', '+ str(len(ATgroup.index)) + ' - ' "UCES"
 	sns.set_style('ticks')
@@ -495,7 +506,7 @@ def graph_element_line_means(dfWindow,names,fileName,Random):
 	pp = PdfPages('Fangs_{0}.pdf'.format(fileName))
 	plt.figure(figsize=(14,7))
 	plt.suptitle(info,fontsize=10)
-	sns.set_palette("husl",n_colors=8)#(len(nucLine)*2)
+	sns.set_palette("husl",n_colors=8)
 
 	ax0 = plt.subplot(gs[0,:])
 	ax1 = plt.subplot(gs[1,:],sharex=ax0)
@@ -568,7 +579,7 @@ def main():
 	# Get and set parameters
 	args = get_args()
 	set_global_variables(args)
-	paramlabels = '{0}_{1}_{2}_{3}_{4}_{5}_{6}'.format(uce,inuce,num,binDir,window,eFiles,stringName)
+	paramlabels = '{0}_{1}_{2}_{3}_{4}_{5}_{6}'.format(elementsize,inuce,num,binDir,window,eFiles,stringName)
 	
 	# Get coords and strings for elements
 	rangeFeatures = collect_element_coordinates(eFiles)
@@ -600,19 +611,18 @@ def main():
 				if reverseComplement:
 					ranrevWindow, ranrevNames = sort_elements_by_directionality(randirFeatures,'compareBoundaries')
 					spreadRandomRC.append(ranrevWindow)
-		if not rFiles:
+		else:
 			for i in range(randomassignments):
 				directionFeatures['randomDirection'] = np.random.choice(dirOptions,len(directionFeatures.index),p=probOptions)
 				randirWindow, randirNames = sort_elements_by_directionality(directionFeatures,'randomDirection')
 				spreadRandom.append(randirWindow)
 				spreadRandomRC.append(randirWindow)
-		graph_element_line_means(allWindow,allNames,'all_{0}'.format(paramlabels),spreadRandom)
 		if reverseComplement:
 			graph_element_line_means_with_rc_sorted(allWindow,allNames,revWindow,'all_rc_{0}'.format(paramlabels),spreadRandom,spreadRandomRC)
-	
+		else:
+			graph_element_line_means(allWindow,allNames,'all_{0}'.format(paramlabels),spreadRandom)
 	if labelcolumn:
 		typeList = rangeFeatures[labelcolumn].unique()
-		print typeList
 		for type in typeList:
 			typeBool,typeWindow,typeNames = separate_dataframe_by_group(type,rangeFeatures,'type',eFiles)
 			percentage_at_for_element(typeBool['feature'],'{0}, {1}'.format(eFiles,type))
@@ -636,15 +646,16 @@ def main():
 					if reverseComplement:
 						typeWindowRCrandom,typeNamesRCrandom = sort_elements_by_directionality(rantypeBool,'compareBoundaries')
 						spreadRandomtypeRC.append(typeWindowRCrandom)
-			if not rFiles:
+			else:
 				for i in range(randomassignments):
 					typeBool['randomDirectiontype'] = np.random.choice(dirOptions,len(typeBool.index),p=probOptionstype)
 					typedirWindow, typedirNames = sort_elements_by_directionality(typeBool,'randomDirectiontype')
 					spreadRandomtype.append(typedirWindow)
 					spreadRandomtypeRC.append(typedirWindow)
-			graph_element_line_means(typeWindow,typeNames,'{0}_{1}'.format(type,paramlabels),spreadRandomtype)
 			if reverseComplement:
 				graph_element_line_means_with_rc_sorted(typeWindow,typeNames,typeWindowRC,'{0}_rc_{1}'.format(type,paramlabels),spreadRandomtype,spreadRandomtypeRC)
+			else:
+				graph_element_line_means(typeWindow,typeNames,'{0}_{1}'.format(type,paramlabels),spreadRandomtype)
 
 if __name__ == "__main__":
 	main()

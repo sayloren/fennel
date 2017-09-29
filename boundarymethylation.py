@@ -48,7 +48,7 @@ def get_args():
 	# File lists
 	parser = argparse.ArgumentParser(description="Description")
 	parser.add_argument("efile", type=str,help='A file containing a list of paths to the element files with unique names separated by newlines')
-	parser.add_argument("-r","--randomfile",type=argparse.FileType('rU'),help="A file containing a list of paths to the random regions equable with your elements to plot in contrast")
+	parser.add_argument("-r","--randomfile",type=argparse.FileType('rU'),help="A file containing a list of paths to the random regions equable with your elements to plot in contrast") # option to not use random at all, or generate randoms?
 	parser.add_argument("-m","--methylationfile",type=argparse.FileType('rU'),help="A file containing a list of paths to the methlylation bedfiles")
 
 	# Columns in element file - all 0 based
@@ -63,14 +63,11 @@ def get_args():
 	# Integer Parameters for element
 	parser.add_argument("-p","--periphery",type=int,default="10",help='number bp from your boundary you want to include in the analysis')
 	parser.add_argument("-b","--bin",type=int,default="100",help='size of bins used to compare element ends and determine directionality')
-	parser.add_argument("-e","--element",type=int,default="200",help='size of your element (region without flanks), should be an even number')
+	parser.add_argument("-e","--element",type=int,help='size of your element (region without flanks), should be an even number, if not provided will use the smallest size of your input data')#,default="200"
 	
 	# Integer Parameters for methlation
 	parser.add_argument("-mp", "--methylationthresholdpercentage", type=int, default="10", help='size to threshold % methylation data')
 	parser.add_argument("-mc", "--methylationthresholdcoverage", type=int, default="10", help='size to threshold uncapped coverage of methylation data to send to % methylation, field often uses 10')
-
-	# Specify which groups to run
-	parser.add_argument('-l',"--elementlabel",default=['all'],nargs='*',choices=['all','intronic','exonic','intergenic'],help='which group types of element to run')
 
 	# Plot parameters
 	parser.add_argument('-s',"--stringname",type=str,help='string to add to the outfile name')
@@ -86,10 +83,10 @@ def set_global_variables(args):
 	# Integer parameters
 	global periphery
 	global binDir
-	global uce
+	global elementsize
 	periphery = args.periphery
 	binDir = args.bin
-	uce = args.element
+	elementsize = args.element
 
 	# Methylation percentage and coverage thresholds
 	global methPerThresh
@@ -122,10 +119,6 @@ def set_global_variables(args):
 	sizeGenome = args.genome
 	faGenome = args.fasta
 
-	# Lists with the types and directions to use
-	global typeList
-	typeList = args.elementlabel
-	
 	# A string to add to the out file name in case you want to set up runs and let be
 	global stringName
 	global twographs
@@ -148,11 +141,25 @@ def collect_coordinates_for_element_positions(btFeatures):
 	midFeatures['chr'] = midFeatures.loc[:,0]
 	midFeatures['start'] = midFeatures.loc[:,1]
 	midFeatures['end'] = midFeatures.loc[:,2]
+	midFeatures['size'] = midFeatures.loc[:,2].astype(int)-midFeatures.loc[:,1].astype(int)
+	global uce
+	if elementsize:
+		uce = elementsize
+	else:
+		getmin = midFeatures['size'].min()
+		if (getmin % 2) == 0:
+			uce = getmin
+		else:
+			uce = getmin + 1
 	midFeatures['startup'] = midFeatures.loc[:,1] - periphery
 	midFeatures['startdown'] = midFeatures.loc[:,1] + periphery
 	midFeatures['endup'] = midFeatures.loc[:,2] - periphery
 	midFeatures['enddown'] = midFeatures.loc[:,2] + periphery
 	midFeatures['id'] = midFeatures.loc[:,idcolumn]
+	if idcolumn:
+		midFeatures['id'] = midFeatures.loc[:,idcolumn]
+	else:
+		midFeatures.insert(0,'id',range(0,0+len(midFeatures)))
 	if labelcolumn:
 		midFeatures['type'] = midFeatures.loc[:,labelcolumn]
 	if directionalitycolumn:
@@ -161,11 +168,11 @@ def collect_coordinates_for_element_positions(btFeatures):
 
 # get the strings for sliding window regions
 def get_fasta_for_element_coordinates(rangeFeatures):#rangeFeatures,faGenome
-	rangeFeatures['upstreamsequence'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','startup','startdown']].values.tolist()))
+	rangeFeatures['upstreamsequence'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','startup','startdown']].values.astype(str).tolist()))
 	rangeFeatures['upstreamsequence'] = rangeFeatures['upstreamsequence'].str.upper()
-	rangeFeatures['downstreamsequence'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','endup','enddown']].values.tolist()))
+	rangeFeatures['downstreamsequence'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','endup','enddown']].values.astype(str).tolist()))
 	rangeFeatures['downstreamsequence'] = rangeFeatures['downstreamsequence'].str.upper()
-	rangeFeatures['feature'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','start','end']].values.tolist()))
+	rangeFeatures['feature'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','start','end']].values.astype(str).tolist()))
 	rangeFeatures['feature'] = rangeFeatures['feature'].str.upper()
 	return rangeFeatures
 
@@ -298,17 +305,17 @@ def threshold_methylation_data(methFeatures):
 
 # Intersect regions from the methylation data with element regions
 def intersect_methylation_data_by_element(rangeFeatures,methFeature):
-	methylationupstreamboundary = methFeature.intersect(rangeFeatures[['chr','startup','startdown','id']].values.tolist(),wb=True,wa=True)
+	methylationupstreamboundary = methFeature.intersect(rangeFeatures[['chr','startup','startdown','id']].values.astype(str).tolist(),wb=True,wa=True)
 	if len(methylationupstreamboundary) != 0:
 		pdmethup=convert_bedtool_to_panda(methylationupstreamboundary)
 		pdmethup['int']=0
 		pdmethup.columns = ['mchr','mstart','mstop','methCov','methPer','chr','sBoundary','sEdge','id','int']
 		pdmethup['Context'] = pdmethup['mstop'] + 1
 		pdmethup['BackContext'] = pdmethup['mstart'] -1
-		pdmethup['Nuc'] = get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethup[['mchr','BackContext','Context']].values.tolist()))
-		pdmethup['NucContext'] = get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethup[['mchr','mstop','Context']].values.tolist()))
-		pdmethup['NucCytosine'] = get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethup[['mchr','mstart','mstop']].values.tolist()))
-		pdmethup['NucBackContext'] = get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethup[['mchr','BackContext','mstart']].values.tolist()))
+		pdmethup['Nuc'] = get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethup[['mchr','BackContext','Context']].values.astype(str).tolist()))
+		pdmethup['NucContext'] = get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethup[['mchr','mstop','Context']].values.astype(str).tolist()))
+		pdmethup['NucCytosine'] = get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethup[['mchr','mstart','mstop']].values.astype(str).tolist()))
+		pdmethup['NucBackContext'] = get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethup[['mchr','BackContext','mstart']].values.astype(str).tolist()))
 		pdmethup['methLoc'] = pdmethup['int'].astype(int)+(pdmethup['mstart'].astype(int)-pdmethup['sBoundary'].astype(int))
 		outupstreammethylation = pdmethup[['chr','mstart','mstop','sBoundary','sEdge','int','id','methPer','methLoc','methCov','Nuc','NucContext','NucCytosine','NucBackContext']]
 		outupstreammethylation.columns = ['chr','methStart','methStop','eleStart','eleStop','int','id','methPer','methLoc','methCov','Nuc','NucContext','NucCytosine','NucBackContext']
@@ -322,10 +329,10 @@ def intersect_methylation_data_by_element(rangeFeatures,methFeature):
 		pdmethdown.columns=['mchr','mstart','mstop','methCov','methPer','chr','eEdge','eBoundary','id','int']
 		pdmethdown['Context']=pdmethdown['mstop'] + 1
 		pdmethdown['BackContext']=pdmethdown['mstart'] -1
-		pdmethdown['Nuc']=get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethdown[['mchr','BackContext','Context']].values.tolist()))
-		pdmethdown['NucContext']=get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethdown[['mchr','mstop','Context']].values.tolist()))
-		pdmethdown['NucCytosine']=get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethdown[['mchr','mstart','mstop']].values.tolist()))
-		pdmethdown['NucBackContext']=get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethdown[['mchr','BackContext','mstart']].values.tolist()))
+		pdmethdown['Nuc']=get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethdown[['mchr','BackContext','Context']].values.astype(str).tolist()))
+		pdmethdown['NucContext']=get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethdown[['mchr','mstop','Context']].values.astype(str).tolist()))
+		pdmethdown['NucCytosine']=get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethdown[['mchr','mstart','mstop']].values.astype(str).tolist()))
+		pdmethdown['NucBackContext']=get_just_fasta_sequence_for_feature(get_bedtools_features(pdmethdown[['mchr','BackContext','mstart']].values.astype(str).tolist()))
 		pdmethdown['methLoc']=pdmethdown['int'].astype(int)-(pdmethdown['eBoundary'].astype(int)-pdmethdown['mstop'].astype(int))
 		outdownstreammethylation=pdmethdown[['id','methPer','methLoc','methCov']]
 		outdownstreammethylation=pdmethdown[['chr','mstart','mstop','eEdge','eBoundary','int','id','methPer','methLoc','methCov','Nuc','NucContext','NucCytosine','NucBackContext']]
@@ -494,7 +501,7 @@ def main():
 	# Get and set parameters
 	args = get_args()
 	set_global_variables(args)
-	paramlabels = '{0}_{1}_{2}_{3}'.format(uce,binDir,eFiles,stringName)
+	paramlabels = '{0}_{1}_{2}_{3}'.format(elementsize,binDir,eFiles,stringName)
 	
 	# Get coords and strings for elements
 	rangeFeatures = collect_element_coordinates(eFiles)
@@ -544,7 +551,7 @@ def main():
 					randomrevmethylationdownstream['group'] = 'random'
 					collectreversecomplementupstream.append(randomrevmethylationupstream)
 					collectreversecomplementdownstream.append(randomrevmethylationdownstream)
-		if not rFiles:
+		else:
 			for i in range(randomassignments):
 				directionFeatures['randomDirection'] = np.random.choice(dirOptions,len(directionFeatures.index),p=probOptions)
 				randirrevmethylationupstream,randirrevmethylationdownstream = sort_elements_by_directionality(directionFeatures,'randomDirection')
@@ -561,64 +568,63 @@ def main():
 			concatupstreamreverse = pd.concat(collectreversecomplementupstream)
 			concatdownstreamreverse = pd.concat(collectreversecomplementdownstream)
 			graph_boundary_methylation(concatupstreamreverse,concatdownstreamreverse,'all_rc_{0}'.format(paramlabels),'methylationfrequency','cpgsequencecount')
-	for type in typeList:
-		if not labelcolumn:
-			print "Argument -lc for label column needed"
-			break
-		typecollectupstream,typecollectdownstream = [],[]
-		typecollectreversecomplementupstream,typecollectreversecomplementdownstream = [],[]
-		typeBool,typeupstreammethylation,typedownstreammethylation = separate_dataframe_by_group(type,rangeFeatures,'type',eFiles)
-		typeupstreammethylation['group'] = 'element'
-		typedownstreammethylation['group'] = 'element'
-		typecollectupstream.append(typeupstreammethylation)
-		typecollectdownstream.append(typedownstreammethylation)
-		if directionalitycolumn:
-			probOptionstype = make_probabilites_for_direction(typeBool,'directionality')
-		else:
-			probOptionstype = make_probabilites_for_direction(typeBool,'compareBoundaries')
-		if reverseComplement:
+	if labelcolumn:
+		typeList = rangeFeatures[labelcolumn].unique()
+		for type in typeList:
+			typecollectupstream,typecollectdownstream = [],[]
+			typecollectreversecomplementupstream,typecollectreversecomplementdownstream = [],[]
+			typeBool,typeupstreammethylation,typedownstreammethylation = separate_dataframe_by_group(type,rangeFeatures,'type',eFiles)
+			typeupstreammethylation['group'] = 'element'
+			typedownstreammethylation['group'] = 'element'
+			typecollectupstream.append(typeupstreammethylation)
+			typecollectdownstream.append(typedownstreammethylation)
 			if directionalitycolumn:
-				revtypeupstreammethylation,revtypedownstreammethylation = sort_elements_by_directionality(typeBool,'directionality')
-				revtypeupstreammethylation['group'] = 'element'
-				revtypedownstreammethylation['group'] = 'element'
-				typecollectreversecomplementupstream.append(revtypeupstreammethylation)
-				typecollectreversecomplementdownstream.append(revtypedownstreammethylation)
+				probOptionstype = make_probabilites_for_direction(typeBool,'directionality')
 			else:
-				revtypeupstreammethylation,revtypedownstreammethylation = sort_elements_by_directionality(typeBool,'compareBoundaries')
-				revtypeupstreammethylation['group'] = 'element'
-				revtypedownstreammethylation['group'] = 'element'
-				typecollectreversecomplementupstream.append(revtypeupstreammethylation)
-				typecollectreversecomplementdownstream.append(revtypedownstreammethylation)
-		if rFiles:
-			for randomFile in rFiles:
-				randomFeatures = collect_element_coordinates(randomFile)
-				randirFeatures,randirBins = evaluate_boundaries_size_n(randomFeatures,randomFile)
-				rantypeBool,randomtypeupstreammethylation,randomtypedownstreammethylation = separate_dataframe_by_group(type,randirFeatures,'type',randomFile)
-				randomtypeupstreammethylation['group'] = 'random'
-				randomtypedownstreammethylation['group'] = 'random'
-				typecollectupstream.append(randomtypeupstreammethylation)
-				typecollectdownstream.append(randomtypedownstreammethylation)
-				if reverseComplement:
-					randomrevtypeupstreammethylation,randomrevtypedownstreammethylation = sort_elements_by_directionality(rantypeBool,'compareBoundaries')
-					randomrevtypeupstreammethylation['group'] = 'random'
-					randomrevtypedownstreammethylation['group'] = 'random'
-					typecollectreversecomplementupstream.append(randomrevtypeupstreammethylation)
-					typecollectreversecomplementdownstream.append(randomrevtypedownstreammethylation)
-		if not rFiles:
-			for i in range(randomassignments):
-				typeBool['randomDirectiontype'] = np.random.choice(dirOptions,len(typeBool.index),p=probOptionstype)
-				typedirupstreammethylation,typedirdownstreammethylation = sort_elements_by_directionality(typeBool,'randomDirectiontype')
-				typedirupstreammethylation['group'] = 'element'
-				typedirdownstreammethylation['group'] = 'element'
-				typecollectreversecomplementupstream.append(typedirupstreammethylation)
-				typecollectreversecomplementdownstream.append(typedirdownstreammethylation)
-		typeconcatupstream = pd.concat(typecollectupstream)
-		typeconcatdownstream = pd.concat(typecollectdownstream)
-		graph_boundary_methylation(typeconcatupstream,typeconcatdownstream,'{0}_{1}'.format(type,paramlabels),'methylationfrequency','cpgsequencecount')
-		if reverseComplement:
-			typeconcatupstreamreverse = pd.concat(typecollectreversecomplementupstream)
-			typeconcatdownstreamreverse = pd.concat(typecollectreversecomplementdownstream)
-			graph_boundary_methylation(typeconcatupstreamreverse,typeconcatdownstreamreverse,'{0}_rc_{1}'.format(type,paramlabels),'methylationfrequency','cpgsequencecount')
+				probOptionstype = make_probabilites_for_direction(typeBool,'compareBoundaries')
+			if reverseComplement:
+				if directionalitycolumn:
+					revtypeupstreammethylation,revtypedownstreammethylation = sort_elements_by_directionality(typeBool,'directionality')
+					revtypeupstreammethylation['group'] = 'element'
+					revtypedownstreammethylation['group'] = 'element'
+					typecollectreversecomplementupstream.append(revtypeupstreammethylation)
+					typecollectreversecomplementdownstream.append(revtypedownstreammethylation)
+				else:
+					revtypeupstreammethylation,revtypedownstreammethylation = sort_elements_by_directionality(typeBool,'compareBoundaries')
+					revtypeupstreammethylation['group'] = 'element'
+					revtypedownstreammethylation['group'] = 'element'
+					typecollectreversecomplementupstream.append(revtypeupstreammethylation)
+					typecollectreversecomplementdownstream.append(revtypedownstreammethylation)
+			if rFiles:
+				for randomFile in rFiles:
+					randomFeatures = collect_element_coordinates(randomFile)
+					randirFeatures,randirBins = evaluate_boundaries_size_n(randomFeatures,randomFile)
+					rantypeBool,randomtypeupstreammethylation,randomtypedownstreammethylation = separate_dataframe_by_group(type,randirFeatures,'type',randomFile)
+					randomtypeupstreammethylation['group'] = 'random'
+					randomtypedownstreammethylation['group'] = 'random'
+					typecollectupstream.append(randomtypeupstreammethylation)
+					typecollectdownstream.append(randomtypedownstreammethylation)
+					if reverseComplement:
+						randomrevtypeupstreammethylation,randomrevtypedownstreammethylation = sort_elements_by_directionality(rantypeBool,'compareBoundaries')
+						randomrevtypeupstreammethylation['group'] = 'random'
+						randomrevtypedownstreammethylation['group'] = 'random'
+						typecollectreversecomplementupstream.append(randomrevtypeupstreammethylation)
+						typecollectreversecomplementdownstream.append(randomrevtypedownstreammethylation)
+			else:
+				for i in range(randomassignments):
+					typeBool['randomDirectiontype'] = np.random.choice(dirOptions,len(typeBool.index),p=probOptionstype)
+					typedirupstreammethylation,typedirdownstreammethylation = sort_elements_by_directionality(typeBool,'randomDirectiontype')
+					typedirupstreammethylation['group'] = 'element'
+					typedirdownstreammethylation['group'] = 'element'
+					typecollectreversecomplementupstream.append(typedirupstreammethylation)
+					typecollectreversecomplementdownstream.append(typedirdownstreammethylation)
+			typeconcatupstream = pd.concat(typecollectupstream)
+			typeconcatdownstream = pd.concat(typecollectdownstream)
+			graph_boundary_methylation(typeconcatupstream,typeconcatdownstream,'{0}_{1}'.format(type,paramlabels),'methylationfrequency','cpgsequencecount')
+			if reverseComplement:
+				typeconcatupstreamreverse = pd.concat(typecollectreversecomplementupstream)
+				typeconcatdownstreamreverse = pd.concat(typecollectreversecomplementdownstream)
+				graph_boundary_methylation(typeconcatupstreamreverse,typeconcatdownstreamreverse,'{0}_rc_{1}'.format(type,paramlabels),'methylationfrequency','cpgsequencecount')
 
 if __name__ == "__main__":
 	main()
