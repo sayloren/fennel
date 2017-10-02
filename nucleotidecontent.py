@@ -6,6 +6,9 @@ September 1 2017
 
 To Do:
 unittest
+change directionality arg column
+streamline and remove excess columns
+.index len to break up large datasets
 
 Copyright 2017 Harvard University, Wu Lab
 
@@ -209,13 +212,14 @@ def get_fasta_for_element_coordinates(rangeFeatures):
 	rangeFeatures['sBoundarySeq'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','sBoundary','start']].values.astype(str).tolist()))
 	rangeFeatures['sEdgeSeq'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','start','sEdge']].values.astype(str).tolist()))
 	rangeFeatures['MiddleSeq'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','sCenter','eCenter']].values.astype(str).tolist()))
-	rangeFeatures['eEdgeSeq'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','eEdge','end',]].values.astype(str).tolist()))
+	rangeFeatures['eEdgeSeq'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','eEdge','end']].values.astype(str).tolist()))
 	rangeFeatures['eBoundarySeq'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','end','eBoundary']].values.astype(str).tolist()))
 	rangeFeatures['feature'] = get_just_fasta_sequence_for_feature(get_bedtools_features(rangeFeatures[['chr','start','end']].values.astype(str).tolist()))
 	rangeFeatures['combineString'] = rangeFeatures['sBoundarySeq'].astype(str) + rangeFeatures['sEdgeSeq'].astype(str) + rangeFeatures['MiddleSeq'].astype(str) + rangeFeatures['eEdgeSeq'].astype(str) + rangeFeatures['eBoundarySeq'].astype(str)
 	rangeFeatures['combineString'] = rangeFeatures['combineString'].str.upper()
 	rangeFeatures['feature'] = rangeFeatures['feature'].str.upper()
 	rangeFeatures['reverseComplement'] = rangeFeatures.apply(lambda row: reverse_complement_dictionary(row['combineString']),axis=1)
+	rangeFeatures.drop(['sBoundarySeq','sEdgeSeq','MiddleSeq','eEdgeSeq','eBoundarySeq','sBoundary','start','sEdge','sCenter','eCenter','eEdge','end','eBoundary'],axis=1)
 	return rangeFeatures
 
 # get the reverse complement
@@ -244,7 +248,6 @@ def collect_element_coordinates(fileName):
 	btFeatures = get_bedtools_features(fileName)
 	subsetFeatures = collect_coordinates_for_element_positions(btFeatures)
 	rangeFeatures = get_fasta_for_element_coordinates(subsetFeatures)
-# 	percentage_at_for_element(rangeFeatures['feature'],fileName)
 	return rangeFeatures
 
 # Do the comparison between boundaries to get + - or =
@@ -268,71 +271,9 @@ def compare_boundaries_size_n(element,size):
 # With the results from compare_boundaries_size_n per each element, evaluate directionality into new column
 def evaluate_boundaries_size_n(rangeFeatures,fileName):
 	rangeFeatures['compareBoundaries'] = rangeFeatures.apply(lambda row: (compare_boundaries_size_n(row['feature'],binDir)),axis=1)
-	rangeFeatures['compareBoundariesRange'] = rangeFeatures.apply(lambda row: (emperical_boundaries_for_increasing_bins_symbol(row['feature'])),axis=1)
-	rangeFeatures['equalBoundariesCount'] = rangeFeatures.apply(lambda row: row['compareBoundariesRange'].count('='),axis=1)
-	rangeFeatures['plusBoundariesCount'] = rangeFeatures.apply(lambda row: row['compareBoundariesRange'].count('+'),axis=1)
-	rangeFeatures['minusBoundariesCount'] = rangeFeatures.apply(lambda row: row['compareBoundariesRange'].count('-'),axis=1)
-# 	print rangeFeatures[['plusBoundariesCount','minusBoundariesCount','equalBoundariesCount']]
-	
 	compareEnds = pd.DataFrame(rangeFeatures[['chr','start','end','compareBoundaries']])
 	print 'Sorting the element boundaries by bin size {0}'.format(binDir)
-	rangeBins = collect_emperical_boundary_comparisons(rangeFeatures)
-	return rangeFeatures,rangeBins
-
-# Get the actual spread of = in the data over increasing bin size
-def collect_emperical_boundary_comparisons(rangeFeatures):
-	# Perform min,max collection
-	rangeAT = rangeFeatures.apply(lambda row: (emperical_boundaries_for_increasing_bins_percentage(row['feature'])),axis=1)
-	pdrangeAT = pd.DataFrame(rangeAT.values.tolist())
-	
-	# Get direction collection
-	equalAT = rangeFeatures.apply(lambda row: (emperical_boundaries_for_increasing_bins_symbol(row['feature'])),axis=1)
-	pdequalAT = pd.DataFrame(equalAT.values.tolist())
-	countAT = pdequalAT.apply(pd.value_counts)
-	equalCounts = countAT.loc['=']/len(pdequalAT.index)
-	
-	# Separate Start from End for min and max
-	splitAT = pd.concat(dict([(row[0],row[1].apply(lambda y: pd.Series(y))) for row in pdrangeAT.iterrows()]),axis=1)
-	
-	outcollect = []
-	for column in splitAT:
-		outcollect.append(splitAT[column[0]])
-	outcat = pd.concat(outcollect,axis=1)
-	outcat /= 100 # convert to decimal
-
-	# Separate data frames by Start v End and Min v Max
-	pdATCollectStartMin = outcat[[outcat.columns[0]]].min(axis=1)
-	pdATCollectEndMin = outcat[[outcat.columns[1]]].min(axis=1)
-	
-	pdATCollectStartMax = outcat[[outcat.columns[0]]].max(axis=1)
-	pdATCollectEndMax = outcat[[outcat.columns[1]]].max(axis=1)
-	
-	Min = pdATCollectStartMin * pdATCollectEndMin
-	Max = pdATCollectStartMax * pdATCollectEndMax
-
-	pdBins = pd.concat([Min,Max,equalCounts],axis=1)
-	pdBins.columns=['Min','Max','Equal']
-	return pdBins
-
-# Run calculate_nucleotides_at for increasing bin sizes
-def emperical_boundaries_for_increasing_bins_percentage(element):
-	totalSteps=[]
-	for i in np.arange(1,(uce/2)):
-		pairStep = calculate_nucleotides_at(element,i)
-		totalSteps.append(pairStep)
-	return totalSteps
-
-# Run compare_boundaries_size_n over increasing bin sizes
-def emperical_boundaries_for_increasing_bins_symbol(element):
-	totalSteps=[]
-	for i in np.arange(1,(uce/2)):
-		perSize = calculate_nucleotides_at(element,i)
-		# give + - = depending on which side has larger AT content
-		if perSize[0] > perSize[1]: outList = '+'
-		if perSize[1] > perSize[0]: outList = '-'
-		if perSize[1] == perSize[0]: outList = '='
-		totalSteps.append(outList)
-	return totalSteps
+	return rangeFeatures
 
 # run the sliding window for each nucleotide string
 def run_sliding_window_for_each_nucleotide_string(features,label):
@@ -411,10 +352,12 @@ def collect_sum_two_nucleotides(dfWindow,names,nuc1,nuc2):
 	return ATgroup, ATmean, ATstd
 
 # Make graphs for fangs, with rc sorting
-def graph_element_line_means_with_rc_sorted(dfWindow,names,revWindow,fileName,collectRandom,collectRandomRC):
+def graph_element_line_means_with_rc_sorted(dfWindow,names,revWindow,fileName,collectRandom,collectRandomRC,denseRandom,denseRandomRC):
 	set_ploting_parameters()
 	ATgroup,ATmean,ATstd = collect_sum_two_nucleotides(dfWindow,names,'A','T')
+	ranATgroup,ranATmean,ranATstd = collect_sum_two_nucleotides(denseRandom,names,'A','T')
 	revATgroup,revATmean,revATstd = collect_sum_two_nucleotides(revWindow,names,'A','T')
+	revranATgroup,revranATmean,revranATstd = collect_sum_two_nucleotides(denseRandomRC,names,'A','T')
 	info = str(fileName) + ', '+ str(len(ATgroup.index)) + ' - ' "UCES"
 	sns.set_style('ticks')
 	gs = gridspec.GridSpec(2,2,height_ratios=[3,1])
@@ -423,6 +366,18 @@ def graph_element_line_means_with_rc_sorted(dfWindow,names,revWindow,fileName,co
 	plt.figure(figsize=(14,7))
 	plt.suptitle(info,fontsize=10)
 	sns.set_palette("husl",n_colors=8)
+
+	# Stats
+# 	wilcoxonsignedrank = ss.wilcoxon(ATmean,ranATmean)
+# 	wilcoxonsignedrankreverse = ss.wilcoxon(revATmean,revranATmean)
+# 	sdelement = ATgroup.loc[:,plotLineLocationThree:plotLineLocationFour].std()
+# 	sdrandom = ranATgroup.loc[:,plotLineLocationThree:plotLineLocationFour].std()
+# 	sdelementreverse = revATgroup.loc[:,plotLineLocationThree:plotLineLocationFour].std()
+# 	sdrandomreverse = revranATgroup.loc[:,plotLineLocationThree:plotLineLocationFour].std()
+# 	sdkruskal = mstats.kruskalwallis(sdelement,sdrandom)
+# 	sdkruskalreverse = mstats.kruskalwallis(sdelementreverse,sdrandomreverse)
+# 	ax0.text(20,90,'Wilcox Signed Rank P-value {:0.1e}'.format(wilcoxPSRMean[1]),size=6,clip_on=False)
+# 	ax2.text(16.25,14.5,'KW P-value {:0.1e}'.format(kruskalSD[1]),size=6,clip_on=False)
 
 	ax0 = plt.subplot(gs[0,0])
 	for dfNuc in collectRandom:
@@ -496,9 +451,10 @@ def graph_element_line_means_with_rc_sorted(dfWindow,names,revWindow,fileName,co
 	pp.close()
 
 # Make graphs for fangs
-def graph_element_line_means(dfWindow,names,fileName,Random):
+def graph_element_line_means(dfWindow,names,fileName,Random,denseRandom):
 	set_ploting_parameters()
 	ATgroup,ATmean,ATstd = collect_sum_two_nucleotides(dfWindow,names,'A','T')
+	ranATgroup,ranATmean,ranATstd = collect_sum_two_nucleotides(denseRandom,names,'A','T')
 	info = str(fileName) + ', '+ str(len(ATgroup.index)) + ' - ' "UCES"
 	sns.set_style('ticks')
 	gs = gridspec.GridSpec(2,1,height_ratios=[3,1])
@@ -507,6 +463,14 @@ def graph_element_line_means(dfWindow,names,fileName,Random):
 	plt.figure(figsize=(14,7))
 	plt.suptitle(info,fontsize=10)
 	sns.set_palette("husl",n_colors=8)
+	
+	# Stats
+# 	wilcoxonsignedrank = ss.wilcoxon(ATmean,ranATmean)
+# 	sdelement = ATgroup.loc[:,plotLineLocationThree:plotLineLocationFour].std()
+# 	sdrandom = ranATgroup.loc[:,plotLineLocationThree:plotLineLocationFour].std()
+# 	sdkruskal = mstats.kruskalwallis(sdelement,sdrandom)
+# 	ax0.text(20,90,'Wilcox Signed Rank P-value {:0.1e}'.format(wilcoxPSRMean[1]),size=6,clip_on=False)
+# 	ax2.text(16.25,14.5,'KW P-value {:0.1e}'.format(kruskalSD[1]),size=6,clip_on=False)
 
 	ax0 = plt.subplot(gs[0,:])
 	ax1 = plt.subplot(gs[1,:],sharex=ax0)
@@ -584,7 +548,7 @@ def main():
 	# Get coords and strings for elements
 	rangeFeatures = collect_element_coordinates(eFiles)
 	percentage_at_for_element(rangeFeatures['feature'],eFiles)
-	directionFeatures,directionBins = evaluate_boundaries_size_n(rangeFeatures,eFiles)
+	directionFeatures = evaluate_boundaries_size_n(rangeFeatures,eFiles)
 	
 	# Get the probability for each directional assignment, and use to randomly assign the correct number of random directions
 	dirOptions = ['-','+','=']
@@ -605,7 +569,7 @@ def main():
 		if rFiles:
 			for randomFile in rFiles:
 				randomFeatures = collect_element_coordinates(randomFile)
-				randirFeatures,randirBins = evaluate_boundaries_size_n(randomFeatures,randomFile)
+				randirFeatures= evaluate_boundaries_size_n(randomFeatures,randomFile)
 				sWindow,sNames = sliding_window_wrapper(randirFeatures['combineString'],randirFeatures['id'])
 				spreadRandom.append(sWindow)
 				if reverseComplement:
@@ -617,10 +581,12 @@ def main():
 				randirWindow, randirNames = sort_elements_by_directionality(directionFeatures,'randomDirection')
 				spreadRandom.append(randirWindow)
 				spreadRandomRC.append(randirWindow)
+		denseRandom = sliding_window_df_to_collect_all_random(spreadRandom,allNames)
 		if reverseComplement:
-			graph_element_line_means_with_rc_sorted(allWindow,allNames,revWindow,'all_rc_{0}'.format(paramlabels),spreadRandom,spreadRandomRC)
+			denseRandomRC = sliding_window_df_to_collect_all_random(spreadRandomRC,allNames)
+			graph_element_line_means_with_rc_sorted(allWindow,allNames,revWindow,'all_rc_{0}'.format(paramlabels),spreadRandom,spreadRandomRC,denseRandom,denseRandomRC)
 		else:
-			graph_element_line_means(allWindow,allNames,'all_{0}'.format(paramlabels),spreadRandom)
+			graph_element_line_means(allWindow,allNames,'all_{0}'.format(paramlabels),spreadRandom,denseRandom)
 	if labelcolumn:
 		typeList = rangeFeatures[labelcolumn].unique()
 		for type in typeList:
@@ -640,7 +606,7 @@ def main():
 			if rFiles:
 				for randomFile in rFiles:
 					randomFeatures = collect_element_coordinates(randomFile)
-					randirFeatures,randirBins = evaluate_boundaries_size_n(randomFeatures,randomFile)
+					randirFeatures= evaluate_boundaries_size_n(randomFeatures,randomFile)
 					rantypeBool,rantypeWindow,rantypeNames = separate_dataframe_by_group(type,randirFeatures,'type',randomFile)
 					spreadRandomtype.append(rantypeWindow)
 					if reverseComplement:
@@ -652,10 +618,12 @@ def main():
 					typedirWindow, typedirNames = sort_elements_by_directionality(typeBool,'randomDirectiontype')
 					spreadRandomtype.append(typedirWindow)
 					spreadRandomtypeRC.append(typedirWindow)
+			denseRandomtype = sliding_window_df_to_collect_all_random(spreadRandomtype,typeNames)
 			if reverseComplement:
-				graph_element_line_means_with_rc_sorted(typeWindow,typeNames,typeWindowRC,'{0}_rc_{1}'.format(type,paramlabels),spreadRandomtype,spreadRandomtypeRC)
+				denseRandomtypeRC = sliding_window_df_to_collect_all_random(spreadRandomtypeRC,allNames)
+				graph_element_line_means_with_rc_sorted(typeWindow,typeNames,typeWindowRC,'{0}_rc_{1}'.format(type,paramlabels),spreadRandomtype,spreadRandomtypeRC,denseRandomtype,denseRandomtypeRC)
 			else:
-				graph_element_line_means(typeWindow,typeNames,'{0}_{1}'.format(type,paramlabels),spreadRandomtype)
+				graph_element_line_means(typeWindow,typeNames,'{0}_{1}'.format(type,paramlabels),spreadRandomtype,denseRandomtype)
 
 if __name__ == "__main__":
 	main()
