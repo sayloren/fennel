@@ -233,7 +233,6 @@ def compare_boundaries_size_n(element,size):
 # With the results from compare_boundaries_size_n per each element, evaluate directionality into new column
 def evaluate_boundaries_size_n(rangeFeatures,fileName):
 	rangeFeatures['compareBoundaries'] = rangeFeatures.apply(lambda row: (compare_boundaries_size_n(row['feature'],binDir)),axis=1)
-	compareEnds = pd.DataFrame(rangeFeatures[['chr','start','end','compareBoundaries']])
 	print 'Sorting the element boundaries by bin size {0}'.format(binDir)
 	return rangeFeatures
 
