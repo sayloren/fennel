@@ -544,6 +544,7 @@ def graph_element_line_means(dfWindow,names,fileName,Random,denseRandom):
 
 # Extra for hoedown presentation
 def graph_element_line_means_random_below(dfWindow,names,fileName,Random,denseRandom): # Extra
+	#http://www.color-hex.com/color-palette/46594
 	set_ploting_parameters()
 	ATgroup,ATmean,ATstd = collect_sum_two_nucleotides(dfWindow,names,'A','T')
 	info = str(fileName) + ', '+ str(len(ATgroup.index)) + ' - ' "UCES"
@@ -573,7 +574,7 @@ def graph_element_line_means_random_below(dfWindow,names,fileName,Random,denseRa
 			columns=['statistic','pvalue'],
 			index=['wsr-element','wsr-random'])
 		save_panda(statstable,'Stats_{0}.txt'.format(fileName))
-	ax0.plot(fillX,ATmean,linewidth=1,label='AT element',color='#7676da')
+	ax0.plot(fillX,ATmean,linewidth=1,label='AT element',color='#737f87')
 	ax0.axvline(x=plotLineLocationOne,linewidth=.05,linestyle='dashed',color='#e7298a')
 	ax0.axvline(x=plotLineLocationTwo,linewidth=.05,linestyle='dashed',color='#e7298a')
 	ax0.axvline(x=plotLineLocationThree,linewidth=.05,linestyle='dashed',color='#bd4973')
@@ -583,7 +584,7 @@ def graph_element_line_means_random_below(dfWindow,names,fileName,Random,denseRa
 	ax0.set_title('Mean AT Content for UCEs',size=16)
 	ax0.set_yticks(ax0.get_yticks()[::2])
 	plt.xlim(0,num)
-	ax1.plot(fillX,ranATmean,linewidth=1,label='AT random',color='#a8da76')
+	ax1.plot(fillX,ranATmean,linewidth=1,label='AT random',color='#cc858c')
 	ax1.axvline(x=plotLineLocationOne,linewidth=.05,linestyle='dashed',color='#e7298a')
 	ax1.axvline(x=plotLineLocationTwo,linewidth=.05,linestyle='dashed',color='#e7298a')
 	ax1.axvline(x=plotLineLocationThree,linewidth=.05,linestyle='dashed',color='#bd4973')
@@ -707,7 +708,7 @@ def main():
 			denseRandomRC = sliding_window_df_to_collect_all_random(spreadRandomRC,allNames)
 			graph_element_line_means_with_rc_sorted(allWindow,allNames,revWindow,'All_RC_{0}'.format(paramlabels),spreadRandom,spreadRandomRC,denseRandom,denseRandomRC)
 		else:
-			graph_element_line_means(allWindow,allNames,'All_{0}'.format(paramlabels),spreadRandom,denseRandom)
+			graph_element_line_means_random_below(allWindow,allNames,'All_{0}'.format(paramlabels),spreadRandom,denseRandom)
 	endtime = time.time()
 	print 'total time elapsed is {0}'.format(endtime-starttime)
 
