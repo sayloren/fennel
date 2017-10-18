@@ -142,16 +142,10 @@ def set_ploting_parameters():
 	plotLineLocationTwo = (((num-uce)/2)+(uce-inuce-halfwindow))
 	plotLineLocationThree = (((num-uce)/2)-halfwindow)
 	plotLineLocationFour = (((num-uce)/2)+uce-halfwindow)
-	
-	# Locations for plotting without the sliding window
-	global plotLineLocationOneFull # upstream element boundary
-	global plotLineLocationTwoFull # downstream element boundary
-	global plotLineLocationThreeFull # upstream element inset
-	global plotLineLocationFourFull # downstream element inset
-	plotLineLocationOneFull = (((num-uce)/2)+inuce)
-	plotLineLocationTwoFull = (((num-uce)/2)+(uce-inuce))
-	plotLineLocationThreeFull = ((num-uce)/2)
-	plotLineLocationFourFull = (((num-uce)/2)+uce)
+
+	global centerelementpoint
+	centerelementpoint = ((num-uce)/2)+(uce/2)-halfwindow
+	print 'center point', centerelementpoint
 
 	print 'set plotting parameters'
 
@@ -525,8 +519,6 @@ def graph_element_line_means(dfWindow,names,fileName,Random,denseRandom):
 	ax0.axvline(x=plotLineLocationTwo,linewidth=.05,linestyle='dashed',color='#e7298a')
 	ax0.axvline(x=plotLineLocationThree,linewidth=.05,linestyle='dashed',color='#bd4973')
 	ax0.axvline(x=plotLineLocationFour,linewidth=.05,linestyle='dashed',color='#bd4973')
-# 	ax0.hlines(y=66,xmin=20,xmax=31,linewidth=.5,color='#081d58',zorder=0)
-# 	ax0.text(32,65,'11bp sliding window',size=6)
 	ax0.set_ylabel('% AT Content',size=16)
 	ax0.set_xlabel('Position',size=16)
 	ax0.set_title('Mean AT Content With Standard Deviation',size=16)
@@ -541,6 +533,65 @@ def graph_element_line_means(dfWindow,names,fileName,Random,denseRandom):
 	ax1.set_xlabel('Position',size=16)
 	ax1.set_ylabel('SD',size=16)
 	ax1.set_title('Standard Deviation',size=16)
+	plt.setp(ax1.get_xticklabels(),visible=True)
+
+	ax0.tick_params(axis='both',which='major',labelsize=16)
+	ax1.tick_params(axis='both',which='major',labelsize=16)
+
+	sns.despine()
+	pp.savefig()
+	pp.close()
+
+# Extra for hoedown presentation
+def graph_element_line_means_random_below(dfWindow,names,fileName,Random,denseRandom): # Extra
+	set_ploting_parameters()
+	ATgroup,ATmean,ATstd = collect_sum_two_nucleotides(dfWindow,names,'A','T')
+	info = str(fileName) + ', '+ str(len(ATgroup.index)) + ' - ' "UCES"
+	sns.set_style('ticks')
+	gs = gridspec.GridSpec(2,1,height_ratios=[1,1])
+	gs.update(hspace=.8)
+	pp = PdfPages('Fangs_{0}.pdf'.format(fileName))
+	plt.figure(figsize=(14,7))
+	plt.suptitle(info,fontsize=10)
+	sns.set_palette("husl",n_colors=8)
+
+	ax0 = plt.subplot(gs[0,:])
+	ax1 = plt.subplot(gs[1,:],sharex=ax0)
+	if any([rFiles,randomassignments]):
+		ranATgroup,ranATmean,ranATstd = collect_sum_two_nucleotides(denseRandom,names,'A','T')
+	# Stats
+		# regions
+		upstreamelement = ATgroup.loc[:,plotLineLocationThree:centerelementpoint].mean()
+		downstreamelement = ATgroup.loc[:,centerelementpoint:plotLineLocationFour].mean()
+		upstreamrandom = ranATgroup.loc[:,plotLineLocationThree:centerelementpoint].mean()
+		downstreamrandom = ranATgroup.loc[:,centerelementpoint:plotLineLocationFour].mean()
+		# wilcoxon signed rank
+		wilcoxonsignedrank = ss.wilcoxon(upstreamelement,downstreamelement)
+		wilcoxonsignedrankrandom = ss.wilcoxon(upstreamrandom,downstreamrandom)
+		# Stats Table
+		statstable = pd.DataFrame([wilcoxonsignedrank,wilcoxonsignedrankrandom],
+			columns=['statistic','pvalue'],
+			index=['wsr-element','wsr-random'])
+		save_panda(statstable,'Stats_{0}.txt'.format(fileName))
+	ax0.plot(fillX,ATmean,linewidth=1,label='AT element',color='#7676da')
+	ax0.axvline(x=plotLineLocationOne,linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax0.axvline(x=plotLineLocationTwo,linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax0.axvline(x=plotLineLocationThree,linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax0.axvline(x=plotLineLocationFour,linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax0.set_ylabel('% AT Content',size=16)
+	ax0.set_xlabel('Position',size=16)
+	ax0.set_title('Mean AT Content for UCEs',size=16)
+	ax0.set_yticks(ax0.get_yticks()[::2])
+	plt.xlim(0,num)
+	ax1.plot(fillX,ranATmean,linewidth=1,label='AT random',color='#a8da76')
+	ax1.axvline(x=plotLineLocationOne,linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax1.axvline(x=plotLineLocationTwo,linewidth=.05,linestyle='dashed',color='#e7298a')
+	ax1.axvline(x=plotLineLocationThree,linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax1.axvline(x=plotLineLocationFour,linewidth=.05,linestyle='dashed',color='#bd4973')
+	ax1.set_yticks(ax1.get_yticks()[::2])
+	ax1.set_xlabel('Position',size=16)
+	ax1.set_ylabel('% AT Content',size=16)
+	ax1.set_title('Mean AT Content for Randomly Sorted UCEs',size=16)
 	plt.setp(ax1.get_xticklabels(),visible=True)
 
 	ax0.tick_params(axis='both',which='major',labelsize=16)
